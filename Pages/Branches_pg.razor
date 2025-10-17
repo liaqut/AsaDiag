@@ -1,0 +1,113 @@
+﻿@page "/branches_pg"
+@using DigiEquipSys.Models
+@inject ISessionStorageService sessionStorage
+@inject NavigationManager UriHelper
+@inject IJSRuntime JSRuntime
+
+<h3 class="page-title">COMPANY INFO</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap4 {
+        stroke: red;
+    }
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap4" Size="50" Label="Data loading">
+</SfSpinner>
+@if (BranchList != null)
+{
+    <div class="col-lg-12 Control-section">
+        <div class="content-wrapper">
+            <div class="Control-wrapper">
+                <SfGrid @ref="BranchGrid" 
+                        DataSource="@BranchList"
+                        AllowSorting="true" AllowFiltering="false" AllowPaging="true" AllowResizing="true" AllowReordering="true"  AllowExcelExport="true"
+                        ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                        Toolbar="@(new List<string>() { "Edit", "Cancel", "Update", "Print" })">
+                    <GridEvents OnActionBegin="ActionBeginHandler"  RowSelected="RowSelectHandler" TValue="Branch"></GridEvents>
+                    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                    <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Dialog" Dialog="DialogParams"></GridEditSettings>
+                    <GridTemplates>
+                        <EmptyRecordTemplate>
+                            <span>No Records Found</span>
+                        </EmptyRecordTemplate>
+                    </GridTemplates>
+                    <GridColumns>
+
+                        <GridColumn Field="@nameof(Branch.BranchId)"
+                                    HeaderText="BranchId"
+                                    IsIdentity="true"
+                                    IsPrimaryKey="true"
+                                    Visible="false">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(Branch.BranchCode)"
+                                    HeaderText="Code"
+                                    AllowEditing="@IsEdit"
+                                    Width="40">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(Branch.BranchDesc)"
+                                    HeaderText="Company Name"
+                                    Width="75">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(Branch.BranchAddress)"
+                                    HeaderText="Company Address"
+                                    Width="75">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(Branch.BranchCity)"
+                                    Width="50"
+                                    HeaderText="City">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(Branch.BranchState)"
+                                    Width="50"
+                                    HeaderText="State">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(Branch.BranchCountry)"
+                                    Width="50"
+                                    HeaderText="Country">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(Branch.BranchPoBox)"
+                                    Width="40"
+                                    HeaderText="Post Box No.">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(Branch.BranchPhone)"
+                                    Width="40"
+                                    HeaderText="Phone">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(Branch.SetupPassword)"
+                                    Width="40"
+                                    HeaderText="Password">
+                        </GridColumn>
+
+@*                         <GridColumn Field="@nameof(Branch.BranchCrNo)"
+                                    Width="50"
+                                    HeaderText="CR Number">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(Branch.BranchVatNo)"
+                                    Width="50"
+                                    HeaderText="VAT Number">
+                        </GridColumn> *@
+                    </GridColumns>
+                </SfGrid>
+                <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+                <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
+            </div>
+            <a href="#" @onclick="NavigateToPrevious" CssClass="e-link">
+                <SfButton CssClass="e-small e-success">BACK</SfButton>
+            </a>
+        </div>
+    </div>
+}

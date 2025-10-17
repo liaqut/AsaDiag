@@ -1,0 +1,158 @@
+﻿@page "/chklistinv_pg"
+@using DigiEquipSys.Interfaces
+@using DigiEquipSys.Models
+@inject NavigationManager NavigationManager
+@inject IItemMasterService myItemMaster
+@inject IStockCheckService myStockCheckService
+@inject IJSRuntime JSRuntime
+@inject ISessionStorageService sessionStorage
+
+<h3 class="page-title">Goods Receipt (GRN)</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+</style>
+
+<style>
+    .grid-item {
+        background-color: rgba(255, 255, 255, 0.8);
+    }
+</style>
+<style>
+    .grid-container {
+        display: grid;
+        padding: 20px;
+        max-width: 1200px; /* Maximum width of the whole container - in this case both columns */
+        grid-template-columns: 1fr 1fr 1fr; /* Relative width of each column (1fr 1fr is equivalent to, say, 33fr 33fr */
+        grid-gap: 5px; /* size of the gap between columns */
+        background-color: #ffefd5;
+    }
+
+    .flex-container {
+        display: flex;
+        flex-direction: row; /* Causes tab to move along row and then onto following row */
+        justify-content: space-evenly; /* Equal space left and right margin and between elements */
+        margin: 10px; /* This appears to be vertical margin between rows */
+        column-gap: 10px;
+        /* Tgap betwen columns */
+    }
+
+    .e-numeric.e-style .e-Control.e-numerictextbox {
+        text-align: right;
+        padding: 0px 5px 0px 0px;
+    }
+</style>
+
+
+
+@if (rcptvoudetailsSumm != null)
+{
+    <div class="col-lg-12">
+         <div class="col-lg-12 Control-section">
+            <div class="content-wrapper">
+                <div class="row">
+                    <SfGrid @ref="RcptDetGridSumm" DataSource="@rcptvoudetailsSumm" Height="500" Width="100%" AllowSorting="true" AllowPaging="true" AllowFiltering="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                            ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                            Toolbar="@(new List<string>() { "Edit", "Cancel", "Update", "Print","ExcelExport" })">
+                        <GridEditSettings ShowConfirmDialog="false" NewRowPosition="NewRowPosition.Bottom" AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
+                        <GridEvents  OnToolbarClick="ToolbarClickHandler" RowSelected="OnRowSelected" TValue="RcptDetailSumm"></GridEvents>
+                        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                        <GridPageSettings PageSize="100" PageSizes="@(new int[] { 50, 100, 200, 400,500})"></GridPageSettings>
+
+                        <GridAggregates>
+                            <GridAggregate>
+                                <GridAggregateColumns>
+                                    <GridAggregateColumn Field="RdQty" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate>
+                                            @{
+                                                var aggregate = (context as AggregateTemplateContext);
+                                                <div>
+                                                    <p>Qty: @aggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+                                </GridAggregateColumns>
+                            </GridAggregate>
+                        </GridAggregates>
+
+                        <GridColumns>
+                            <GridColumn Field="@nameof(RcptDetailSumm.RdScanCode)" AllowFiltering="false" AllowEditing="false"
+                                        HeaderText="Scan Code"
+                                        Width="50">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(RcptDetailSumm.RdListNo)" AllowEditing="false"
+                                        HeaderText="List No."
+                                        Width="40">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(RcptDetailSumm.RdLotNo)" AllowEditing="false"
+                                        HeaderText="Lot No."
+                                        Width="40">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(RcptDetailSumm.RdExpiryDate)" AllowEditing="false"
+                                        HeaderText="Expiry Date" Format="dd/MM/yyyy"
+                                        Width="40">
+                            </GridColumn>
+
+                            <GridForeignColumn Field="@nameof(RcptDetailSumm.RdStkId)"
+                                               HeaderText="Item Desc"
+                                               ForeignKeyField="ItemId" ForeignKeyValue="ItemDesc" ForeignDataSource="@ItemMasterList"
+                                               Width="75" AllowEditing="false">
+                            </GridForeignColumn>
+
+                            <GridColumn Field="@nameof(RcptDetailSumm.RdQty)" AllowFiltering="false" Format="n2" EditorSettings="@myEditParams"
+                                        HeaderText="Rcv. Qty"
+                                        Width="30" AllowEditing="@showEditButton">
+                            </GridColumn>
+
+                            <GridColumn HeaderText="Action" Width="25" Visible="@showEditButton">
+                                @if (showEditButton == true)
+                                {
+                                    <GridCommandColumns>
+                                        <GridCommandColumn Type="CommandButtonType.Edit"
+                                                           ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-edit",
+                                      CssClass="e-flat"
+                                    })">
+                                        </GridCommandColumn>
+                                        <GridCommandColumn Type="CommandButtonType.Save"
+                                                           ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-update",
+                                      CssClass="e-flat"
+                                    })">
+                                        </GridCommandColumn>
+                                        <GridCommandColumn Type="CommandButtonType.Cancel"
+                                                           ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-cancel-icon",
+                                      CssClass="e-flat"
+                                    })">
+                                        </GridCommandColumn>
+                                        <GridCommandColumn Type="CommandButtonType.Delete"
+                                                           ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-undo",
+                                      CssClass="e-flat"
+                                    })">
+                                        </GridCommandColumn>
+                                    </GridCommandColumns>
+                                }
+                            </GridColumn>
+
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+            </div>
+        </div>
+        <br />
+        <br />
+        <div class="e-footer-content" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+            <div class="button-container" style="display: flex; align-items: center; gap: 10px;">
+                <button type="button" class="e-btn e-normal" @onclick="Previous">Back</button>
+            </div>
+        </div>
+    </div>
+}
+

@@ -1,0 +1,25 @@
+--Delete from Rcpt_Detail
+--Delete from Rcpt_Head
+--Delete from Del_Detl
+--Delete from Del_Head
+--Delete from Item_Unit
+--Delete from Stock
+--Delete from Item_Master
+--Delete from Client_Master
+--Delete from Supplier_Master
+--Delete from Group_Master
+--Delete from Gen_city
+--Delete from Gen_Country
+--DBCC CHECKIDENT ('Stock', RESEED, 0);
+--DBCC CHECKIDENT ('Item_Master', RESEED, 0);
+--DBCC CHECKIDENT ('Del_Head', RESEED, 0);
+--DBCC CHECKIDENT ('Del_Detl', RESEED, 0);
+--DBCC CHECKIDENT ('Rcpt_Head', RESEED, 0);
+--DBCC CHECKIDENT ('Rcpt_Detail', RESEED, 0);
+--DBCC CHECKIDENT ('Item_Unit', RESEED, 0);
+--DBCC CHECKIDENT ('Client_Master', RESEED, 0);
+--DBCC CHECKIDENT ('Supplier_Master', RESEED, 0);
+--DBCC CHECKIDENT ('Group_Master', RESEED, 0);
+--DBCC CHECKIDENT ('Gen_city', RESEED, 0);
+--DBCC CHECKIDENT ('Gen_Country', RESEED, 0);
+--GO

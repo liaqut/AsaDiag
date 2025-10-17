@@ -1,0 +1,255 @@
+﻿@page "/pending_pg"
+<h3 class="page-title">Pending Purchase Orders</h3>
+@inject HttpClient Http
+@using DigiEquipSys.Services
+@using DigiEquipSys.Models
+@using DigiEquipSys.Interfaces
+@inject IPoDetailService myPoDetailService
+@inject NavigationManager UriHelper
+@using System.Dynamic
+@inject ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime
+
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+
+    .e-grid .e-groupheadercell {
+        height: 30px;
+        background: linear-gradient();
+        color: #fff;
+    }
+
+        .e-grid .e-groupheadercell:hover {
+            height: 30px;
+            background: #ffbb60;
+            color: #fff;
+        }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap5 {
+        stroke: red;
+    }
+
+    .Control-wrapper {
+        width: 250px;
+    }
+
+    .myButton {
+        background-color: #0a0a23;
+        color: #fff;
+        border: 2px solid #E9E9E9;
+        border-width: 2px 2px 2px 2px;
+        border-radius: 10px;
+        padding: 15px;
+        min-height: 30px;
+        min-width: 120px;
+    }
+
+        .myButton:hover {
+            background-color: #002ead;
+            transition: 0.7s;
+        }
+
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap5" Size="50">
+</SfSpinner>
+
+@if (@PoList != null)
+{
+    <div class="col-lg-12 Control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                <div class="Control-wrapper">
+                    <SfDateRangePicker TValue="DateTime?" Placeholder="Choose a Date Range" FullScreen="true" ShowClearButton="true">
+                        <DateRangePickerEvents TValue="DateTime?" ValueChange="ValueChangeHandler"></DateRangePickerEvents>
+                    </SfDateRangePicker>
+                </div>
+                <br />
+                <div id="container">
+                    <SfGrid @ref="PoGrid" Height="550px" Width="100%"
+                            DataSource="@PoList" AllowTextWrap="true"
+                            AllowGrouping="true" AllowSorting="true" AllowFiltering="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                            ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                            Toolbar="@(new List<string>() { "Print", "ExcelExport" })">
+                        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                        <GridEditSettings AllowAdding="false" AllowEditing="false" AllowDeleting="false" Mode="EditMode.Normal"></GridEditSettings>
+                        <GridEvents TValue="VwPurchaseOrder" OnToolbarClick="ToolbarClickHandler"></GridEvents>
+                        <GridPageSettings PageSize="20" PageSizes="@(new int[] {20, 30, 50, 100, 200, 400,500})"></GridPageSettings>
+                        <GridTemplates>
+                            <EmptyRecordTemplate>
+                                <span>No Records Found</span>
+                            </EmptyRecordTemplate>
+                        </GridTemplates>
+
+                        <GridAggregates>
+                            <GridAggregate>
+                                <GridAggregateColumns>
+                                    <GridAggregateColumn Field="PoQty" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate Context="vMyContext">
+                                            @{
+                                                var vMyaggregate = (vMyContext as AggregateTemplateContext);
+
+                                                <div>
+                                                    <p>Qty: @vMyaggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+                                    <GridAggregateColumn Field="PoTotal" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate Context="vMyContext">
+                                            @{
+                                                var vMyaggregate = (vMyContext as AggregateTemplateContext);
+                                                <div>
+                                                    <p>Amt: @vMyaggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+                                    <GridAggregateColumn Field="PoRcvdQty" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate Context="vMyContext">
+                                            @{
+                                                var vMyaggregate = (vMyContext as AggregateTemplateContext);
+                                                <div>
+                                                    <p>Rqty: @vMyaggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+                                    <GridAggregateColumn Field="PoRcvdTotal" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate Context="vMyContext">
+                                            @{
+                                                var vMyaggregate = (vMyContext as AggregateTemplateContext);
+                                                <div>
+                                                    <p>RdAmt: @vMyaggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+                                </GridAggregateColumns>
+                            </GridAggregate>
+                        </GridAggregates>
+
+                        <GridColumns>
+                            <GridColumn Field="@nameof(VwPurchaseOrder.PohDispNo)"
+                                        HeaderText="Po No."
+                                        AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwPurchaseOrder.PohDate)" Format="dd/MM/yyyy"
+                                        HeaderText="Po Date"
+                                        AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwPurchaseOrder.PohApproved)"
+                                        HeaderText="Approved"
+                                        AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwPurchaseOrder.PodListNo)"
+                                        HeaderText="List No."
+                                        AllowEditing="false"
+                                        Width="25">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwPurchaseOrder.ItemDesc)"
+                                        HeaderText="Item Desc"
+                                        AllowEditing="false"
+                                        Width="40">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwPurchaseOrder.ItemUnit)"
+                                        HeaderText="Unit"
+                                        Width="20"
+                                        AllowEditing="false">
+                            </GridColumn>
+
+                            <GridColumn Field=@nameof(VwPurchaseOrder.ClientName)
+                                        HeaderText="Client Name" Width="30"
+                                        AllowEditing="false">
+                            </GridColumn>
+
+                            <GridColumn Field=@nameof(VwPurchaseOrder.SuppName)
+                                        HeaderText="Supplier Name" Width="30"
+                                        AllowEditing="false">
+                            </GridColumn>
+
+                            <GridColumn Field=@nameof(VwPurchaseOrder.PohCurr)
+                                        HeaderText="PO Currency" Width="30"
+                                        AllowEditing="false">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwPurchaseOrder.PohConvRate)" Format="n2" 
+                                        HeaderText="Conv Rate"
+                                        AllowEditing="false"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwPurchaseOrder.PodUp)" Format="n2" Visible="@IsVisRole"
+                                        HeaderText="Po Up."
+                                        AllowEditing="false"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwPurchaseOrder.PoQty)"
+                                        HeaderText="Po Qty"
+                                        AllowEditing="false"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwPurchaseOrder.PoTotal)" Format="n2" Visible="@IsVisRole"
+                                        HeaderText="Po Amt"
+                                        AllowEditing="false"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwPurchaseOrder.PoRcvdQty)" Format="n2" Visible="@IsVisRole"
+                                        HeaderText="Rcvd Qty"
+                                        AllowEditing="false"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwPurchaseOrder.PoRcvdTotal)" Format="n2" Visible="@IsVisRole"
+                                        HeaderText="Rcvd Amt"
+                                        AllowEditing="false"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+                            </GridColumn>
+
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+                <br />
+            </div>
+            <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+            <a href="#" @onclick="NavigateToPrevious" CssClass="e-link">
+                <SfButton CssClass="e-small e-success">BACK</SfButton>
+            </a>
+            <span style="font-weight:600;text-align:right;">Total Quantities: @TotalQty </span>
+            <span style="font-weight:600;text-align:right;visibility:@(IsVisRole ? "visible" : "hidden")">Total Amount: @TotalAmt.ToString("N2") </span>
+            <span style="font-weight:600;text-align:right;">Received Quantities: @TotalRcvd </span>
+            <span style="font-weight:600;text-align:right;visibility:@(IsVisRole ? "visible" : "hidden")">Received Amount: @TotalRcvdAmt.ToString("N2") </span>
+        </div>
+    </div>
+}

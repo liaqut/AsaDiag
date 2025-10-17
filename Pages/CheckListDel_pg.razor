@@ -1,0 +1,604 @@
+﻿@page "/checklistDel_pg/{DelvouId:long}"
+@using DigiEquipSys.Interfaces
+@using DigiEquipSys.Models
+@using DigiEquipSys.Services
+@inject NavigationManager NavigationManager
+@inject IItemMasterService myItemMaster
+@inject IDelDetlService DelDetailService
+@inject IClientService ClientService
+@inject IDelHeadService DelHeadService
+@inject IStockService StockService
+@inject IJSRuntime JSRuntime
+@inject IItemUnitService myUnitService
+@using System.Transactions;
+@inject ISessionStorageService sessionStorage
+
+<h3 class="page-title">Delivery Note (DN)</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+
+    .grid-item {
+        background-color: rgba(255, 255, 255, 0.8);
+    }
+</style>
+<style>
+    .grid-container {
+        display: grid;
+        padding: 20px;
+        max-width: 1200px; /* Maximum width of the whole container - in this case both columns */
+        grid-template-columns: 1fr 1fr 1fr; /* Relative width of each column (1fr 1fr is equivalent to, say, 33fr 33fr */
+        grid-gap: 5px; /* size of the gap between columns */
+        background-color: #ffefd5;
+    }
+
+    .flex-container {
+        display: flex;
+        flex-direction: row; /* Causes tab to move along row and then onto following row */
+        justify-content: space-evenly; /* Equal space left and right margin and between elements */
+        margin: 10px; /* This appears to be vertical margin between rows */
+        column-gap: 10px;
+        /* Tgap betwen columns */
+    }
+
+    .e-numeric.e-style .e-Control.e-numerictextbox {
+        text-align: right;
+        padding: 0px 5px 0px 0px;
+    }
+
+    .e-grid .e-headercell, .e-grid .e-detailheadercell {
+        padding-right: 0 !important;
+    }
+
+    .e-grid .e-headercelldiv {
+        padding-right: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .e-grid .e-filtermenudiv {
+        margin: 0 93%;
+    }
+</style>
+
+@if (DelvoudetailsSumm != null)
+{
+    <div class="col-lg-12">
+        @if (Delv != null)
+        {
+            <div class="grid-container">
+                <div class="grid-item">
+                    <SfTextBox Enabled=false Placeholder="DN No" @bind-Value="Delv.DelDispNo" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                    <SfDatePicker Enabled=false Placeholder="GRN Date" @bind-Value="Delv.DelDate" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfDatePicker>
+                    <SfTextBox Enabled=false Placeholder="Customer" @bind-Value="clientname" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                </div>
+                <div class="grid-item">
+                    <SfTextBox Enabled=false Placeholder="P.O. Number" @bind-Value="Delv.PoNumber" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                    <SfDatePicker Enabled=false Placeholder="P.O. Date" @bind-Value="Delv.PoDate" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfDatePicker>
+                </div>
+            </div>
+            <br />
+        }
+        <div class="col-lg-12 Control-section">
+            <div class="content-wrapper">
+                <div class="row">
+                    <SfGrid @ref="DelDetGridSumm" DataSource="@DelvoudetailsSumm" Height="500" Width="100%" AllowSorting="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                            ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                            Toolbar="@(new List<string>() { "Print" })">
+                        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                        <GridPageSettings PageSize="100" PageSizes="@(new int[] { 50, 100, 200, 400,500})"></GridPageSettings>
+
+                        <GridAggregates>
+                            <GridAggregate>
+                                <GridAggregateColumns>
+                                    <GridAggregateColumn Field="DelQty" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate>
+                                            @{
+                                                var aggregate = (context as AggregateTemplateContext);
+                                                <div>
+                                                    <p>Qty: @aggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+                                    <GridAggregateColumn Field="TotalPrice" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate>
+                                            @{
+                                                var aggregate = (context as AggregateTemplateContext);
+                                                <div>
+                                                    <p>Amt: @aggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+                                </GridAggregateColumns>
+                            </GridAggregate>
+                        </GridAggregates>
+
+
+                        <GridColumns>
+
+                            <GridColumn Field="@nameof(DelDetailSumm.DelScanCode)" AllowFiltering="false"
+                                        HeaderText="Scan Code"
+                                        Width="100">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(DelDetailSumm.DelListNo)" AllowFiltering="false"
+                                        HeaderText="List Number"
+                                        Width="30">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(DelDetailSumm.DelLotNo)" AllowFiltering="false"
+                                        HeaderText="Lot Number"
+                                        Width="30">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(DelDetailSumm.DelExpiryDate)" AllowFiltering="false"
+                                        HeaderText="Expiry Date" Format="dd/MM/yyyy"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridForeignColumn Field="@nameof(DelDetailSumm.DelStkIdDesc)"
+                                               HeaderText="Item Desc"
+                                               ForeignKeyField="ItemId" ForeignKeyValue="ItemDesc" ForeignDataSource="@ItemMasterList"
+                                               Width="75" AllowEditing="false">
+                            </GridForeignColumn>
+
+                            <GridForeignColumn Field="@nameof(DelDetailSumm.DelStkIdUnit)"
+                                               HeaderText="Unit"
+                                               ForeignKeyField="ItemUnitDesc" ForeignKeyValue="ItemUnitDesc" ForeignDataSource="@ItemUnitList"
+                                               Width="30" AllowEditing="false">
+                            </GridForeignColumn>
+
+                            <GridColumn Field="@nameof(DelDetailSumm.DelUp)" AllowFiltering="false" Visible="@IsVisRole"
+                                        HeaderText="Sell Price"
+                                        Width="30" AllowEditing="true">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(DelDetailSumm.DelQty)" AllowFiltering="false"
+                                        HeaderText="Delv. Qty"
+                                        Width="30" AllowEditing=false>
+                            </GridColumn>
+
+                            @* <GridColumn HeaderText="Amount" Format="C2" TextAlign="TextAlign.Center" Width="20" Visible="@IsVisRole">
+                        <Template>
+                        @{
+                        var order = context as DelDetailSumm;
+                        var Amt = (@order.DelQty * @order.DelUp);
+                        <div>@(Amt.ToString("n2"))</div>
+                        }
+                        </Template>
+                        </GridColumn> *@
+
+                            <GridColumn Field="@nameof(DelDetailSumm.TotalPrice)" AllowFiltering="false" Format="n2" Visible="@IsVisRole"
+                                        HeaderText="Amount"
+                                        Width="30" AllowEditing="false">
+                            </GridColumn>
+
+
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+            </div>
+        </div>
+        <br />
+        <br />
+        <div class="e-footer-content" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+            <div class="button-container">
+                <button type="button" class="e-btn e-normal" @onclick="Cancel">Back</button>
+                <button type="button" disabled="@isApprove" class="e-btn e-normal" @onclick="Approve">Approve</button>
+                <button type="button" disabled="@isDisApprove" class="e-btn e-normal" @onclick="DisApprove">Disapprove</button>
+                <span style="font-weight:600;">Overall Total Items: @TotalItems </span>
+                <span style="font-weight:600; visibility:@(IsVisRole ? "visible" : "hidden")">Total Amount: @TotalAmount.ToString("N2")</span>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code
+{
+    [Parameter] public long DelvouId { get; set; }
+    public class DelDetailSumm
+    {
+        public string? DelScanCode { get; set; }
+        public string? DelListNo { get; set; }
+        public string? DelLotNo { get; set; }
+        public DateTime DelExpiryDate { get; set; }
+        public int DelBatchId { get; set; }
+        public long DelStkIdDesc { get; set; }
+        public string? DelStkIdUnit { get; set; }
+        public decimal DelUp { get; set; }
+        public decimal DelQty { get; set; }
+        public decimal TotalPrice { get; set; }
+        public string? DelClientCode { get; set; }
+    }
+
+    public class DelSumm
+    {
+        public string? DelListNo { get; set; }
+        public string? DelLotNo { get; set; }
+        public DateTime DelExpiryDate { get; set; }
+        public string? DelClientCode { get; set; }
+        public decimal DelQty { get; set; }
+    }
+
+
+
+    private SfGrid<DelDetailSumm>? DelDetGridSumm;
+    protected List<ItemMaster> ItemMasterList = new();
+    protected List<DelDetl> Delvoudetails = new();
+    protected List<DelDetailSumm> DelvoudetailsSumm = new();
+    protected List<DelSumm> DelTotSumm = new();
+    private DelDetailSumm Deladdedit = new();
+    private DelHead? Delv = new();
+    private ClientMaster client = new();
+    private Stock stk = new();
+    private string clientname { get; set; }
+    private string vDelListNo { get; set; }
+    private string vDelLotNo { get; set; }
+    private DateTime vDelExpiryDate { get; set; }
+    private bool isApprove = true;
+    private bool isDisApprove = true;
+    public List<ItemUnit>? ItemUnitList = new();
+    public bool IsVisRole { get; set; } = true;
+    private string? myRole;
+    public int TotalItems { get; set; }
+    public decimal TotalAmount { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            myRole = await sessionStorage.GetItemAsync<string>("adminRo");
+            Delv = await DelHeadService.GetDelHead(DelvouId);
+            if (Delv.DelClientId != null)
+            {
+                client = await ClientService.GetClient(Convert.ToInt32(Delv.DelClientId));
+                clientname = client.ClientName;
+                if (Delv.DelApproved == true)
+                {
+                    isApprove = true;
+                    isDisApprove = false;
+                    // if (myRole == "01")
+                    // {
+                    //     isDisApprove = false;
+                    // }
+                }
+                else
+                {
+                    isApprove = false;
+                    isDisApprove = true;
+                }
+            }
+            else
+            {
+                clientname = "";
+            }
+            ItemUnitList = await myUnitService.GetItemUnits();
+            ItemMasterList = await myItemMaster.GetItemMasters();
+            Delvoudetails = await DelDetailService.GetDelDetlsByDelHeadId(DelvouId);
+
+            myRole = await sessionStorage.GetItemAsync<string>("adminRo");
+            if (myRole == "01" || myRole == "02" || myRole == "03")
+            {
+                IsVisRole = true;
+            }
+            else
+            {
+                IsVisRole = false;
+            }
+
+            var myDelvou = Delvoudetails
+                  .GroupBy(m => new { m.DelListNo, m.DelLotNo, m.DelExpiryDate, m.DelClientCode })
+                  .Select(m => new DelSumm
+                      {
+                          DelListNo = m.Key.DelListNo,
+                          DelLotNo = m.Key.DelLotNo,
+                          DelClientCode = m.Key.DelClientCode,
+                          DelExpiryDate = Convert.ToDateTime(m.Key.DelExpiryDate),
+                          DelQty = m.Sum(m => Convert.ToDecimal(m.DelQty)),
+                      }).ToList();
+            DelTotSumm = myDelvou;
+            int cnt;
+            //distributing for each batch id - first come first serve.
+            foreach (var delv in DelTotSumm)
+            {
+                //var distQty = (from k in DelTotSumm where k.DelListNo == delv.DelListNo && k.DelLotNo == delv.DelLotNo && k.DelExpiryDate == delv.DelExpiryDate && k.DelClientCode == delv.DelClientCode select k.DelQty).FirstOrDefault();
+                var distQty = delv.DelQty;
+                var qryStock = await StockService.GetStockList(delv.DelListNo, delv.DelLotNo, Convert.ToDateTime(delv.DelExpiryDate), delv.DelClientCode);
+                if (qryStock != null && qryStock.Count > 0)
+                {
+                    cnt = 0;
+                    foreach (var stkQty in qryStock)
+                    {
+                        var avlQty = ((stkQty.ItemOpQty ?? 0) + (stkQty.ItemPurQty ?? 0) + (stkQty.ItemTrInQty ?? 0) - ((stkQty.ItemTrOutQty ?? 0) + (stkQty.ItemDelQty ?? 0)));
+                        if (avlQty > 0)
+                        {
+                            cnt = 1;
+                            if (distQty >= avlQty)
+                            {
+                                distQty = distQty - avlQty;
+                                foreach (var k in Delvoudetails)
+                                {
+                                    if (k.DelListNo == delv.DelListNo && k.DelLotNo == delv.DelLotNo && k.DelExpiryDate == delv.DelExpiryDate && k.DelClientCode == delv.DelClientCode)
+                                    {
+                                        if (k.DelBatchId == null)
+                                        {
+                                            k.DelStockStkId = stkQty.StkId;
+                                            k.DelBatchId = stkQty.ItemBatchId;
+                                            k.DelPurchPrice = stkQty.ItemCp;
+                                            await DelDetailService.UpdateDelDetl(k);
+                                            avlQty = avlQty - (decimal)k.DelQty;
+                                            if (avlQty <= 0)
+                                            {
+                                                break;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (k.DelBatchId == stkQty.ItemBatchId)
+                                            {
+                                                avlQty = avlQty - (decimal)k.DelQty;
+                                                if (avlQty <= 0)
+                                                {
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                foreach (var k in Delvoudetails)
+                                {
+                                    if (k.DelListNo == delv.DelListNo && k.DelLotNo == delv.DelLotNo && k.DelExpiryDate == delv.DelExpiryDate && k.DelClientCode == delv.DelClientCode)
+                                    {
+                                        if (k.DelBatchId == null)
+                                        {
+                                            k.DelStockStkId = stkQty.StkId;
+                                            k.DelBatchId = stkQty.ItemBatchId;
+                                            k.DelPurchPrice = stkQty.ItemCp;
+                                            await DelDetailService.UpdateDelDetl(k);
+                                            distQty = distQty - (decimal)k.DelQty;
+                                            if (distQty <= 0)
+                                            {
+                                                break;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (k.DelBatchId == stkQty.ItemBatchId)
+                                            {
+                                                distQty = distQty - (decimal)k.DelQty;
+                                                if (distQty <= 0)
+                                                {
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (distQty != 0)
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                if (Delv.DelApproved == false && cnt == 0)
+                                {
+                                    string message1 = "Excess Delivery ...You are Delivering " + delv.DelQty + " Where as the available stock is " + ((stkQty.ItemOpQty ?? 0) + (stkQty.ItemPurQty ?? 0) + (stkQty.ItemTrInQty ?? 0) - ((stkQty.ItemTrOutQty ?? 0) + (stkQty.ItemDelQty ?? 0))) + " in List No: " + delv.DelListNo + " Lot No: " + delv.DelLotNo + " Expiry: " + delv.DelExpiryDate.ToShortDateString();
+                                    await JSRuntime.InvokeVoidAsync("alert", message1);
+                                    await Task.Delay(1);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    if (distQty != 0)
+                    {
+                        if (Delv.DelApproved == false)
+                        {
+                            string message1 = "Invalid Quantity ...You are Delivering " + delv.DelQty + " Where as not available or not enough stock in the List No: " + delv.DelListNo + " Lot No: " + delv.DelLotNo + " Expiry: " + delv.DelExpiryDate.ToShortDateString();
+                            await JSRuntime.InvokeVoidAsync("alert", message1);
+                            await Task.Delay(1);
+                            return;
+                        }
+                    }
+                }
+                else
+                {
+                    string message = "List No: " + delv.DelListNo + " Lot No: " + delv.DelLotNo + " Expiry: " + delv.DelExpiryDate.ToShortDateString() + " is not found in the Stock for this client.  Please add to the Stock first......";
+                    await JSRuntime.InvokeVoidAsync("alert", message);
+                    await Task.Delay(1);
+                    return;
+                }
+            }
+
+            await InvokeAsync(StateHasChanged);
+            Delvoudetails = await DelDetailService.GetDelDetlsByDelHeadId(DelvouId);
+            var tt = Delvoudetails
+                  .GroupBy(r => new { r.DelScanCode, r.DelListNo, r.DelLotNo, r.DelExpiryDate, r.DelBatchId, r.DelStkIdDesc, r.DelStkIdUnit, r.DelUprice, r.DelClientCode })
+                  .Select(g => new DelDetailSumm
+                      {
+                          DelScanCode = g.Key.DelScanCode,
+                          DelListNo = g.Key.DelListNo,
+                          DelLotNo = g.Key.DelLotNo,
+                          DelClientCode = g.Key.DelClientCode,
+                          DelExpiryDate = Convert.ToDateTime(g.Key.DelExpiryDate),
+                          DelBatchId = g.Key.DelBatchId ?? 1,
+                          DelStkIdDesc = Convert.ToInt64(g.Key.DelStkIdDesc),
+                          DelStkIdUnit = g.Key.DelStkIdUnit,
+                          DelUp = Convert.ToDecimal(g.Key.DelUprice),
+                          DelQty = g.Sum(r => Convert.ToDecimal(r.DelQty)),
+                          TotalPrice = g.Sum(r => Convert.ToDecimal(r.TotalPrice))
+                      }).ToList();
+            DelvoudetailsSumm = tt;
+            TotalItems = DelvoudetailsSumm.Count();
+            TotalAmount = Math.Round(DelvoudetailsSumm.Sum(d => d.TotalPrice), 2);
+            DelDetGridSumm?.Refresh();
+            await InvokeAsync(StateHasChanged);
+
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+            return;
+        }
+    }
+
+    public void Cancel()
+    {
+        NavigationManager.NavigateTo($"DelHead_pg/{DelvouId}/");
+    }
+
+    protected async Task DisApprove()
+    {
+        try
+        {
+            await StockService.ExecuteWithTransactionAsync(async () =>
+            {
+                bool allStockUpdatesSucceeded = true;
+                bool anyStockUpdated = false;   // track if at least one stock row was updated
+
+                if (DelvoudetailsSumm != null)
+                {
+                    foreach (var individualEntry in DelvoudetailsSumm)
+                    {
+                        var myStk = await StockService.GetStockBatch(individualEntry.DelListNo, individualEntry.DelLotNo, individualEntry.DelExpiryDate, individualEntry.DelClientCode, individualEntry.DelBatchId);
+                        if (myStk == null)
+                        {
+                            throw new Exception("Item not found in stock..Critical Error...");
+                        }
+                        var expectedDelQty = (myStk.ItemDelQty ?? 0) - individualEntry.DelQty;
+                        if(myStk.ItemDelQty == expectedDelQty)
+                        {
+                            throw new Exception($"Stock for List No {individualEntry.DelListNo} " +
+                                                $"Lot No {individualEntry.DelLotNo} already updated. " +
+                                                $"Disapproval stopped to avoid duplicate processing.");
+                        }
+                        myStk.ItemDelQty = myStk.ItemDelQty - individualEntry.DelQty;
+                        myStk.ItemDelAmt = myStk.ItemDelAmt - (individualEntry.DelQty * individualEntry.DelUp);
+                        var updated = await StockService.UpdateStock(myStk);
+                        if (updated != "Success")  // You must make UpdateStock return bool
+                        {
+                            allStockUpdatesSucceeded = false;
+                            throw new Exception("Stock update failed for List No: " + individualEntry.DelListNo);
+                        }
+                        anyStockUpdated = true;
+                    }
+                    if (allStockUpdatesSucceeded && anyStockUpdated && Delv != null)
+                    {
+                        Delv.DelApproved = false;
+                        var delHeadUpdated = await DelHeadService.UpdateDelHead(Delv);
+                        if (delHeadUpdated != "Success")
+                        {
+                            throw new Exception("DelHead update failed.");
+                        }
+                        isApprove = false;
+                        isDisApprove = true;
+                        string message = "Disapproved Successfully...";
+                        await JSRuntime.InvokeVoidAsync("alert", message);
+                    }
+                    else
+                    {
+                        throw new Exception("Update failed.. Try Again !!");
+                    }
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+        }
+    }
+
+    protected async Task Approve()
+    {
+        try
+        {
+            await StockService.ExecuteWithTransactionAsync(async () =>
+            {
+                bool allStockUpdatesSucceeded = true;
+                bool anyStockUpdated = false;   // track if at least one stock row was updated
+
+                if (DelvoudetailsSumm != null)
+                {
+                    foreach (var individualEntry in DelvoudetailsSumm)
+                    {
+                        var myStk = await StockService.GetStockBatch(individualEntry.DelListNo, individualEntry.DelLotNo, individualEntry.DelExpiryDate, individualEntry.DelClientCode, individualEntry.DelBatchId);
+                        if (myStk == null)
+                        {
+                            allStockUpdatesSucceeded = false;
+                            string message1 = "Item Not Found In the Stock...";
+                            throw new Exception(message1);
+                        }
+                        if (individualEntry.DelUp == 0)
+                        {
+                            var myMast1 = await myItemMaster.GetItemMaster(individualEntry.DelListNo, individualEntry.DelClientCode);
+                            if (myMast1 != null)
+                            {
+                                individualEntry.DelUp = (decimal)myMast1.ItemSellPrice;
+                            }
+                        }
+                        decimal availableStock = ((myStk.ItemOpQty ?? 0) + (myStk.ItemPurQty ?? 0) + (myStk.ItemTrInQty ?? 0) - ((myStk.ItemTrOutQty ?? 0) + (myStk.ItemDelQty ?? 0)));
+                        if (individualEntry.DelQty > availableStock)
+                        {
+                            throw new Exception($"Excess Delivery! You are delivering {individualEntry.DelQty}, " +
+                                   $"but available stock is {availableStock} in List No: {individualEntry.DelListNo}, " +
+                                   $"Lot No: {individualEntry.DelLotNo}, Expiry: {individualEntry.DelExpiryDate.ToShortDateString()}");
+                        }
+                        var expectedDelQty = (myStk.ItemDelQty ?? 0) + individualEntry.DelQty;
+                        if (myStk.ItemDelQty == expectedDelQty)
+                        {
+                             // Stock already updated once → fail fast
+                             throw new Exception($"Stock for List No {individualEntry.DelListNo} " +
+                                                 $"Lot No {individualEntry.DelLotNo} already updated. " +
+                                                 $"Approval stopped to avoid duplicate processing.");
+                        }
+                        // Do stock update
+                        myStk.ItemDelAmt = myStk.ItemDelAmt + (individualEntry.DelQty * individualEntry.DelUp);
+                        myStk.ItemDelQty = myStk.ItemDelQty + individualEntry.DelQty;
+                        myStk.ItemSp = individualEntry.DelUp;
+                        var updated = await StockService.UpdateStock(myStk);
+                        if (updated != "Success")  // You must make UpdateStock return bool
+                        {
+                            allStockUpdatesSucceeded = false;
+                            throw new Exception("Stock update failed for List No: " + individualEntry.DelListNo);
+                        }
+                        anyStockUpdated = true;
+                    }
+                    if (allStockUpdatesSucceeded && anyStockUpdated && Delv != null)
+                    {
+                        Delv.DelApproved = true;
+                        var delHeadUpdated = await DelHeadService.UpdateDelHead(Delv);
+                        if (delHeadUpdated != "Success")
+                        {
+                            throw new Exception("DelHead update failed.");
+                        }
+                        isApprove = true;
+                        isDisApprove = false;
+                        // if (myRole == "01")
+                        // {
+                        //     isDisApprove = false;
+                        // }
+
+                        string message = "Approved Successfully...";
+                        await JSRuntime.InvokeVoidAsync("alert", message);
+                    }
+                    else
+                    {
+                        throw new Exception("No stock updates occurred. Approval not allowed !!");
+                    }
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+        }
+    }
+}

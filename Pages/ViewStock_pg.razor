@@ -1,0 +1,395 @@
+﻿
+
+@page "/viewstock_pg/{vCompType}"
+@page "/viewstock_pg"
+@inject HttpClient Http
+@using DigiEquipSys.Services
+@using DigiEquipSys.Models
+@using DigiEquipSys.Interfaces
+@inject IGroupMasterService myGroupMaster
+@inject ICatMasterService myCatService
+@inject IItemUnitService myUnit
+@inject IItemMasterService myItemMaster
+@inject IStockService myStock
+@inject ISupplierService mySupplierService
+@inject IClientService myClientService
+@inject IRcptDetailService myRcptService
+@inject NavigationManager UriHelper
+@using System.Dynamic
+@inject ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime
+
+<h3 class="page-title">View Stock</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white;
+    }
+
+    .e-grid .e-groupheadercell {
+        height: 30px;
+        background: linear-gradient();
+        color: #fff;
+    }
+
+        .e-grid .e-groupheadercell:hover {
+            height: 30px;
+            background: #ffbb60;
+            color: #fff;
+        }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap5 {
+        stroke: red;
+    }
+
+    .Control-wrapper {
+        width: 250px;
+    }
+
+    .myButton {
+        background-color: #0a0a23;
+        color: #fff;
+        border: 2px solid #E9E9E9;
+        border-width: 2px 2px 2px 2px;
+        border-radius: 10px;
+        padding: 15px;
+        min-height: 30px;
+        min-width: 120px;
+    }
+
+        .myButton:hover {
+            background-color: #002ead;
+            transition: 0.7s;
+        }
+
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap5" Size="50">
+</SfSpinner>
+
+@if (@StockList != null)
+{
+    <div class="col-lg-12 Control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                <div class="Control-wrapper">
+
+                    <SfTextBox Placeholder="Select Your Item Code/Description" ValueChange="@OnChangeItem"></SfTextBox>
+@*                     <SfDropDownList TItem="ItemMaster" ShowClearButton="true"
+                                    TValue="string"
+                                    DataSource="@ItemMasterList"
+                                    Placeholder="Select Your Item Code"
+                                    PopupHeight="200px"
+                                    PopupWidth="250px"
+                                    AllowFiltering="true">
+                        <DropDownListFieldSettings Text="ItemCode" Value="ItemId"></DropDownListFieldSettings>
+                        <DropDownListEvents TItem="ItemMaster" TValue="string" ValueChange="OnChangeItem"></DropDownListEvents>
+                    </SfDropDownList> *@
+                </div>
+                <div class="Control-wrapper">
+                    <p> (you can search by item code or description)</p>
+                </div>
+                <br />
+                <div style="overflow-x: auto; width: 100%;">
+                    <SfGrid @ref="StockGrid" Height="500" Width="2500px"
+                            DataSource="@StockList" AllowTextWrap="true" 
+                        AllowGrouping="false" AllowSorting="true" AllowFiltering="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true" 
+                        ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                        Toolbar="@(new List<string>() { "Print", "ExcelExport" })">
+                        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                        <GridEditSettings AllowAdding="false" AllowEditing="false" AllowDeleting="false" Mode="EditMode.Normal"></GridEditSettings>
+                        <GridEvents QueryCellInfo="OnQueryCellInfo" TValue="Stock" OnToolbarClick="ToolbarClickHandler" ExcelQueryCellInfoEvent="ExcelQueryCellInfoHandler"></GridEvents>
+                        <GridPageSettings PageSize="20" PageSizes="@(new int[] {20, 30, 50, 100, 200, 400,500})"></GridPageSettings>
+
+                        @*<GridGroupSettings Columns="@Initial"></GridGroupSettings>*@
+                        <GridTemplates>
+                            <EmptyRecordTemplate>
+                                <span>No Records Found</span>
+                            </EmptyRecordTemplate>
+                        </GridTemplates>
+
+                        <GridAggregates>
+                            <GridAggregate>
+                                <GridAggregateColumns>
+                                    <GridAggregateColumn Field="TotBalQty" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate Context="vMyContext">
+                                            @{
+                                                var aggregate = (vMyContext as AggregateTemplateContext);
+                                                <div>
+                                                    <p>Bal.Qty: @aggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+                                    <GridAggregateColumn Field="TotBalAmt" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate Context="vMyContext">
+                                            @{
+                                                var aggregate = (vMyContext as AggregateTemplateContext);
+                                                <div>
+                                                    <p>Bal.Amt: @aggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+                                </GridAggregateColumns>
+                            </GridAggregate>
+                        </GridAggregates>
+
+
+                        <GridColumns>
+                            <GridColumn Field="@nameof(Stock.StkId)"
+                                        HeaderText="ID"
+                                        IsIdentity="true"
+                                        IsPrimaryKey="true"
+                                        Visible=false>
+                            </GridColumn>
+                            <GridColumn Field="@nameof(Stock.ItemListNo)" 
+                                        HeaderText="List No." 
+                                        AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(Stock.ItemLotNo)" 
+                                        HeaderText="Lot No."
+                                        AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(Stock.ItemExpiryDate)"  Format="dd/MM/yyyy"
+                                        HeaderText="Exp. Date"
+                                        AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(Stock.ItemBatchId)" 
+                                        TextAlign="TextAlign.Center"
+                                        HeaderText="Batch" 
+                                        AllowEditing="false"
+                                        Width="35">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(Stock.ItemExpStat)" 
+                                        HeaderText="Expired"
+                                        AllowEditing="false"
+                                        Width="35">
+                            </GridColumn>
+                            <GridForeignColumn Field="@nameof(Stock.ItemStkIdDesc)"
+                                               HeaderText="Item Desc"
+                                               ForeignKeyField="ItemId" ForeignKeyValue="ItemDesc" ForeignDataSource="@ItemMasterList"
+                                               Width="70">
+                                <Template Context="data">
+                                    @{
+                                        var stock = data as Stock;
+                                        var item = ItemMasterList.FirstOrDefault(x => x.ItemId == stock?.ItemStkIdDesc);
+                                    }
+                                    <a href="#" @onclick="@((MouseEventArgs e) => ShowItemPopup(stock.StkId))" @onclick:preventDefault="true">
+                                        @item?.ItemDesc
+                                    </a>
+
+                                </Template>
+                            </GridForeignColumn>
+
+
+                            <GridForeignColumn Field="@nameof(Stock.ItemStkIdGrp)"
+                                               HeaderText="Grp Desc"
+                                               ForeignKeyField="GrpNo" ForeignKeyValue="GrpDesc" ForeignDataSource="@GroupMasterList"
+                                               Width="40">
+                            </GridForeignColumn>
+                            <GridForeignColumn Field="@nameof(Stock.ItemStkIdCat)"
+                                               HeaderText="Categ Desc"
+                                               ForeignKeyField="CatNo" ForeignKeyValue="CatDesc" ForeignDataSource="@ItemCatList"
+                                               Width="30"
+                                               AllowEditing="false">
+                            </GridForeignColumn>
+                            <GridForeignColumn Field="@nameof(Stock.ItemStkIdUnit)"
+                                               HeaderText="Unit"
+                                               ForeignKeyField="ItemUnitDesc" ForeignKeyValue="ItemUnitDesc" ForeignDataSource="@ItemUnitList"
+                                               Width="20"
+                                               AllowFiltering="false">
+                            </GridForeignColumn>
+
+                            <GridForeignColumn Field=@nameof(Stock.ItemClientCode)
+                                               HeaderText="Client Name" ForeignKeyField="ClientCode"
+                                               ForeignKeyValue="ClientName"
+                                               ForeignDataSource="@ClientMasterList" Width="40">
+                            </GridForeignColumn>
+
+                            <GridForeignColumn Field=@nameof(Stock.ItemSuppCode)
+                                               HeaderText="Supplier Name" ForeignKeyField="SuppCode"
+                                               ForeignKeyValue="SuppName"
+                                               ForeignDataSource="@SupplierMasterList" Width="40">
+                            </GridForeignColumn>
+
+                            <GridColumn Field="@nameof(Stock.ItemSp)" Format="N2" Visible="@IsVisRole"
+                                        HeaderText="Sell. Price" AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(Stock.ItemUp)" Format="N2" Visible="@IsVisRole"
+                                        HeaderText="Purch. Price" AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(Stock.ItemOpQty)"
+                                        HeaderText="Op. Qty"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn HeaderText="Op. Amt." Visible="@IsVisRole" Format="N2"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+                                       <Template>
+                                       @{
+                                            var data = (context as Stock);
+                                        }
+                                    @(String.Format("{0:N2}", ((data.ItemUp ?? 0) * (data.ItemOpQty ?? 0))))
+                            </Template>
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(Stock.ItemPurQty)" Format="n2"
+                                        HeaderText="Purch. Qty"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+
+                            </GridColumn>
+                            <GridColumn Field="@nameof(Stock.ItemPurAmt)" Format="n2" Visible="@IsVisRole"
+                                        HeaderText="Purch. Amt"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="35">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(Stock.ItemTrInQty)" Format="n2"
+                                        HeaderText="Journal InQty"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="35">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(Stock.ItemTrInAmt)" Format="n2" Visible="@IsVisRole"
+                                        HeaderText="Journal InAmt"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="35">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(Stock.ItemDelQty)" Format="n2"
+                                        HeaderText="Deliv. Qty"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="35">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(Stock.ItemDelAmt)" Format="n2" Visible="@IsVisRole"
+                                        HeaderText="Deliv. Amt"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="35">
+                            </GridColumn>
+
+
+                            <GridColumn Field="@nameof(Stock.ItemTrOutQty)" Format="n2"
+                                        HeaderText="Jour OutQty"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="35">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(Stock.ItemTrOutAmt)" Format="n2" Visible="@IsVisRole"
+                                        HeaderText="Jour OutAmt"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="35">
+                            </GridColumn>
+                            <GridColumn Field="vBalQty" HeaderText="Balance Qty" Format="C2" TextAlign="TextAlign.Center" Width="30" Visible="false">
+                                <Template>
+                                    @{
+                                        var order = context as Stock;
+                                        var ItemOpQty = order?.ItemOpQty ?? 0;
+                                        var ItemPurQty = order?.ItemPurQty ?? 0;
+                                        var ItemTrInQty = order?.ItemTrInQty ?? 0;
+                                        var ItemDelQty = order?.ItemDelQty ?? 0;
+                                        var ItemTrOutQty = order?.ItemTrOutQty ?? 0;
+                                        var BalQty = (ItemOpQty + ItemPurQty + ItemTrInQty - (ItemDelQty + ItemTrOutQty));
+                                        <div>@BalQty</div>
+                                    }
+                                </Template>
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(Stock.TotBalQty)" HeaderText="Balance Qty" Format="n2" TextAlign="TextAlign.Right" Width="60px" ></GridColumn>
+                            <GridColumn Field="@nameof(Stock.TotBalAmt)" HeaderText="Balance amt" Format="n2" TextAlign="TextAlign.Right" Width="60px"></GridColumn>
+                            <GridColumn Visible="false">
+                                <Template>
+                                    @{
+                                        var adet = (context as Stock);
+                                        <div>
+                                            <SfButton @onclick="@((args) => ShowItemPopup(adet.StkId))" IsPrimary="true" IconPosition=@IconPosition.Left>Detail</SfButton>
+                                        </div>
+                                    }
+                                </Template>
+                            </GridColumn>
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+                <br />
+            </div>
+            @if (tblSource != null)
+            {
+                <SfDialog @ref="DialogVendorDates" IsModal="true" Width="500px" Height="550px" ShowCloseIcon="true" Visible="false">
+                    <DialogTemplates>
+                        <Header>Purchase Dates</Header>
+                    </DialogTemplates>
+                    <div class="table-responsive">
+                        <table class="e-table e-grid table table-bordered">
+                            <tr>
+                                <td>Expiry Date: </td>
+                                <td><label>@tblSource.FirstOrDefault().ExpiryDate?.ToString("dd/MM/yyyy")</label></td>
+                                <td>Stock on Hand: </td>
+                                <td><label>@tblSource.FirstOrDefault().StockBalQty</label></td>
+
+                            </tr>
+                        </table>
+
+                        <table class="e-table e-grid table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Invoice No</th>
+                                    <th>Invoice Date</th>
+                                    <th>Purchase Qty</th>
+                                    <!-- Add more headers as needed -->
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in tblSource)
+                                {
+                                    <tr>
+                                        <td style="text-align:center">@item.VendorInvNo</td>
+                                        <td style="text-align:center">@item.VendorInvDate?.ToString("dd/MM/yyyy")</td>
+                                        <td style="text-align:right">@item.VendorPurchQty</td>
+                                        <!-- Add more fields as needed -->
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                </SfDialog>
+            }
+            else
+            {
+                <p>No Purchase data available</p>
+            }
+            <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+             <div class="e-footer-content" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                <div class="button-container">
+
+            <a href="#" @onclick="NavigateToPrevious" CssClass="e-link">
+                <SfButton CssClass="e-small e-success">BACK</SfButton>
+            </a>
+            <span style="font-weight:600;text-align:left;">Total Available Qty: @TotalQty.ToString("N2") </span>
+            <span style="font-weight:600;text-align:left;">Total Stock Value: @TotalAmt.ToString("N2") </span>
+
+            </div>
+            </div>
+        </div>
+    </div>
+}

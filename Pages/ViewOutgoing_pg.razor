@@ -1,0 +1,289 @@
+﻿@page "/viewoutgoing_pg"
+@inject HttpClient Http
+@using DigiEquipSys.Services
+@using DigiEquipSys.Models
+@using DigiEquipSys.Interfaces
+@inject IvwSaleService myvwSaleService
+@inject NavigationManager UriHelper
+@using System.Dynamic
+@inject ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime
+
+<h3 class="page-title">Outgoing Summary</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+
+    .e-grid .e-groupheadercell {
+        height: 30px;
+        background: linear-gradient();
+        color: #fff;
+    }
+
+        .e-grid .e-groupheadercell:hover {
+            height: 30px;
+            background: #ffbb60;
+            color: #fff;
+        }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap5 {
+        stroke: red;
+    }
+
+    .Control-wrapper {
+        width: 250px;
+    }
+
+    .myButton {
+        background-color: #0a0a23;
+        color: #fff;
+        border: 2px solid #E9E9E9;
+        border-width: 2px 2px 2px 2px;
+        border-radius: 10px;
+        padding: 15px;
+        min-height: 30px;
+        min-width: 120px;
+    }
+
+        .myButton:hover {
+            background-color: #002ead;
+            transition: 0.7s;
+        }
+
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap5" Size="50">
+</SfSpinner>
+
+@if (@OutgoingList != null)
+{
+    <div class="col-lg-12 Control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                <div class="Control-wrapper">
+                    <SfDateRangePicker TValue="DateTime?" Placeholder="Choose a Date Range" FullScreen="true" ShowClearButton="true">
+                        <DateRangePickerEvents TValue="DateTime?" ValueChange="ValueChangeHandler"></DateRangePickerEvents>
+                    </SfDateRangePicker>
+                </div>
+                <br />
+                <div id="container">
+                    <SfGrid @ref="OutgoingGrid" Height="550px" Width="100%"
+                            DataSource="@OutgoingList" AllowTextWrap="true"
+                            AllowGrouping="true" AllowSorting="true" AllowFiltering="true" AllowPaging="false" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                            ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                            Toolbar="@(new List<string>() { "Print", "ExcelExport" })">
+                        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                        <GridEditSettings AllowAdding="false" AllowEditing="false" AllowDeleting="false" Mode="EditMode.Normal"></GridEditSettings>
+                        <GridEvents TValue="VwSale" OnToolbarClick="ToolbarClickHandler" OnActionComplete="OnGridActionComplete"></GridEvents>
+                        @* <GridPageSettings PageSize="20" PageSizes="@(new int[] {20, 30, 50, 100, 200, 400,500})"></GridPageSettings> *@
+                        <GridTemplates>
+                            <EmptyRecordTemplate>
+                                <span>No Records Found</span>
+                            </EmptyRecordTemplate>
+                        </GridTemplates>
+
+                        <GridAggregates>
+                            <GridAggregate>
+                                <GridAggregateColumns>
+                                    <GridAggregateColumn Field="DelQty" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate Context="vMyContext">
+                                            @{
+                                                var vMyaggregate = (vMyContext as AggregateTemplateContext);
+
+                                                <div>
+                                                    <p>Qty: @vMyaggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+                                    <GridAggregateColumn Field="DelTotal" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate Context="vMyContext">
+                                            @{
+                                                var vMyaggregate = (vMyContext as AggregateTemplateContext);
+                                                <div>
+                                                    <p>S: @vMyaggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+                                    <GridAggregateColumn Field="PurchTotal" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate Context="vMyContext">
+                                            @{
+                                                var vMyaggregate = (vMyContext as AggregateTemplateContext);
+                                                <div>
+                                                    <p>P: @vMyaggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+                                    <GridAggregateColumn Field="Gross" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate Context="vMyContext">
+                                            @{
+                                                var vMyaggregate = (vMyContext as AggregateTemplateContext);
+                                                <div>
+                                                    <p>G: @vMyaggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+                                   @*  <GridAggregateColumn Field="Margin" Type="AggregateType.Custom" Format="n2">
+                                        <FooterTemplate Context="vMyContext">
+                                            @{
+                                                var allData = ((Syncfusion.Blazor.Grids.SfGrid<VwSale>)OutgoingGrid).DataSource as IEnumerable<VwSale>;
+                                                decimal delTotal1 = allData?.Sum(item => item.DelTotal) ?? 0.00M;
+                                                decimal gross1 = allData?.Sum(item => item.Gross) ?? 0.00M;
+                                                decimal ratio = delTotal1 != 0 ? (gross1*100) / delTotal1 : 0.00M;
+                                                <div>
+                                                    <p>R: @ratio.ToString("n2")</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn> *@
+
+                                    <GridAggregateColumn Field="Margin" Type="AggregateType.Custom" Format="n2">
+                                        <FooterTemplate>
+                                            <div>
+                                                <p>R: @FilteredMarginRatio.ToString("n2")</p>
+                                            </div>
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+                                </GridAggregateColumns>
+                            </GridAggregate>
+                        </GridAggregates>
+
+
+                        <GridColumns>
+                            <GridColumn Field="@nameof(VwSale.DelDispNo)"
+                                        HeaderText="Delivery No."
+                                        AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwSale.DelDate)" Format="dd/MM/yyyy"
+                                        HeaderText="Delivery Date"
+                                        AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwSale.DelApproved)"
+                                        HeaderText="Approved"
+                                        AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwSale.DelListNo)"
+                                        HeaderText="List No."
+                                        AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(VwSale.DelLotNo)"
+                                        HeaderText="Lot No."
+                                        AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(VwSale.DelExpiryDate)" Format="dd/MM/yyyy"
+                                        HeaderText="Exp. Date"
+                                        AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwSale.DelBatchId)" 
+                                        HeaderText="Batch Id"
+                                        AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwSale.ItemDesc)"
+                                        HeaderText="Item Desc"
+                                        AllowEditing="false"
+                                        Width="50">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwSale.GrpDesc)"
+                                        HeaderText="Group"
+                                        AllowEditing="false"
+                                        Width="40">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(VwSale.CatDesc)"
+                                        HeaderText="Category"
+                                        Width="30"
+                                        AllowEditing="false">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(VwSale.ItemUnit)"
+                                        HeaderText="Unit"
+                                        Width="20"
+                                        AllowEditing="false">
+                            </GridColumn>
+
+                            <GridColumn Field=@nameof(VwSale.ClientName)
+                                        HeaderText="Client Name" Width="30"
+                                        AllowEditing="false">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(VwSale.DelPurchPrice)" Format="n2" Visible="@(myRole == "01")"
+                                        HeaderText="Purch Up."
+                                        AllowEditing="false"
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwSale.DelUprice)" Format="n2" Visible="@IsVisRole"
+                                        HeaderText="Sale Up."
+                                        AllowEditing="false"
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwSale.DelQty)"
+                                        HeaderText="Sale Qty"
+                                        AllowEditing="false"
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(VwSale.PurchTotal)" Format="n2" Visible="@(myRole == "01")"
+                                        HeaderText="Purch Amt"
+                                        AllowEditing="false"
+                                        TextAlign="TextAlign.Right"
+                                        Width="40">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwSale.DelTotal)" Format="n2" Visible="@IsVisRole"
+                                        HeaderText="Sale Amt"
+                                        AllowEditing="false"
+                                        TextAlign="TextAlign.Right"
+                                        Width="40">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwSale.Gross)" Format="n2" Visible="@(myRole == "01")"
+                                        HeaderText="Gross"
+                                        AllowEditing="false"
+                                        TextAlign="TextAlign.Right"
+                                        Width="40">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(VwSale.Margin)" Format="n2" Visible="@(myRole == "01")"
+                                        HeaderText="Margin %"
+                                        AllowEditing="false"
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+                            </GridColumn>
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+                <br />
+            </div>
+            <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+            <a href="#" @onclick="NavigateToPrevious" CssClass="e-link">
+                <SfButton CssClass="e-small e-success">BACK</SfButton>
+            </a>
+            <span style="font-weight:600;text-align:right;">Total Quantities: @TotalQty </span>
+            <span style="font-weight:600;text-align:right;visibility:@(IsVisRole ? "visible" : "hidden")">Total Sale: @TotalAmt.ToString("N2") </span>
+        </div>
+    </div>
+}

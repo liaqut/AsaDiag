@@ -1,0 +1,302 @@
+﻿@page "/rcptHeadEdit_pg/{RcptvouId:long}"
+@using DigiEquipSys.Interfaces
+@using DigiEquipSys.Models
+@using DigiEquipSys.Services
+@inject IItemMasterService myItemMaster
+@inject IItemUnitService myUnitService
+@inject IGenScanSpecService myScanSpecService
+@inject ISupplierService mySupplierService
+@inject IClientService myClientService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject ISessionStorageService sessionStorage
+@inject AccYear myAccYear
+@inject IGroupMasterService myGrpService
+@inject ICatMasterService myCatService
+@inject IPoHeadService myPoheadService
+<h3 class="page-title">Goods Receipt Note - Edit</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap4 {
+        stroke: red;
+    }
+</style>
+
+<style>
+    .grid-item {
+        background-color: rgba(255, 255, 255, 0.8);
+    }
+</style>
+<style>
+    .e-gridfooter .e-footercell {
+        min-width: 500px !important;
+        text-align: left;
+    }
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap4" Size="50" Label="Data loading">
+</SfSpinner>
+@if (@rcptvoudetails != null)
+{
+    <div class="col-lg-12">
+        <EditForm Model="@rcptvouaddedit">
+            <div class="grid-container">
+                <div class="grid-item">
+                    <SfTextBox Enabled="false" Placeholder="Receipt No" @bind-Value="@rcptvouaddedit.RhDispNo" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                </div>
+                <div class="grid-item">
+                    <SfDatePicker Enabled=@vEnable TValue="DateTime?" Placeholder="Receipt Date" @bind-Value="@rcptvouaddedit.RhDate" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Auto">
+                    </SfDatePicker>
+                </div>
+                <div class="grid-item">
+                    <SfTextBox Enabled=@vEnable Placeholder="Remarks" @bind-Value="@rcptvouaddedit.RhRemarks" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                </div>
+            </div>
+            <div class="col-lg-12 Control-section">
+                <div class="content-wrapper">
+                    <div class="row">
+
+                        <SfGrid @ref="RcptDetGrid" AllowTextWrap="true" DataSource="@rcptvoudetails" Height="500" Width="100%" AllowFiltering="true" AllowSorting="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                                ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                                Toolbar="@(new List<string>() {  "Print" })">
+                            <GridEditSettings ShowConfirmDialog="false" NewRowPosition="NewRowPosition.Bottom" AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
+                            <GridEvents RowUpdating="RowUpdatingHandler" TValue="RcptDetail"></GridEvents>
+                            <GridPageSettings PageSize="100" PageSizes="@(new int[] { 50, 100, 200, 400,500})"></GridPageSettings>
+                            <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+
+                            <GridAggregates>
+                                <GridAggregate>
+                                    <GridAggregateColumns>
+                                        <GridAggregateColumn Field="RdQty" Type="AggregateType.Sum" Format="n2">
+                                            <FooterTemplate Context="vMyContext">
+                                                @{
+                                                    var vMyaggregate = (vMyContext as AggregateTemplateContext);
+
+                                                    <div>
+                                                        <p>Qty: @vMyaggregate.Sum</p>
+                                                    </div>
+                                                }
+                                            </FooterTemplate>
+                                        </GridAggregateColumn>
+
+                                        <GridAggregateColumn Field="TotalPrice" Type="AggregateType.Sum" Format="n2">
+                                            <FooterTemplate Context="vMyContext">
+                                                @{
+                                                    var vMyaggregate = (vMyContext as AggregateTemplateContext);
+                                                    <div>
+                                                        <p>Amt: @vMyaggregate.Sum</p>
+                                                    </div>
+                                                }
+                                            </FooterTemplate>
+                                        </GridAggregateColumn>
+
+
+                                    </GridAggregateColumns>
+                                </GridAggregate>
+                            </GridAggregates>
+
+                            <GridColumns>
+                                <GridColumn Field="@nameof(RcptDetail.RdId)"
+                                            HeaderText="ID"
+                                            IsIdentity="true"
+                                            IsPrimaryKey="true"
+                                            Visible=false>
+                                </GridColumn>
+                                <GridColumn Field="@nameof(RcptDetail.RdScanCode)" EditorSettings="@myEditParams" AllowEditing="false"
+                                            HeaderText="Scan Code"
+                                            Width="100">
+                                </GridColumn>
+                                <GridColumn Field="@nameof(RcptDetail.RdListNo)" EditorSettings="@myEditParams" AllowEditing="false"
+                                            HeaderText="List No."
+                                            Width="30">
+                                </GridColumn>
+                                <GridColumn Field="@nameof(RcptDetail.RdLotNo)" EditorSettings="@myEditParams" AllowEditing="false"
+                                            HeaderText="Lot No."
+                                            Width="30">
+                                </GridColumn>
+                                <GridColumn Field="@nameof(RcptDetail.RdExpiryDate)" EditorSettings="@myEditParams" AllowEditing="false"
+                                            HeaderText="Exp. Date" Format="dd/MM/yyyy"
+                                            Width="30">
+                                </GridColumn>
+
+                                <GridForeignColumn Field="@nameof(RcptDetail.RdStkId)"
+                                                   HeaderText="Item Code"
+                                                   ForeignKeyField="ItemId" ForeignKeyValue="ItemListNo" ForeignDataSource="@ItemMasterList"
+                                                   Width="30" AllowEditing="false" Visible=false>
+                                </GridForeignColumn>
+
+                                <GridForeignColumn Field="@nameof(RcptDetail.RdStkIdDesc)"
+                                                   HeaderText="Item Desc"
+                                                   ForeignKeyField="ItemId" ForeignKeyValue="ItemDesc" ForeignDataSource="@ItemMasterList"
+                                                   Width="50" AllowEditing="false">
+                                </GridForeignColumn>
+
+                                <GridForeignColumn Field="@nameof(RcptDetail.RdStkIdGrp)"
+                                                   HeaderText="Group Desc"
+                                                   ForeignKeyField="GrpNo" ForeignKeyValue="GrpDesc" ForeignDataSource="@ItemGroupList"
+                                                   Width="30" AllowEditing="false">
+                                </GridForeignColumn>
+                                <GridForeignColumn Field="@nameof(RcptDetail.RdStkIdCat)"
+                                                   HeaderText="Categ Desc"
+                                                   ForeignKeyField="CatNo" ForeignKeyValue="CatDesc" ForeignDataSource="@ItemCatList"
+                                                   Width="30" AllowEditing="false">
+                                </GridForeignColumn>
+
+                                <GridForeignColumn Field="@nameof(RcptDetail.RdStkIdUnit)"
+                                                   HeaderText="Unit"
+                                                   ForeignKeyField="ItemUnitDesc" ForeignKeyValue="ItemUnitDesc" ForeignDataSource="@ItemUnitList" AllowFiltering="false"
+                                                   Width="25" AllowEditing="false">
+                                </GridForeignColumn>
+
+                                <GridForeignColumn Field="@nameof(RcptDetail.RdSuppCode)"
+                                                   HeaderText="Supp. Name"
+                                                   ForeignKeyField="SuppCode"
+                                                   ForeignKeyValue="SuppName"
+                                                   ForeignDataSource="@SupplierMasterList"
+                                                   AllowEditing="@showEditButton"
+                                                   Width="40">
+                                    @* <EditTemplate Context="rcpt">
+                                        <SfComboBox TValue="string"
+                                                    TItem="SupplierMaster"
+                                                    DataSource="@SupplierMasterList"
+                                                    @bind-Value="((RcptDetail)rcpt).RdSuppCode"
+                                                    Placeholder="Select Supplier"
+                                                    AllowFiltering="true"
+                                                    AllowCustom="true"
+                                                    OnBlur="@(() => UpdatePurchaseOrderDropdown((RcptDetail)rcpt))">
+                                            <ComboBoxFieldSettings Value="SuppCode" Text="SuppName" />
+                                        </SfComboBox>
+                                    </EditTemplate> *@
+                                </GridForeignColumn>
+
+                                @* <GridColumn Field="@nameof(RcptDetail.RdPohDispNo)"
+                                            HeaderText="PO Number"
+                                            AllowEditing="@showEditButton"
+                                            Width="80"> *@
+                                    @* <EditTemplate Context="rcpt">
+                                        @{
+                                            var currentRow = (RcptDetail)rcpt;
+                                        }
+
+                                        <SfDropDownList TValue="string"
+                                                        TItem="PoHead"
+                                                        DataSource="@currentRow.PohList"
+                                                        @bind-Value="currentRow.RdPohDispNo"
+                                                        Placeholder="Select PO"
+                                                        AllowFiltering="true">
+                                            <DropDownListFieldSettings Value="PohDispNo" Text="PohDispNo" />
+                                        </SfDropDownList>
+                                    </EditTemplate> *@
+                                @* </GridColumn> *@
+
+
+                                <GridForeignColumn Field=@nameof(RcptDetail.RdClientCode) AllowEditing="@showEditButton"
+                                                   HeaderText="Client Name" ForeignKeyField="ClientCode"
+                                                   ForeignKeyValue="ClientName"
+                                                   ForeignDataSource="@ClientMasterList" Width="40">
+                                    @* <EditTemplate Context="myContext">
+                                <SfComboBox @ref="@ComboObj" TValue="string" TItem="ClientMaster" @bind-Value="@((myContext as RcptDetail).RdClientCode)" DataSource="@ClientMasterList" Placeholder="Select a Customer" Width="40" PopupWidth="250" AllowFiltering="true" AllowCustom="true">
+                                <ComboBoxFieldSettings Value="ClientCode" Text="ClientName" ></ComboBoxFieldSettings>
+                                <ComboBoxEvents TItem="ClientMaster" TValue="string" Filtering="OnFiltering"></ComboBoxEvents>
+                                </SfComboBox>
+                                </EditTemplate>*@
+                                </GridForeignColumn>
+                                <GridColumn Field="@nameof(RcptDetail.RdVendInvNo)" AllowEditing="@showEditButton"
+                                            HeaderText="Vend. Inv.No."
+                                            TextAlign="@TextAlign.Left"
+                                            Width="32">
+                                </GridColumn>
+                                <GridColumn Field="@nameof(RcptDetail.RdVendInvDate)" Format="dd/MM/yyyy" AllowEditing="@showEditButton"
+                                            HeaderText="Vend. Inv.Date"
+                                            TextAlign="@TextAlign.Left"
+                                            Width="34">
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(RcptDetail.RdUp)" EditorSettings="@myEditParams" AllowFiltering="false" Format="n2" Visible="@IsVisRole"
+                                            HeaderText="Purch. Price" TextAlign="TextAlign.Right"
+                                            Width="30" AllowEditing=false>
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(RcptDetail.RdQty)" EditorSettings="@myEditParams" AllowFiltering="false" Format="n2"
+                                            HeaderText="Rcv. Qty" TextAlign="TextAlign.Right"
+                                            Width="30px" AllowEditing=false>
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(RcptDetail.TotalPrice)" HeaderText="Total Price" Format="n2" TextAlign="TextAlign.Right" Width="60px" Visible="@IsVisRole"></GridColumn>
+
+                                <GridColumn HeaderText="Action" Width="20" Visible="@showEditButton">
+                                    @if (showEditButton == true)
+                                    {
+                                        <GridCommandColumns>
+                                            <GridCommandColumn Type="CommandButtonType.Edit"
+                                                               ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-edit",
+                                      CssClass="e-flat"
+                                    })">
+                                            </GridCommandColumn>
+                                            <GridCommandColumn Type="CommandButtonType.Save"
+                                                               ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-update",
+                                      CssClass="e-flat"
+                                    })">
+                                            </GridCommandColumn>
+                                            <GridCommandColumn Type="CommandButtonType.Cancel"
+                                                               ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-cancel-icon",
+                                      CssClass="e-flat"
+                                    })">
+                                            </GridCommandColumn>
+                                        </GridCommandColumns>
+                                    }
+                                </GridColumn>
+                            </GridColumns>
+                        </SfGrid>
+                    </div>
+                </div>
+            </div>
+            <br /><br />
+        </EditForm>
+        <br />
+        <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+        <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
+            <button type="button" disabled=@isButtonDisabled class="e-btn e-normal e-primary" @onclick="RcptVouSave">Save</button>
+            <button type="button" class="e-btn e-normal" @onclick="Cancel">Back</button>
+            <button type="button" disabled=@isChkList class="e-btn e-normal" @onclick="CheckList">Check List</button>
+            @* <button type="button" disabled=@isNewRcpt class="e-btn e-normal btn-success" @onclick="@NewReceipt">New Receipt</button> *@
+            <span style="font-weight:600;">Overall Total Items: @TotalItems </span>
+            <span style="font-weight:600; visibility:@(IsVisRole ? "visible" : "hidden")">Total Amount: @TotalAmount.ToString("N2")</span>
+
+        </div>
+    </div>
+    <div id="report-viewer" style="height: 100vh;z-index: 1; position: absolute; top: 0; left: 0;"></div>
+}
+<style>
+    .grid-container {
+        display: grid;
+        padding: 20px;
+        max-width: 1200px; /* Maximum width of the whole container - in this case both columns */
+        grid-template-columns: 1fr 1fr 1fr; /* Relative width of each column (1fr 1fr is equivalent to, say, 33fr 33fr */
+        grid-gap: 5px; /* size of the gap between columns */
+        background-color: #ffefd5;
+    }
+
+    .flex-container {
+        display: flex;
+        flex-direction: row; /* Causes tab to move along row and then onto following row */
+        justify-content: space-evenly; /* Equal space left and right margin and between elements */
+        margin: 10px; /* This appears to be vertical margin between rows */
+        column-gap: 10px;
+        /* Tgap betwen columns */
+    }
+
+    .e-numeric.e-style .e-Control.e-numerictextbox {
+        text-align: right;
+        padding: 0px 5px 0px 0px;
+    }
+</style>
+

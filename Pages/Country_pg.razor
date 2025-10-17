@@ -1,0 +1,73 @@
+﻿@page "/country_pg"
+@inject HttpClient Http
+@using DigiEquipSys.Services
+@using DigiEquipSys.Models
+@using DigiEquipSys.Interfaces
+@inject IGenCountryService myGenCountry
+@inject NavigationManager UriHelper
+@inject IJSRuntime JSRuntime
+
+<h3 class="page-title">Country List</h3>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap5 {
+        stroke: red;
+    }
+</style>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap5" Size="50">
+</SfSpinner>
+@if (CountryList != null)
+{
+    <div class="col-lg-12 Control-section">
+        <div class="content-wrapper">
+            <div class="Control-wrapper">
+                <SfGrid @ref="CountryGrid"
+                    DataSource="@CountryList"
+                    AllowSorting="true" AllowFiltering="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                    ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                    Toolbar="@(new List<string>() { "Add", "Delete", "Edit", "Cancel", "Update", "Print" })">
+                    <GridEvents OnActionBegin="ActionBeginHandler" TValue="GenCountry"></GridEvents>
+                    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                    <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode=EditMode.Normal Dialog="DialogParams"></GridEditSettings>
+                    <GridTemplates>
+                        <EmptyRecordTemplate>
+                            <span>No Records Found</span>
+                        </EmptyRecordTemplate>
+                    </GridTemplates>
+                    <GridColumns>
+                        <GridColumn Field="@nameof(GenCountry.CountryId)"
+                                HeaderText="Id"
+                                IsIdentity="true"
+                                IsPrimaryKey="true"
+                                Visible=false>
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(GenCountry.CountryCode)"
+                                HeaderText="Code"
+                                Width="30"
+                                AllowEditing="@IsEdit">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(GenCountry.CountryName)"
+                                HeaderText="Country Name"
+                                Width="100">
+                        </GridColumn>
+
+                    </GridColumns>
+                </SfGrid>
+                <br />
+                <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+                <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
+                <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
+                    <SfButton @onclick="@((args) => UriHelper.NavigateTo("others_pg"))" IsPrimary="true" IconPosition=@IconPosition.Left>Back</SfButton>
+                </div>
+            </div>
+        </div>
+    </div>
+}

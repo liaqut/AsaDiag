@@ -1,0 +1,41 @@
+﻿@page "/findUser_pg"
+@using DigiEquipSys.Services
+@using DigiEquipSys.Models
+@using DigiEquipSys.Interfaces
+@inject IAdminService myAdminService
+@inject ISessionStorageService sessionStorage
+@inject NavigationManager navManager
+
+
+@code
+{
+    WarningPage? Warning;
+    string WarningHeaderMessage = "Warning!";
+    string WarningContentMessage = "UnAuthorized User Credentials....";
+    private string? vUser;
+    protected List<AdminInfo> AdminInfoList = new();
+    protected AdminInfo admininfo = new();
+    public string? myRole { get; set; }
+    public string? myLoc { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var adminSession = await sessionStorage.GetItemAsync<string>("adminKey");
+        if (adminSession != null)
+        {
+            vUser = await sessionStorage.GetItemAsync<string>("adminEmail");
+        }
+        else
+        {
+            Warning.OpenDialog();
+            navManager.NavigateTo($"gentrad");
+        }
+        admininfo = await myAdminService.GetAdminDetail(vUser);
+        if (admininfo != null)
+        {
+            myRole = admininfo.RoleId;
+            myLoc = admininfo.LocId;
+        }
+
+    }
+}

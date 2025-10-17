@@ -1,0 +1,330 @@
+﻿@page "/delHead_pg/{DelnoteId:long}/{vCompType}"
+@page "/delHead_pg/{DelnoteId:long}"
+@using DigiEquipSys.Interfaces
+@using DigiEquipSys.Models
+@using DigiEquipSys.Services
+@inject IItemMasterService myItemMaster
+@inject IGroupMasterService myGrpMaster
+@inject ICatMasterService myCatMaster
+@inject IItemUnitService myUnitMaster
+@inject NavigationManager NavigationManager
+@inject ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime
+@inject IClientService myClientMaster
+@inject IGenScanSpecService myScanSpecService
+@inject IGenCityService myCityService
+@inject IClientCityService myClientCityService
+@inject AccYear myAccYear
+@inject IStockService myStockService
+
+<h3 class="page-title">Delivery Note</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #d4d1ce;
+        color: white
+    }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap4 {
+        stroke: red;
+    }
+</style>
+<style>
+    .grid-item {
+        background-color: rgba(255, 255, 255, 0.8);
+    }
+
+    .custom-header-style .e-headercontent {
+        background-color: lightblue; /* Set your desired color */
+        color: white; /* Optional: Text color */
+        font-weight: bold; /* Optional: Make the text bold */
+        text-align: center; /* Optional: Center-align text */
+    }
+
+</style>
+
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap4" Size="50" Label="Data loading">
+</SfSpinner>
+@if (@Deldetls != null)
+{
+    <div class="col-lg-12">
+        <EditForm Model="@Delnoteaddedit" FormName="myDelHead">
+            <div class="grid-container">
+                <div class="grid-item">
+                    <SfTextBox Enabled="false" Placeholder="Del No" @bind-Value="@Delnoteaddedit.DelDispNo" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                    <SfDatePicker Enabled=@vEnable TValue="DateTime?" Placeholder="Sale Date" @bind-Value="@Delnoteaddedit.DelDate" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Auto">
+                        <DatePickerEvents TValue="DateTime?" ValueChange="NoToFutureDate"></DatePickerEvents>
+                    </SfDatePicker>
+                </div>
+
+                <div class="grid-item">
+                    <SfComboBox @ref="@ComboObj" TValue="int?" TItem="ClientMaster" @bind-Value="@Delnoteaddedit.DelClientId" DataSource="@clientlist" Placeholder="Select a Client" AllowFiltering="true" AllowCustom="true" Enabled=@vEnable>
+                        <ComboBoxFieldSettings Value="ClientId" Text="ClientName"></ComboBoxFieldSettings>
+                        <ComboBoxEvents TItem="ClientMaster" TValue="int?" ValueChange="myclientcity" Filtering="OnFiltering"></ComboBoxEvents>
+                    </SfComboBox>
+
+                    <SfDropDownList DataSource="@myClientCityList" AllowFiltering="true"
+                                    TItem="tblClientCity"
+                                    TValue="int?"
+                                    Text="CityId"
+                                    @bind-Value="@Delnoteaddedit.DelCityId"
+                                    Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Auto"
+                                    Placeholder="Select City/Place"
+                                    Enabled=@vEnable>
+                        <DropDownListFieldSettings Text="CityName" Value="CityId"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                 </div>
+                <div class="grid-item">
+                    <SfTextBox Enabled="@vEnable" Placeholder="Our Ref" @bind-Value="@Delnoteaddedit.PoNumber" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                </div>
+            </div>
+        </EditForm>
+        <br />
+            <div class="col-lg-12 Control-section">
+                <div class="content-wrapper">
+                    <div class="row">
+                    <SfGrid @ref="DelDetGrid" DataSource="@Deldetls" Height="500" Width="100%" AllowTextWrap="true" AllowSorting="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true" AllowFiltering="true"
+                            ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                            Toolbar="@(new List<string>() { "Add", "Delete", "Cancel", "Update", "Print","Manual" })">
+                            <GridEditSettings ShowConfirmDialog="false" NewRowPosition="NewRowPosition.Bottom" AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode=EditMode.Batch></GridEditSettings>
+                            <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                        <GridPageSettings PageSize="100" PageSizes="@(new int[] { 50, 100, 200, 400,500})"></GridPageSettings>
+                        <GridEvents TValue="DelDetl" RowSelected="RowSelectHandler" OnToolbarClick="ToolbarClickHandler" CellSaved="CellSavedHandler" OnBatchSave="BatchSaveHandler" OnActionComplete="ActionCompleteHandler"></GridEvents>
+
+                        <GridAggregates>
+                            <GridAggregate>
+                                <GridAggregateColumns>
+                                    <GridAggregateColumn Field="DelQty" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate Context="vMyContext">
+                                            @{
+                                                var vMyaggregate = (vMyContext as AggregateTemplateContext);
+
+                                                <div>
+                                                    <p>Qty: @vMyaggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+                                    <GridAggregateColumn Field="TotalPrice" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate Context="vMyContext">
+                                            @{
+                                                var vMyaggregate = (vMyContext as AggregateTemplateContext);
+                                                <div>
+                                                    <p>Amt: @vMyaggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+
+                                </GridAggregateColumns>
+                            </GridAggregate>
+                        </GridAggregates>
+
+                        <GridColumns>
+
+                            <GridColumn Field="@nameof(DelDetl.DelScanCode)" HeaderText="Scan Code" Width="100" AllowEditing="false"></GridColumn>
+                            <GridColumn Field="@nameof(DelDetl.DelListNo)" HeaderText="List Number" Width="30" AllowEditing="false"></GridColumn>
+                            <GridColumn Field="@nameof(DelDetl.DelLotNo)" HeaderText="Lot Number" Width="40" AllowEditing="false"></GridColumn>
+                            <GridColumn Field="@nameof(DelDetl.DelExpiryDate)" Format="dd/MM/yyyy" HeaderText="Expiry Date" Width="30" AllowEditing="false"></GridColumn>
+                            <GridColumn Field="@nameof(DelDetl.DelBatchId)" HeaderText="Batch Id" Width="40" AllowEditing="false"></GridColumn>
+
+                            <GridForeignColumn Field="@nameof(DelDetl.DelStkId)" ForeignKeyField="ItemId" ForeignKeyValue="ItemListNo" ForeignDataSource="@ItemMasterList" HeaderText="Item Code" Width="30" Visible="false"></GridForeignColumn>
+                            <GridForeignColumn Field="@nameof(DelDetl.DelStkIdDesc)"
+                                               HeaderText="Item Desc" AllowEditing="false"
+                                               ForeignKeyField="ItemId" ForeignKeyValue="ItemDesc" ForeignDataSource="@ItemMasterList"
+                                               Width="100">
+                            </GridForeignColumn>
+
+                            <GridForeignColumn Field="@nameof(DelDetl.DelStkIdGrp)"
+                                               HeaderText="Group Desc"
+                                               ForeignKeyField="GrpNo" ForeignKeyValue="GrpDesc" ForeignDataSource="@ItemGroupList"
+                                               Width="50" AllowEditing="false">
+                            </GridForeignColumn>
+                            <GridForeignColumn Field="@nameof(DelDetl.DelStkIdCat)"
+                                               HeaderText="Categ Desc"
+                                               ForeignKeyField="CatNo" ForeignKeyValue="CatDesc" ForeignDataSource="@ItemCatList"
+                                               Width="50" AllowEditing="false">
+                            </GridForeignColumn>
+
+                            <GridForeignColumn Field="@nameof(DelDetl.DelStkIdUnit)" AllowEditing="false"
+                                               HeaderText="Unit" TextAlign="@TextAlign.Center"
+                                               ForeignKeyField="ItemUnitDesc" ForeignKeyValue="ItemUnitDesc" ForeignDataSource="@ItemUnitList"
+                                               Width="30">
+                            </GridForeignColumn>
+
+                            <GridColumn Field=@nameof(DelDetl.DelQty) AllowEditing=false EditorSettings="@myEditParams" HeaderText="Qty" Width="30" TextAlign="@TextAlign.Right" Format="n2"></GridColumn>
+                            <GridColumn Field=@nameof(DelDetl.DelUprice) Visible="@IsVisRole" AllowEditing=@vEnable EditorSettings="@myEditParams" HeaderText="Selling Price" Width="30" TextAlign="@TextAlign.Right" Format="n2"></GridColumn>
+                            @* <GridColumn HeaderText="Amount" Format="C2" TextAlign="TextAlign.Center" Width="30" Visible="@IsVisRole">
+                                <Template>
+                                    @{
+                                        var order = context as DelDetl;
+                                        var Amt = (@order.DelQty * @order.DelUprice);
+                                        <div>@((Amt ?? 0).ToString("n2"))</div>
+                                    }
+                                </Template>
+                            </GridColumn> *@
+
+                            <GridColumn Field="@nameof(DelDetl.TotalPrice)" HeaderText="Total Price" Format="n2" TextAlign="TextAlign.Right" Width="50px" Visible="@IsVisRole"></GridColumn>
+
+                            <GridColumn Field="@nameof(DelDetl.DelPurchPrice)" HeaderText="Purch Price" Format="n2" TextAlign="TextAlign.Right" Width="50px" Visible="@(myRole == "01")"></GridColumn>
+
+                            <GridColumn HeaderText="Diff Value" Format="n2" TextAlign="TextAlign.Center" Width="30" Visible="@(myRole == "01")">
+                                <Template>
+                                    @{
+                                        var order = context as DelDetl;
+                                        var Amt = (@order.DelQty * (@order.DelUprice - @order.DelPurchPrice));
+                                        <div>@((Amt ?? 0).ToString("n2"))</div>
+                                    }
+                                </Template>
+                            </GridColumn>
+
+                            <GridColumn HeaderText="Margin" Format="n2" TextAlign="TextAlign.Center" Width="30" Visible="@(myRole == "01")">
+                                <Template>
+                                    @{
+                                        var order = context as DelDetl;
+                                        var Amt = @order.DelUprice==0 ? 0 : ((@order.DelUprice - @order.DelPurchPrice) / @order.DelUprice * 100);
+                                        <div>@((Amt ?? 0).ToString("n2"))</div>
+                                    }
+                                </Template>
+                            </GridColumn>
+
+                            <GridColumn Field=@nameof(DelDetl.DelDetId) HeaderText="Id" IsIdentity="true" IsPrimaryKey="true" Visible="false" Width="0"></GridColumn>
+                          </GridColumns>
+                        </SfGrid>
+                    </div>
+                </div>
+            </div>
+        <SfDialog @ref="DialogAddManual" IsModal="true" Width="750px" ShowCloseIcon="true" Visible="false" Header="Manual Delivery Entry">
+            <EditForm Model="@delv" OnValidSubmit="@DelManualSave">
+
+                <SfMultiColumnComboBox class="custom-header-style" EnableAltRow="true" GridLines="Syncfusion.Blazor.Grids.GridLine.Both" TValue="string" TItem="StockForJournal" @bind-Value="@mValue" ValueChange="OnValueChange" AllowFiltering="true" ShowClearButton=true DataSource="@StockForJournalList" PopupWidth="720px" ValueField="StkId" TextField="ItemDesc" Placeholder="Select any product">
+                    <MultiColumnComboboxColumns>
+                        <MultiColumnComboboxColumn Field="ItemDesc" Header="Description" Width="150px" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Left"></MultiColumnComboboxColumn>
+                        <MultiColumnComboboxColumn Field="ClientName" Header="Client Name" Width="75px" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Left"></MultiColumnComboboxColumn>
+                        <MultiColumnComboboxColumn Field="ItemListNo" Header="List No." Width="40px" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center"></MultiColumnComboboxColumn>
+                        <MultiColumnComboboxColumn Field="ItemLotNo" Header="Lot No." Width="40px" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Left"></MultiColumnComboboxColumn>
+                        <MultiColumnComboboxColumn Field="ItemExpiryDate" Header="Expiry Date" Format="dd/MM/yyyy" Width="60px" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center"></MultiColumnComboboxColumn>
+                        <MultiColumnComboboxColumn Field="ItemBatchId" Header="Batch" Width="40px" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Left"></MultiColumnComboboxColumn>
+                        <MultiColumnComboboxColumn Field="BalQty" Header="Bal Qty" Width="40px" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Right"></MultiColumnComboboxColumn>
+                    </MultiColumnComboboxColumns>
+                </SfMultiColumnComboBox>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">List Number</h4>
+                        <SfTextBox Placeholder="List Number" Width="50"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@delv.DelListNo">
+                        </SfTextBox>
+                    </div>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Expiry Date</h4>
+                        <SfDatePicker Placeholder="Expiry date" Width="100" @bind-Value="@delv.DelExpiryDate"
+                                      Format="dd/MM/yyyy">
+                        </SfDatePicker>
+                    </div>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Lot Number</h4>
+                        <SfTextBox Enabled="true" Placeholder="Lot Number" Width="100"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@delv.DelLotNo">
+                        </SfTextBox>
+                    </div>
+                <div class="sftextbox-header">
+                    <h4 class="dialog-header">Batch Id</h4>
+                    <SfNumericTextBox Enabled="true" Placeholder="Batch Id" Width="100"
+                               Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                               @bind-Value="@delv.DelBatchId">
+                    </SfNumericTextBox>
+                </div>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Delivery Quantity</h4>
+                        <SfNumericTextBox Enabled="true" Placeholder="Quantity" Width="100" Format="N2"
+                                          Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always" @bind-Value="@delv.DelQty">
+                        </SfNumericTextBox>
+                    </div>
+                    <br /><br />
+                    <div class="e-footer-content">
+                        <div class="button-container">
+                            <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+                            <button type="submit" class="e-btn e-normal e-primary">Save</button>
+                            <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Close</button>
+                        </div>
+                    </div>
+            </EditForm>
+        </SfDialog>
+
+
+
+            <br />
+            <div class="e-footer-content" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                <div class="button-container">
+                    <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+                <button type="submit" disabled=@vbuttonEnable class="e-btn e-normal e-primary" @onclick="@PoVouSave">Save</button>
+                    <button type="button" class="e-btn e-normal" @onclick="@Cancel">Back</button>
+                    <button type="button" disabled=@isChkList class="e-btn e-normal" @onclick="CheckList">Check List</button>
+                   @*  <button type="button" disabled=@isNewDel class="e-btn e-normal btn-success" @onclick="@NewDelivery">New Delivery</button> *@
+                   <span style="font-weight:600;text-align:right;">Total Quantities: @TotalQty </span>
+                <span style="font-weight:600;text-align:right;visibility:@(IsVisRole ? "visible" : "hidden")">Total Amount: @TotalAmt.ToString("N2") </span>
+           </div>
+            </div>
+        <br />
+        <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+        <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
+    </div>
+}
+<style>
+    .grid-container {
+        display: grid;
+        padding: 20px;
+        max-width: 1200px; /* Maximum width of the whole container - in this case both columns */
+        grid-template-columns: 1fr 1fr 1fr; /* Relative width of each column (1fr 1fr is equivalent to, say, 33fr 33fr */
+        grid-gap: 5px; /* size of the gap between columns */
+        background-color: #ffefd5;
+    }
+
+    .flex-container {
+        display: flex;
+        flex-direction: row; /* Causes tab to move along row and then onto following row */
+        justify-content: space-evenly; /* Equal space left and right margin and between elements */
+        margin: 10px; /* This appears to be vertical margin between rows */
+        column-gap: 10px;
+        /* Tgap betwen columns */
+    }
+
+    .e-numeric.e-style .e-Control.e-numerictextbox {
+        text-align: right;
+        padding: 0px 5px 0px 0px;
+    }
+</style>
+
+
+
+
+
+@*<SfDropDownList DataSource="@clientlist" AllowFiltering="true"
+                                       TItem="ClientMaster"
+                                       TValue="int?"
+                                       Text="ClientId"
+                                       @bind-Value="@Delnoteaddedit.DelClientId"
+                                       Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Auto"
+                                       Placeholder="Select From Clients"
+                                       Enabled=@vEnable>
+    <DropDownListEvents TItem="ClientMaster" TValue="int?" ValueChange="myclientcity"></DropDownListEvents>
+    <DropDownListFieldSettings Text="ClientName" Value="ClientId"></DropDownListFieldSettings>
+</SfDropDownList>
+
+                <div class="sftextbox-header">
+                    <h4 class="dialog-header">Item Description</h4>
+                    <SfComboBox @ref="@ComboObj2" TValue="string" TItem="ItemMaster" @bind-Value="@vItemCode" DataSource="@ItemMasterList" Placeholder="Select an Item" Width="200px" PopupWidth="350px" AllowFiltering="true" AllowCustom="true">
+                        <ComboBoxFieldSettings Value="ItemListNo" Text="ItemDesc"></ComboBoxFieldSettings>
+                        <ComboBoxEvents TItem="ItemMaster" TValue="string" ValueChange="@OnItemChanged" Filtering="OnFiltering2"></ComboBoxEvents>
+                    </SfComboBox>
+                </div>
+
+*@

@@ -1,0 +1,137 @@
+﻿@layout MainLayoutSub
+@page "/dailySalesReport_pg/{vCompType}"
+@page "/dailySalesReport_pg"
+@using DigiEquipSys.Interfaces;
+@using DigiEquipSys.Models;
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Components
+@inject IJSRuntime JSRuntime
+@using DigiEquipSys.Api;
+@inject IWareHouseService myWarehouseService
+@inject NavigationManager NavigationManager
+@inject ISessionStorageService sessionStorage
+
+<style>
+    .e-reportviewer-toggleicon {
+        color: #fff;
+    }
+</style>
+
+<div class="control-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-3">
+                <label class="example-label">Select your Branch</label>
+                <SfDropDownList TItem="WareHouse" TValue="string" PopupHeight="150px" @bind-Value="@DropDownValue" DataSource="@WareHouseList" AllowFiltering="true" EnableVirtualization="true">
+                    <DropDownListFieldSettings Text="WhName" Value="WhCode"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </div>
+            <br />
+            <br />
+            <div class="wrap col-sm-3">
+                <label class="example-label">Pick a Date</label>
+                <SfDateRangePicker TValue="DateTime" Placeholder="Choose a Date" ShowClearButton="true">
+                    <DateRangePickerEvents TValue="DateTime" ValueChange="@onDateChange"></DateRangePickerEvents>
+                </SfDateRangePicker>
+            </div>
+            <div class="e-footer-content col-sm-3">
+                <br />
+                <SfButton CssClass="e-small e-success" @onclick="DispRep">
+                    Print
+                </SfButton>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="report-viewer" style="height: 90vh;"></div>
+<a href="#" @onclick="NavigateToPrevious" CssClass="e-link">
+    <SfButton CssClass="e-small e-success">BACK</SfButton>
+</a>
+@code {
+    [CascadingParameter]
+    public EventCallback notify { get; set; }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await notify.InvokeAsync();
+        }
+    }
+
+    [Parameter]
+    public string? vCompType { get; set; }
+    private string? myLoc;
+    public DateTime StartValue { get; set; }
+    public DateTime EndValue { get; set; }
+    public string? myWh { get; set; }
+    public string DropDownValue = "";
+    protected List<WareHouse> WareHouseList = new();
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            myLoc = await sessionStorage.GetItemAsync<string>("adminLoc");
+            WareHouseList = await myWarehouseService.GetWareHouses();
+        }
+        catch (Exception ex)
+        {
+            //ignore
+        }
+    }
+
+    private void onDateChange(RangePickerEventArgs<DateTime> args)
+    {
+        StartValue = args.StartDate;
+        EndValue = args.EndDate;
+        StateHasChanged();
+    }
+
+    public void DispRep()
+    {
+        myWh = DropDownValue;
+        RenderReportViewer();
+    }
+
+    public void NavigateToPrevious()
+    {
+        switch (vCompType)
+        {
+            case "GenTrad":
+                NavigationManager.NavigateTo($"genTrad");
+                break;
+            case "Pos":
+                NavigationManager.NavigateTo($"pos");
+                break;
+        }
+    }
+
+    BoldReportViewerOptions viewerOptions = new BoldReportViewerOptions();
+    public async Task RenderReportViewer()
+    {
+        viewerOptions.ReportName = "DailySales";
+        viewerOptions.ServiceURL = "api/Report";
+        viewerOptions.Parameters = new List<JSReportParameter>();
+
+        JSReportParameter parameter1 = new JSReportParameter();
+        parameter1.Name = "myWh";
+        parameter1.Values = new List<string>();
+        parameter1.Values.Add(myWh.ToString());
+        viewerOptions.Parameters.Add(parameter1);
+
+        JSReportParameter parameter2 = new JSReportParameter();
+        parameter2.Name = "StartValue";
+        parameter2.Values = new List<string>();
+        parameter2.Values.Add(StartValue.ToString("MM/dd/yyyy"));
+        viewerOptions.Parameters.Add(parameter2);
+
+        JSReportParameter parameter3 = new JSReportParameter();
+        parameter3.Name = "EndValue";
+        parameter3.Values = new List<string>();
+        parameter3.Values.Add(EndValue.ToString("MM/dd/yyyy"));
+        viewerOptions.Parameters.Add(parameter3);
+
+        await JSRuntime.InvokeVoidAsync("BoldReports.RenderViewer", "report-viewer", viewerOptions);
+    }
+}
+

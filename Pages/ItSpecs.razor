@@ -1,0 +1,144 @@
+﻿@page "/itspecs"
+@using DigiEquipSys.Models
+@using Syncfusion.Blazor.Buttons
+@inject NavigationManager UriHelper
+@inject ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime
+
+<h3 class="page-title">Scan Items Specifications</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap4 {
+        stroke: red;
+    }
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap4" Size="50" Label="Data loading">
+</SfSpinner>
+@if (genscanspecList != null)
+{
+    <div class="col-lg12 Control-section">
+        <div class="content-wrapper">
+            <div class="Control-wrapper">
+                <SfGrid @ref="ItSpecsGrid" DataSource="@genscanspecList"
+                        AllowSorting="true" AllowFiltering="true" AllowPaging="true" AllowResizing="true" AllowReordering="true"
+                        ContextMenuItems="@(new List<object>() { "AutoFit", "AutoFitAll", "SortAscending", "SortDescending", "Copy", "ExcelExport", "CsvExport", "FirstPage", "PrevPage", "LastPage", "NextPage" })"
+                        Toolbar="@(new List<string>() { "Add", "Delete", "Edit", "Cancel", "Update","Print" })">
+                    <GridEvents OnActionBegin="ActionBeginHandler" RowSelected="RowSelectHandler" TValue="GenScanSpec"></GridEvents>
+                    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                    <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
+                    <GridTemplates>
+                        <EmptyRecordTemplate>
+                            <span>Custom no record message</span>
+                        </EmptyRecordTemplate>
+                    </GridTemplates>
+                    <GridColumns>
+
+
+                        <GridColumn Field="@nameof(GenScanSpec.GenScanLength)"
+                                    HeaderText="Scan Code Length"
+                                    Width="100">
+                        </GridColumn>
+                        @* type to differ same length *@
+                        <GridColumn Field="@nameof(GenScanSpec.GenType)"
+                                    HeaderText="Type"
+                                    Width="100">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(GenScanSpec.GenListStartFrom)"
+                                    HeaderText="ListNo Start From"
+                                    Width="150">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(GenScanSpec.GenListLength)"
+                                    HeaderText="ListNo Total Characters"
+                                    Width="150">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(GenScanSpec.GenLotStartFrom)"
+                                    HeaderText="LotNo Start From"
+                                    Width="150">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(GenScanSpec.GenLotLength)"
+                                    HeaderText="LotNo Total Characters "
+                                    Width="150">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(GenScanSpec.GenExpiryStartFrom)"
+                                    HeaderText="Expiry Date Start From "
+                                    Width="150">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(GenScanSpec.GenExpiryLength)"
+                                    HeaderText="Expiry Date Total Characters"
+                                    Width="150">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(GenScanSpec.GenExpiryDir)"
+                                    HeaderText="Year at Left(1)/Right(2)"
+                                    Width="150">
+                        </GridColumn>
+
+
+                    </GridColumns>
+                </SfGrid>
+                <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+                <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
+                <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
+                    <SfButton @onclick="@((args) => NavigateToPrevious())" IsPrimary="true" IconPosition=@IconPosition.Left>Back</SfButton>
+                </div>
+            </div>
+            <SfDialog @ref="DialogGenScanSepecsAddEdit" IsModal="true" Width="900px" Height="700px" ShowCloseIcon="true" Visible="false">
+                <DialogTemplates>
+                    <Header>Details</Header>
+                </DialogTemplates>
+                <EditForm MoDel="@genscansepecsaddedit" OnValidSubmit="@GenScanSpecsSave">
+
+                    <SfNumericTextBox Enabled="false" Placeholder="Scan Code Length"
+                               Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                               @bind-Value="@genscansepecsaddedit.GenScanLength">
+                    </SfNumericTextBox>
+                    <SfNumericTextBox Enabled="true" Placeholder="ListNo Start From"
+                               Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                               @bind-Value="@genscansepecsaddedit.GenListStartFrom">
+                    </SfNumericTextBox>
+
+                    <SfNumericTextBox Enabled="true" Placeholder="ListNo Total Characters"
+                               Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                               @bind-Value="@genscansepecsaddedit.GenListLength">
+                    </SfNumericTextBox>
+                    <SfNumericTextBox Enabled="false" Placeholder="LotNo Start From"
+                               Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                               @bind-Value="@genscansepecsaddedit.GenLotStartFrom">
+                    </SfNumericTextBox>
+
+                    <SfNumericTextBox Enabled="true" Placeholder="LotNo Total Characters "
+                               Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                               @bind-Value="@genscansepecsaddedit.GenLotLength">
+                    </SfNumericTextBox>
+                    <SfNumericTextBox Enabled="true" Placeholder="Expiry Date Start From "
+                               Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                               @bind-Value="@genscansepecsaddedit.GenExpiryStartFrom">
+                    </SfNumericTextBox>
+                    <SfNumericTextBox Enabled="true" Placeholder="Expiry Date Total Characters"
+                               Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                               @bind-Value="@genscansepecsaddedit.GenExpiryLength">
+                    </SfNumericTextBox>
+                    <SfNumericTextBox Enabled="true" Placeholder="Year at Left(1)/Right(2)"
+                               Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                               @bind-Value="@genscansepecsaddedit.GenExpiryDir">
+                    </SfNumericTextBox>
+
+                    <br />
+                    <div class="e-footer-content" style="text-align: right; width: 100%;">
+                        <div class="button-container">
+                            <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+                            <button type="button" class="e-btn e-normal e-primary" @onclick="@GenScanSpecsSave">Save</button>
+                            <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Close</button>
+                        </div>
+                    </div>
+                </EditForm>
+            </SfDialog>
+        </div>
+    </div>
+}

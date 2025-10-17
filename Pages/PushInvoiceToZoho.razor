@@ -1,0 +1,237 @@
+﻿@page "/pushinvoicetozoho/{PoNum:long}"
+@using DigiEquipSys.Interfaces
+@using DigiEquipSys.Models
+@using DigiEquipSys.Services
+@inject ZohoTokenService ZohoTokenService
+@inject ZohoApiService ZohoService
+@inject NavigationManager Nav
+@inject IPoHeadService myPoheadService
+@inject IPoDetailService myPoDetailService
+@inject ISupplierService mySupplierService
+@inject IItemMasterService myItemMasterService
+@inject IJSRuntime JSRuntime
+
+<h3>Push Purchase Invoice to Zoho</h3>
+
+<button @onclick="ConnectToZoho">Connect to Zoho</button>
+<button @onclick="PushToZoho">Push Invoice</button>
+
+<p>@resultMessage</p>
+
+@code 
+{
+    [Parameter]
+    public long PoNum { get; set; }
+    private PoHead povouhead = new();
+    private SupplierMaster povousupplier = new();
+    private List<ItemMaster> poitemmaster = new();
+    private List<PoDetail> povoudetails = new();
+    private string resultMessage = "";
+    protected override async Task OnInitializedAsync()
+    {
+        poitemmaster = await myItemMasterService.GetItemMasters();
+        povouhead = await myPoheadService.GetPoHeadByPoNumber(PoNum);
+        if (povouhead != null)
+        {
+            povoudetails = await myPoDetailService.GetPoDetails(povouhead.PohId);
+            povousupplier = await mySupplierService.GetSupplier((int)povouhead.PohVendId);
+        }
+    }
+
+    private void ConnectToZoho()
+    {
+        var returnUrl = Nav.ToBaseRelativePath(Nav.Uri);
+        var url = ZohoTokenService.GetAuthUrl(returnUrl);
+        Nav.NavigateTo(url, true);
+    }
+
+    private async Task PushToZoho()
+    {
+        try
+        {
+            var token = await ZohoTokenService.GetAccessTokenAsync();
+            var orgId = await ZohoService.GetOrganizationIdAsync(token);
+
+            // var lineItems = povoudetails.Select(i => 
+            //     new {
+            //     item_id = "1169195000000768019",
+            //     units = i.PodStkIdUnit,
+            //     rate = (decimal)i.PodUp,
+            //     quantity = (decimal)i.PodQty
+            // }).ToList();
+
+            var lineItems = (
+                from p in povoudetails
+                join it in poitemmaster on p.PodStkIdDesc equals it.ItemId
+                select new
+                {
+                    item_id = it.ItemZohoItemId,        // from the joined table
+                    units = p.PodStkIdUnit,
+                    rate = (decimal)p.PodUp,
+                    quantity = (decimal)p.PodQty
+                }
+            ).ToList();
+
+            var currentInvoice = new
+            {
+                vendor_id = povousupplier.SuppZohoVendId,
+                purchaseorder_number = povouhead.PohDispNo,
+                reference_number = povouhead.PohVendRef,
+                date = povouhead.PohDate?.ToString("yyyy-MM-dd"),
+                source_of_supply = "AP",
+                destination_of_supply = "TN",
+                exchange_rate = povouhead.PohConvRate,
+                line_items = lineItems
+            };
+
+            var payload = currentInvoice;
+
+            var result = await ZohoService.CreatePurchaseOrderAsync(token, orgId, payload);
+            resultMessage = "Purchase Invoice successfully posted to Zoho.";
+        }
+        catch (Exception ex)
+        {
+            resultMessage = $"Error: {ex.Message}";
+            await JSRuntime.InvokeVoidAsync("alert", resultMessage);
+        }
+    }
+}
+
+
+
+
+
+
+
+@* {
+    "vendor_id": "1169195000002595003",
+     "purchaseorder_number": "PO-00006",
+     "source_of_supply": "AP",
+    "destination_of_supply": "TN",
+    "reference_number": "ER/0034",
+    "date": "2025-09-28",
+    "exchange_rate": 1,
+    "line_items": [
+        {
+            "item_id": "1169195000002606003",
+             "unit": "Nos",
+             "rate": 100,
+            "quantity": 5,
+            "item_order": 0
+        }
+    ]
+
+} *@
+
+
+
+@* @using DigiEquipSys.Interfaces
+@using DigiEquipSys.Models
+@using DigiEquipSys.Services
+@inject ZohoApiService ZohoService
+@inject ZohoTokenService ZohoTokenService
+@inject NavigationManager Nav
+@inject ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime
+@inject IPoHeadService myPoheadService
+@inject IPoDetailService myPoDetailService
+
+<button @onclick="CallZohoApi">Call Zoho API</button>
+
+
+<h3>Push Purchase Invoice to Zoho</h3>
+
+<button @onclick="PushToZoho">Push to create Invoice</button>
+
+@code {
+
+    [CascadingParameter]
+    public EventCallback notify { get; set; }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await notify.InvokeAsync();
+        }
+    }
+
+    [Parameter] public long PoNum { get; set; }
+    private bool SpinnerVisible { get; set; } = false;
+    private string? myLoc;
+    private string? myUser;
+    protected List<PoDetail> povoudetails = new();
+    protected PoHead povouhead = new();
+    private string resultMessage;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            myUser = await sessionStorage.GetItemAsync<string>("adminEmail");
+            myLoc = await sessionStorage.GetItemAsync<string>("adminLoc");
+            this.SpinnerVisible = true;
+
+            povoudetails = await myPoDetailService.GetPoDetails(PoNum);
+            povouhead = await myPoheadService.GetPoHeadByPoNumber(PoNum);
+
+            this.SpinnerVisible = false;
+
+            Nav.NavigateTo(ZohoService.GetAuthUrl(), true);
+            await Task.Delay(1000);
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+            return;
+        }
+    }
+
+    private async Task CallZohoApi()
+    {
+        var token = await ZohoTokenService.GetAccessTokenAsync();
+
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var response = await httpClient.GetStringAsync("https://books.zoho.in/api/v3/organizations");
+        Console.WriteLine(response);
+    }
+
+
+    private async Task PushToZoho()
+   {
+        try
+        {
+            // TODO: Load tokens from secure storage (DB/session)
+            var accessToken = "741233";
+            var orgId = await ZohoService.GetOrganizationIdAsync(accessToken);
+
+            var lineItems = povoudetails.Select(i => new 
+                {
+                    item_name = "My Invoices",
+                    description ="Test Description",
+                    //description = i.Description.Length > 100 ? i.Description.Substring(0, 100) : i.Description,
+                    unit = i.PodStkIdUnit,
+                    rate = (decimal)i.PodUp,
+                    quantity = (decimal)i.PodQty
+                }).ToList();
+
+            var currentInvoice = new 
+                {
+                    vendor_id = povouhead.PohVendId,
+                    reference_number = povouhead.PohDispNo,
+                    date = povouhead.PohDate?.ToString("yyyy-MM-dd"),
+                    line_items = lineItems
+                };
+
+            var result = await ZohoService.CreatePurchaseOrderAsync(accessToken, orgId, currentInvoice);
+
+            resultMessage = "Purchase Invoice successfully posted to Zoho.";
+        }
+        catch (Exception ex)
+        {
+            resultMessage = $"Error: {ex.Message}";
+        }
+    }
+} *@

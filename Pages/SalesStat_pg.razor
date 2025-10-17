@@ -1,0 +1,748 @@
+﻿@inject ISessionStorageService sessionStorage
+@inject NavigationManager navManager
+@using DigiEquipSys.Interfaces
+@using DigiEquipSys.Models
+@using DigiEquipSys.Services
+@using System
+@using System.Globalization
+@using System.Linq
+@using System.Collections.Generic;
+@using Syncfusion.Blazor.Spinner
+@inject AccYear accYear
+@inject IJSRuntime JSRuntime
+@inject IGroupMasterService myGroupMaster
+@inject IClientService myClientService
+@inject IItemMasterService myItemMasterService
+@inject IvwReceiptService myvwReceiptService
+@inject IStockService myStockService
+@inject IStockTransService myStockTransService
+@inject ITrDetailService myTrDetailService
+@inject IvwTransferService myvwTransferService
+@inject IvwSaleService myvwSaleService
+
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap4" Size="50" Label="Data loading">
+</SfSpinner>
+<div style="padding: 0;margin: 30px 0 0 0; ">
+    <h3>Sales</h3>
+    <SfDashboardLayout Columns="10" CellSpacing="@(new double[]{10,10})" MediaQuery="max-width:700px">
+        <DashboardLayoutPanels>
+            @if (monthlySeries != null)
+            {
+                <DashboardLayoutPanel Column="0" Row="0" SizeX="10" SizeY="4">
+                    <HeaderTemplate>
+
+                        <SfMultiSelect @ref="GrpObj" TValue="string[]" TItem="GroupMaster" AllowFiltering="true" Mode="@VisualMode.CheckBox" DataSource="@GroupMasterList" ShowSelectAll="true" PopupHeight="350px" Width="250px" ShowDropDownIcon="true">
+                            <MultiSelectFieldSettings Text="GrpDesc" Value="GrpNo"></MultiSelectFieldSettings>
+                            <MultiSelectEvents TItem="GroupMaster" TValue="string[]" ValueChange="@OnGroupChanged" Filtering="OnGroupFiltering"></MultiSelectEvents>
+                        </SfMultiSelect>
+
+                        <span style="margin-right: 10px;"></span>
+                        <SfMultiSelect @ref="CliObj" TValue="string[]" TItem="ClientMaster" AllowFiltering="true" Mode="@VisualMode.CheckBox" DataSource="@ClientMasterList" ShowSelectAll="true" PopupHeight="350px" Width="250px" ShowDropDownIcon="true">
+                            <MultiSelectFieldSettings Text="ClientName" Value="ClientCode"></MultiSelectFieldSettings>
+                            <MultiSelectEvents TItem="ClientMaster" TValue="string[]" ValueChange="@OnClientChanged" Filtering="OnClientFiltering"></MultiSelectEvents>
+                        </SfMultiSelect>
+
+                        <span style="margin-right: 10px;"></span>
+                        <SfDateRangePicker TValue="DateTime?" Placeholder="Choose a Date Range" Start="CalendarView.Year" Depth="CalendarView.Year" FullScreen="true" ShowClearButton="true" Width="200px" @bind-StartDate="@selectedRangePs.selectedRangeFromPs"
+                                           @bind-EndDate="@selectedRangePs.selectedRangeToPs">
+                            <DateRangePickerEvents TValue="DateTime?" ValueChange="ValueChangeHandlerPs"></DateRangePickerEvents>
+                        </SfDateRangePicker>
+
+                        <span style="margin-right: 10px;"></span>
+                        <SfMultiSelect @ref="ComboObj" TValue="string[]" TItem="ItemMaster" AllowFiltering="true" Mode="@VisualMode.CheckBox" DataSource="@ItemMasterList" ShowSelectAll="true" PopupHeight="350px" Width="350px" ShowDropDownIcon="true">
+                            <MultiSelectFieldSettings Text="ItemDesc" Value="ItemListNo"></MultiSelectFieldSettings>
+                            <MultiSelectEvents TItem="ItemMaster" TValue="string[]" ValueChange="@OnItemChanged" Filtering="OnFiltering"></MultiSelectEvents>
+                        </SfMultiSelect>
+
+                        <SfRadioButton Label="By Customer" Name="opt1" Value="ByCustomer" TChecked="string" ValueChange="@OnMethodChanged" />
+                        <SfRadioButton Label="By Date" Name="opt1" Value="ByMonth" TChecked="string" ValueChange="@OnMethodChanged" />
+
+                    </HeaderTemplate>
+                    <ContentTemplate>
+
+                        <div style="display: flex; flex-direction: column; height: 100%;">
+                            @if (SelectedMethod == "ByMonth")
+                            {
+                                <div style="flex: 1; overflow: auto;">
+                                    <SfChart Title="Daily Sales by Month">
+                                        <ChartPrimaryXAxis Title="Day of Month"
+                                                           ValueType="Syncfusion.Blazor.Charts.ValueType.Double"
+                                                           Interval=1></ChartPrimaryXAxis>
+
+                                        <ChartPrimaryYAxis Title="Sales Amount"
+                                                           LabelFormat="{value}" />
+
+                                        <ChartTooltipSettings Enable="true" />
+                                        <ChartLegendSettings Visible="true" />
+
+                                        <ChartSeriesCollection>
+                                            @foreach (var month in monthlySeries)
+                                            {
+                                                <ChartSeries Name="@month.Key"
+                                                             DataSource="@month.Value"
+                                                             XName="Day"
+                                                             YName="Amount"
+                                                             Type="ChartSeriesType.Line">
+                                                    <ChartMarker Visible="true">
+                                                        <ChartDataLabel Visible="true" />
+                                                    </ChartMarker>
+                                                </ChartSeries>
+                                            }
+                                        </ChartSeriesCollection>
+                                    </SfChart>
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="flex: 1; overflow: auto;">
+                                    <SfChart Title="Daily Sales by Customer">
+                                        <ChartPrimaryXAxis Title="Day of Month" ValueType="Syncfusion.Blazor.Charts.ValueType.Double" Interval=1 />
+                                        <ChartPrimaryYAxis Title="Sales Amount" LabelFormat="{value}" />
+                                        <ChartTooltipSettings Enable="true" />
+                                        <ChartLegendSettings Visible="true" />
+
+                                        <ChartSeriesCollection>
+                                            @foreach (var customer in customerSeries)
+                                            {
+                                                <ChartSeries Name="@customer.Key"
+                                                             DataSource="@customer.Value"
+                                                             XName="Day"
+                                                             YName="Amount"
+                                                             Type="ChartSeriesType.StackingBar">
+                                                    <ChartMarker Visible="true">
+                                                        <ChartDataLabel Visible="true" />
+                                                    </ChartMarker>
+                                                </ChartSeries>
+                                            }
+                                        </ChartSeriesCollection>
+                                    </SfChart>
+                                </div>
+                            }
+                            <div style="margin-top: 15px; border-top: 1px solid #ccc; padding-top: 10px; text-align: left; font-family: Arial, sans-serif;">
+                            <span style="display: inline-block; width: 40px;"></span>
+                            <strong style="font-size: 18px; font-weight: bold; color: #2c3e50;">Total Sales:</strong>
+                            <span style="font-size: 18px; font-weight: bold; color: #27ae60;">@TotSalesPs.ToString("N0")</span
+                            <span style="display: inline-block; width: 40px;"></span>
+                            <strong style="font-size: 18px; font-weight: bold; color: #2c3e50;">Margin Value:</strong>
+                            <span style="font-size: 18px; font-weight: bold; color: #27ae60;">@TotMargValue.ToString("N2")</span>
+                            <span style="display: inline-block; width: 40px;"></span>
+                            <strong style="font-size: 18px; font-weight: bold; color: #2c3e50;">Margin:</strong>
+                            <span style="font-size: 18px; font-weight: bold; color: #27ae60;">@TotMarg.ToString("N2")</span>
+                            <span style="display: inline-block; width: 40px;"></span>
+                            <strong style="font-size: 18px; font-weight: bold; color: #2c3e50;">L2H (From):</strong>
+                            <span style="font-size: 18px; font-weight: bold; color: #27ae60;">@TotL2H2.ToString("N0")</span>
+                            <span style="display: inline-block; width: 40px;"></span>
+                            <strong style="font-size: 18px; font-weight: bold; color: #2c3e50;">L2H (To):</strong>
+                            <span style="font-size: 18px; font-weight: bold; color: #27ae60;">@TotL2H2To.ToString("N0")</span>
+                            <span style="display: inline-block; width: 40px;"></span>
+                            <strong style="font-size: 18px; font-weight: bold; color: #2c3e50;">Qty:</strong>
+                            <span style="font-size: 18px; font-weight: bold; color: #27ae60;">@TotStkQty.ToString("N0")</span>
+                            <span style="display: inline-block; width: 40px;"></span>
+                            <strong style="font-size: 18px; font-weight: bold; color: #2c3e50;">Stock Value:</strong>
+                            <span style="font-size: 18px; font-weight: bold; color: #27ae60;">@TotStkAmt.ToString("N0")</span>
+                            </div>
+                        </div>
+                    </ContentTemplate>
+                </DashboardLayoutPanel>
+            }
+        </DashboardLayoutPanels>
+    </SfDashboardLayout>
+</div>
+
+
+@code {
+    private string[] palettes = new string[] { "#61EFCD", "#CDDE1F", "#FEC200", "#CA765A", "#2485FA", "#F57D7D", "#C152D2",
+    "#8854D9", "#3D4EB8", "#00BCD7","#4472c4", "#ed7d31", "#ffc000", "#70ad47", "#5b9bd5", "#c1c1c1", "#6f6fe2", "#e269ae", "#9e480e", "#997300" };
+
+    private string[] palettes2 = new string[]
+    {
+    "#1ABC9C", // turquoise
+    "#2ECC71", // emerald
+    "#3498DB", // blue
+    "#9B59B6", // amethyst
+    "#34495E", // wet asphalt
+    "#16A085", // greenish teal
+    "#27AE60", // green
+    "#2980B9", // strong blue
+    "#8E44AD", // deep purple
+    "#2C3E50", // dark blue-gray
+    "#E74C3C", // red
+    "#E67E22", // orange
+    "#F1C40F", // yellow
+    "#ECF0F1", // light gray
+    "#95A5A6", // gray
+    "#D35400", // pumpkin
+    "#C0392B", // dark red
+    "#BDC3C7", // silver
+    "#7F8C8D", // grayish blue
+    "#FF6F61"  // coral pink
+    };
+
+    private bool SpinnerVisible { get; set; } = false;
+    public class DateRangePs
+    {
+        public DateTime? selectedRangeFromPs { get; set; }
+        public DateTime? selectedRangeToPs { get; set; }
+    }
+    private DateRangePs selectedRangePs { get; set; } = new DateRangePs();
+    protected class Purchase
+    {
+        // public string? vMon { get; set; }
+        // public string? vMon1 { get; set; }
+        // public decimal? vAmount { get; set; }
+
+        public int Day { get; set; }            // X-Axis
+        public decimal Amount { get; set; }     // Y-Axis
+        public string MonthName { get; set; }   // Series name
+        public string CustomerName { get; set; }
+
+    }
+    private List<Purchase> purchaseSource = new();
+
+    private SfMultiSelect<string[], GroupMaster> GrpObj;
+    private SfMultiSelect<string[], ItemMaster> ComboObj;
+    private SfMultiSelect<string[], ClientMaster> CliObj;
+    public string[]? vGrpArray { get; set; }
+    public string[]? vClientArray { get; set; }
+    public string[]? vItemArray { get; set; }
+    private List<GroupMaster>? GroupMasterList = new();
+    private List<ItemMaster>? ItemMasterList = new();
+    private List<ItemMaster> ItemMastList = new();
+    protected List<ClientMaster>? ClientMasterList = new();
+    protected List<Stock> StockList = new();
+    protected List<StockTran> StockTransList = new();
+
+    public List<TrDetail>? TrDetailList = new();
+    public List<TrDetail>? TrDetailListSelect = new();
+    public List<VwTransfer>? TransferListAll = new();
+    public List<VwTransfer>? TransferList = new();
+
+    public List<TrDetail>? TrDetailList2 = new();
+    public List<TrDetail>? TrDetailListSelect2 = new();
+    public List<VwTransfer>? TransferListAll2 = new();
+    public List<VwTransfer>? TransferList2 = new();
+
+    private string SelectedMethod { get; set; } = "ByMonth";
+    public decimal TotPurchasesPs;
+    public decimal TotStkQty;
+    public decimal TotStkAmt;
+    public decimal TotNonAlertValue2;
+    public decimal TotRevValue2;
+    public decimal TotL2H2;
+    public decimal TotL2H2To;
+    public decimal TotSalesPs;
+    public decimal TotMarg;
+    public decimal TotMargValue;
+
+    Dictionary<string, List<Purchase>> monthlySeries = new();
+    Dictionary<string, List<Purchase>> customerSeries = new();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            string datestringfrom1 = "01/" + DateTime.Now.Month.ToString("00") + "/" + DateTime.Now.Year;
+            selectedRangePs.selectedRangeFromPs = DateTime.ParseExact(datestringfrom1, "dd/MM/yyyy", CultureInfo.InvariantCulture);
+            selectedRangePs.selectedRangeToPs = DateTime.Now;
+            GroupMasterList = await myGroupMaster.GetGroupMasters();
+            ClientMasterList = await myClientService.GetClients();
+            ItemMasterList = await myItemMasterService.GetItemMastersDistinct();
+            ItemMastList = await myItemMasterService.GetItemMasters();
+        	await Ps();
+
+        }
+        catch (Exception ex)
+        {
+            this.SpinnerVisible = false;
+            await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+            return;
+        }
+    }
+
+    private async Task OnMethodChanged(ChangeArgs<string> args)
+    {
+        if (args.Value == "ByCustomer")
+        {
+            SelectedMethod = "ByCustomer";
+            await Ps1();
+        }
+        else
+        {
+            SelectedMethod = "ByMonth";
+            await Ps();
+        }
+    }
+
+    public async Task ValueChangeHandlerPs(RangePickerEventArgs<DateTime?> args)
+    {
+        if (SelectedMethod == "ByMonth")
+        {
+            await Ps();
+        }
+        else
+        {
+            await Ps1();
+        }
+    }
+
+    private async Task OnGroupChanged(MultiSelectChangeEventArgs<string[]> args)
+    {
+        vGrpArray = args.Value;
+        if (SelectedMethod == "ByMonth")
+        {
+            await Ps();
+        }
+        else
+        {
+            await Ps1();
+        }
+    }
+
+    private async Task OnClientChanged(MultiSelectChangeEventArgs<string[]> args)
+    {
+        vClientArray = args.Value;
+        if (SelectedMethod == "ByMonth")
+        {
+            await Ps();
+        }
+        else
+        {
+            await Ps1();
+        }
+    }
+
+    private async Task OnItemChanged(MultiSelectChangeEventArgs<string[]> args)
+    {
+        vItemArray = args.Value;
+        if (SelectedMethod == "ByMonth")
+        {
+            await Ps();
+        }
+        else
+        {
+            await Ps1();
+        }
+    }
+
+
+    private async Task OnGroupFiltering(Syncfusion.Blazor.DropDowns.FilteringEventArgs args)
+    {
+        args.PreventDefaultAction = true;
+
+        var query = string.IsNullOrWhiteSpace(args.Text)
+            ? new Syncfusion.Blazor.Data.Query()
+            : new Syncfusion.Blazor.Data.Query().Where(new Syncfusion.Blazor.Data.WhereFilter()
+                {
+                    Field = "GrpDesc",
+                    Operator = "contains",
+                    value = args.Text,
+                    IgnoreCase = true
+                });
+
+        await GrpObj.FilterAsync(GroupMasterList, query);
+    }
+
+    private async Task OnFiltering(Syncfusion.Blazor.DropDowns.FilteringEventArgs args)
+    {
+        args.PreventDefaultAction = true;
+        var query = string.IsNullOrWhiteSpace(args.Text)
+            ? new Syncfusion.Blazor.Data.Query()
+            : new Syncfusion.Blazor.Data.Query().Where(new Syncfusion.Blazor.Data.WhereFilter()
+                {
+                    Field = "ItemDesc",
+                    Operator = "contains",
+                    value = args.Text,
+                    IgnoreCase = true
+                });
+
+        await ComboObj.FilterAsync(ItemMasterList, query);
+    }
+
+    private async Task OnClientFiltering(Syncfusion.Blazor.DropDowns.FilteringEventArgs args)
+    {
+        args.PreventDefaultAction = true;
+
+        var query = string.IsNullOrWhiteSpace(args.Text)
+            ? new Syncfusion.Blazor.Data.Query()
+            : new Syncfusion.Blazor.Data.Query().Where(new Syncfusion.Blazor.Data.WhereFilter()
+                {
+                    Field = "ClientName",
+                    Operator = "contains",
+                    value = args.Text,
+                    IgnoreCase = true
+                });
+
+        await CliObj.FilterAsync(ClientMasterList, query);
+    }
+
+    public async Task Ps1()
+    {
+        try
+        {
+            this.SpinnerVisible = true;
+            DateTime StDate = selectedRangePs.selectedRangeFromPs.Value;
+            DateTime EnDate = selectedRangePs.selectedRangeToPs.Value;
+            var OutgoingList = await myvwSaleService.GetvwSalesDate(StDate.AddDays(0), EnDate.AddDays(1));
+            await Task.Delay(100);
+            StockTransList = await myStockTransService.GetStockTransByDate(StDate.AddDays(0), EnDate.AddDays(1));
+            await Task.Delay(100);
+            await myTrDetailService.UpdateTrdRev();
+            var Qry3 = await myTrDetailService.GetTrDetls(StDate.AddDays(0), EnDate.AddDays(1));
+            var Qry2 = (from q3 in Qry3
+                        join im in ItemMastList on q3.TrdStkIdDesc equals im.ItemId
+                        where vGrpArray == null || vGrpArray.Length == 0 || vGrpArray.Contains(im.ItemGrpCode)
+                        where vClientArray == null || vClientArray.Length == 0 || vClientArray.Contains(q3.TrdClientCodeFrom)
+                        where vItemArray == null || vItemArray.Length == 0 || vItemArray.Contains(q3.TrdListNo)
+                        select q3).ToList();
+
+
+            if (vGrpArray != null && vGrpArray.Length > 0)
+            {
+                var filteredList4 = OutgoingList.Where(v => vGrpArray.Contains(v.ItemGrpCode)).ToList();
+                OutgoingList = filteredList4;
+
+                StockTransList = StockTransList.Where(v => vGrpArray.Contains(v.ItemStkIdGrp)).ToList();
+            }
+
+            if (vClientArray != null && vClientArray.Length > 0)
+            {
+                var filteredList = OutgoingList.Where(v => vClientArray.Contains(v.DelClientCode)).ToList();
+                OutgoingList = filteredList;
+                StockTransList = StockTransList.Where(v => vClientArray.Contains(v.ItemClientCode)).ToList();
+            }
+
+            if (vItemArray != null && vItemArray.Length > 0)
+            {
+                var filteredList2 = OutgoingList.Where(v => vItemArray.Contains(v.DelListNo)).ToList();
+                OutgoingList = filteredList2;
+                StockTransList = StockTransList.Where(v => vItemArray.Contains(v.ItemListNo)).ToList();
+
+
+            }
+            // var tt = OutgoingList
+            // 			.Where(r => !string.IsNullOrEmpty(r.ClientName))
+            // 			.GroupBy(r => r.ClientName)
+            // 			.Select(g => new Sale
+            // 				{
+            // 					vMon1 = g.Key.ToString(),
+            // 					vAmount = g.Sum(r => Convert.ToDecimal(r.DelTotal))
+            // 				}).ToList();
+            // chartSource = tt;
+            // TotSalesPs = (decimal)chartSource.Sum(x => x.vAmount);
+
+
+            customerSeries = OutgoingList
+                .Where(r => r.DelDate.HasValue)
+                .GroupBy(r => new { r.ClientName, Month = r.DelDate.Value.Month })
+                .Select(g => new
+                {
+                    Customer = g.Key.ClientName,
+                    Day = g.Key.Month,
+                    Total = g.Sum(x => x.DelTotal)
+                })
+                .GroupBy(x => x.Customer)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(x => new Purchase
+                        {
+                            Day = x.Day,
+                            Amount = (decimal)x.Total,
+                            CustomerName = x.Customer
+                        }).OrderBy(x => x.Day).ToList()
+                );
+
+            TotSalesPs = (decimal)OutgoingList.Sum(x => x.DelTotal);
+
+            var TotDiff1=(decimal)OutgoingList.Sum(x => x.Gross);
+            TotMargValue=TotDiff1;
+
+            if (TotSalesPs > 0)
+            {
+            	TotMarg = 100 * (TotDiff1 / TotSalesPs);
+            }
+            else
+            {
+            	TotMarg = 0;
+            }
+
+            TotStkQty = Convert.ToDecimal(StockTransList.Sum(d => (d.ItemTrOpQty ?? 0) + (d.ItemTrInQty ?? 0) + (d.ItemPurQty ?? 0) - ((d.ItemDelQty ?? 0) + (d.ItemTrOutQty ?? 0))));
+            TotStkAmt = Convert.ToDecimal(StockTransList.Sum(d => ((d.ItemTrOpQty ?? 0) + (d.ItemTrInQty ?? 0) + (d.ItemPurQty ?? 0) - ((d.ItemDelQty ?? 0) + (d.ItemTrOutQty ?? 0))) * d.ItemCp));
+
+
+            TrDetailList2 = await myTrDetailService.GetTrDetls();
+            TrDetailListSelect2 = TrDetailList2;
+            var Qry = Qry2.Where(x => x.TrdReversal == "Reversal").ToList();
+            var Qry1 = Qry.ToList();
+            foreach (var q in Qry1)
+            {
+                Qry.AddRange(TrDetailListSelect2.Where(y => y.TrdId == q.TrdIdRevJourn));
+            }
+            TrDetailListSelect2 = new List<TrDetail>(Qry);
+            foreach (var transfer in TrDetailListSelect2)
+            {
+                transfer.TrdRev = true;
+                await myTrDetailService.UpdateTrDetl(transfer);
+            }
+
+            TransferListAll2 = await myvwTransferService.GetvwTransfers();
+            var ReversalList2 = TransferListAll2.Where(q => q.TrdRev == true && (q.TrdLotChange == "" || q.TrdLotChange == null)).ToList();
+            TotRevValue2 = ReversalList2.Sum(x => (Convert.ToDecimal(x.RevAmt)));
+
+            TransferList2 = await myvwTransferService.GetvwTransfersDate(StDate.AddDays(0), EnDate.AddDays(1));
+            if (vClientArray != null && vClientArray.Length > 0)
+            {
+                TransferList2 = TransferList2.Where(v => vClientArray.Contains(v.TrdClientCodeFrom)).ToList();
+            }
+            if (vItemArray != null && vItemArray.Length > 0)
+            {
+                TransferList2 = TransferList2.Where(v => vItemArray.Contains(v.TrdListNo)).ToList();
+            }
+            if (vGrpArray != null && vGrpArray.Length > 0)
+            {
+                TransferList2 = TransferList2.Where(v => vGrpArray.Contains(v.ItemGrpCode)).ToList();
+            }
+            TransferList2 = TransferList2.Where(q => q.TrdRev == false && (q.TrdLotChange == "" || q.TrdLotChange == null)).ToList();
+            TotNonAlertValue2 = TransferList2.Sum(x => (Convert.ToDecimal(x.NonAlertAmt)));
+            TotL2H2 = TotNonAlertValue2 + TotRevValue2;
+
+
+            //TotL2H2To
+
+            await myTrDetailService.UpdateTrdRev();
+            var Qry33 = await myTrDetailService.GetTrDetls(StDate.AddDays(0), EnDate.AddDays(1));
+            var Qry22 = (from q3 in Qry33
+                         join im in ItemMastList on q3.TrdStkIdDesc equals im.ItemId
+                         where vGrpArray == null || vGrpArray.Length == 0 || vGrpArray.Contains(im.ItemGrpCode)
+                         where vClientArray == null || vClientArray.Length == 0 || vClientArray.Contains(q3.TrdClientCodeTo)
+                         where vItemArray == null || vItemArray.Length == 0 || vItemArray.Contains(q3.TrdListNo)
+                         select q3).ToList();
+            TrDetailList2 = await myTrDetailService.GetTrDetls();
+            TrDetailListSelect2 = TrDetailList2;
+            var QryM = Qry22.Where(x => x.TrdReversal == "Reversal").ToList();
+            var Qry11 = QryM.ToList();
+            foreach (var q in Qry11)
+            {
+                QryM.AddRange(TrDetailListSelect2.Where(y => y.TrdId == q.TrdIdRevJourn));
+            }
+            TrDetailListSelect2 = new List<TrDetail>(QryM);
+            foreach (var transfer in TrDetailListSelect2)
+            {
+                transfer.TrdRev = true;
+                await myTrDetailService.UpdateTrDetl(transfer);
+            }
+
+            TransferListAll2 = await myvwTransferService.GetvwTransfers();
+            var ReversalList22 = TransferListAll2.Where(q => q.TrdRev == true && (q.TrdLotChange == "" || q.TrdLotChange == null)).ToList();
+            TotRevValue2 = ReversalList22.Sum(x => (Convert.ToDecimal(x.RevAmt)));
+
+            TransferList2 = await myvwTransferService.GetvwTransfersDate(StDate.AddDays(0), EnDate.AddDays(1));
+            if (vClientArray != null && vClientArray.Length > 0)
+            {
+                TransferList2 = TransferList2.Where(v => vClientArray.Contains(v.TrdClientCodeTo)).ToList();
+            }
+            if (vItemArray != null && vItemArray.Length > 0)
+            {
+                TransferList2 = TransferList2.Where(v => vItemArray.Contains(v.TrdListNo)).ToList();
+            }
+            if (vGrpArray != null && vGrpArray.Length > 0)
+            {
+                TransferList2 = TransferList2.Where(v => vGrpArray.Contains(v.ItemGrpCode)).ToList();
+            }
+            TransferList2 = TransferList2.Where(q => q.TrdRev == false && (q.TrdLotChange == "" || q.TrdLotChange == null)).ToList();
+            TotNonAlertValue2 = TransferList2.Sum(x => (Convert.ToDecimal(x.NonAlertAmt)));
+            TotL2H2To = TotNonAlertValue2 + TotRevValue2;
+
+            await InvokeAsync(StateHasChanged);
+            this.SpinnerVisible = false;
+
+        }
+        catch (Exception ex)
+        {
+            this.SpinnerVisible = false;
+            await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+            return;
+        }
+    }
+
+    public async Task Ps()
+    {
+        try
+        {
+            this.SpinnerVisible = true;
+            DateTime StDate = selectedRangePs.selectedRangeFromPs.Value;
+            DateTime EnDate = selectedRangePs.selectedRangeToPs.Value;
+            var OutgoingList = await myvwSaleService.GetvwSalesDate(StDate.AddDays(0), EnDate.AddDays(1));
+            await Task.Delay(100);
+            StockTransList = await myStockTransService.GetStockTransByDate(StDate.AddDays(0), EnDate.AddDays(1));
+            await Task.Delay(100);
+            await myTrDetailService.UpdateTrdRev();
+            var Qry3 = await myTrDetailService.GetTrDetls(StDate.AddDays(0), EnDate.AddDays(1));
+            var Qry2 = (from q3 in Qry3
+                        join im in ItemMastList on q3.TrdStkIdDesc equals im.ItemId
+                        where vGrpArray == null || vGrpArray.Length == 0 || vGrpArray.Contains(im.ItemGrpCode)
+                        where vClientArray == null || vClientArray.Length == 0 || vClientArray.Contains(q3.TrdClientCodeFrom)
+                        where vItemArray == null || vItemArray.Length == 0 || vItemArray.Contains(q3.TrdListNo)
+                        select q3).ToList();
+
+
+            if (vGrpArray != null && vGrpArray.Length > 0)
+            {
+                var filteredList4 = OutgoingList.Where(v => vGrpArray.Contains(v.ItemGrpCode)).ToList();
+                OutgoingList = filteredList4;
+                StockTransList = StockTransList.Where(v => vGrpArray.Contains(v.ItemStkIdGrp)).ToList();
+            }
+
+            if (vClientArray != null && vClientArray.Length > 0)
+            {
+                var filteredList = OutgoingList.Where(v => vClientArray.Contains(v.DelClientCode)).ToList();
+                OutgoingList = filteredList;
+                StockTransList = StockTransList.Where(v => vClientArray.Contains(v.ItemClientCode)).ToList();
+            }
+
+            if (vItemArray != null && vItemArray.Length > 0)
+            {
+                var filteredList2 = OutgoingList.Where(v => vItemArray.Contains(v.DelListNo)).ToList();
+                OutgoingList = filteredList2;
+                StockTransList = StockTransList.Where(v => vItemArray.Contains(v.ItemListNo)).ToList();
+            }
+            monthlySeries = OutgoingList
+                .Where(r => r.DelDate.HasValue)
+                .GroupBy(r => r.DelDate.Value.Date)
+                .Select(g => new
+                {
+                    Date = g.Key,
+                    Total = g.Sum(x => x.DelTotal)
+                })
+                .GroupBy(x => new { x.Date.Year, x.Date.Month })
+                .ToDictionary(
+                    g => new DateTime(g.Key.Year, g.Key.Month, 1).ToString("MMM yyyy"),
+                    g => g.Select(x => new Purchase
+                        {
+                            Day = x.Date.Day,
+                            Amount = (decimal)x.Total,
+                            MonthName = new DateTime(x.Date.Year, x.Date.Month, 1).ToString("MMM yyyy")
+                        }).OrderBy(x => x.Day).ToList()
+                );
+            TotSalesPs = (decimal)OutgoingList.Sum(x => x.DelTotal);
+
+
+
+            var TotDiff1=(decimal)OutgoingList.Sum(x => x.Gross);
+            TotMargValue=TotDiff1;
+
+            if (TotSalesPs > 0)
+            {
+            	TotMarg = 100 * (TotDiff1 / TotSalesPs);
+            }
+            else
+            {
+            	TotMarg = 0;
+            }
+
+            TotStkQty = Convert.ToDecimal(StockTransList.Sum(d => (d.ItemTrOpQty ?? 0) + (d.ItemTrInQty ?? 0) + (d.ItemPurQty ?? 0) - ((d.ItemDelQty ?? 0) + (d.ItemTrOutQty ?? 0))));
+            TotStkAmt = Convert.ToDecimal(StockTransList.Sum(d => ((d.ItemTrOpQty ?? 0) + (d.ItemTrInQty ?? 0) + (d.ItemPurQty ?? 0) - ((d.ItemDelQty ?? 0) + (d.ItemTrOutQty ?? 0))) * d.ItemCp));
+
+
+            TrDetailList2 = await myTrDetailService.GetTrDetls();
+            TrDetailListSelect2 = TrDetailList2;
+            var Qry = Qry2.Where(x => x.TrdReversal == "Reversal").ToList();
+            var Qry1 = Qry.ToList();
+            foreach (var q in Qry1)
+            {
+                Qry.AddRange(TrDetailListSelect2.Where(y => y.TrdId == q.TrdIdRevJourn));
+            }
+            TrDetailListSelect2 = new List<TrDetail>(Qry);
+            foreach (var transfer in TrDetailListSelect2)
+            {
+                transfer.TrdRev = true;
+                await myTrDetailService.UpdateTrDetl(transfer);
+            }
+
+            TransferListAll2 = await myvwTransferService.GetvwTransfers();
+            var ReversalList2 = TransferListAll2.Where(q => q.TrdRev == true && (q.TrdLotChange == "" || q.TrdLotChange == null)).ToList();
+            TotRevValue2 = ReversalList2.Sum(x => (Convert.ToDecimal(x.RevAmt)));
+
+            TransferList2 = await myvwTransferService.GetvwTransfersDate(StDate.AddDays(0), EnDate.AddDays(1));
+            if (vClientArray != null && vClientArray.Length > 0)
+            {
+                TransferList2 = TransferList2.Where(v => vClientArray.Contains(v.TrdClientCodeFrom)).ToList();
+            }
+            if (vItemArray != null && vItemArray.Length > 0)
+            {
+                TransferList2 = TransferList2.Where(v => vItemArray.Contains(v.TrdListNo)).ToList();
+            }
+            if (vGrpArray != null && vGrpArray.Length > 0)
+            {
+                TransferList2 = TransferList2.Where(v => vGrpArray.Contains(v.ItemGrpCode)).ToList();
+            }
+            TransferList2 = TransferList2.Where(q => q.TrdRev == false && (q.TrdLotChange == "" || q.TrdLotChange == null)).ToList();
+            TotNonAlertValue2 = TransferList2.Sum(x => (Convert.ToDecimal(x.NonAlertAmt)));
+            TotL2H2 = TotNonAlertValue2 + TotRevValue2;
+
+
+            //TotL2H2To
+
+            await myTrDetailService.UpdateTrdRev();
+            var Qry33 = await myTrDetailService.GetTrDetls(StDate.AddDays(0), EnDate.AddDays(1));
+            var Qry22 = (from q3 in Qry33
+                         join im in ItemMastList on q3.TrdStkIdDesc equals im.ItemId
+                         where vGrpArray == null || vGrpArray.Length == 0 || vGrpArray.Contains(im.ItemGrpCode)
+                         where vClientArray == null || vClientArray.Length == 0 || vClientArray.Contains(q3.TrdClientCodeTo)
+                         where vItemArray == null || vItemArray.Length == 0 || vItemArray.Contains(q3.TrdListNo)
+                         select q3).ToList();
+            TrDetailList2 = await myTrDetailService.GetTrDetls();
+            TrDetailListSelect2 = TrDetailList2;
+            var QryM = Qry22.Where(x => x.TrdReversal == "Reversal").ToList();
+            var Qry11 = QryM.ToList();
+            foreach (var q in Qry11)
+            {
+                QryM.AddRange(TrDetailListSelect2.Where(y => y.TrdId == q.TrdIdRevJourn));
+            }
+            TrDetailListSelect2 = new List<TrDetail>(QryM);
+            foreach (var transfer in TrDetailListSelect2)
+            {
+                transfer.TrdRev = true;
+                await myTrDetailService.UpdateTrDetl(transfer);
+            }
+
+            TransferListAll2 = await myvwTransferService.GetvwTransfers();
+            var ReversalList22 = TransferListAll2.Where(q => q.TrdRev == true && (q.TrdLotChange == "" || q.TrdLotChange == null)).ToList();
+            TotRevValue2 = ReversalList22.Sum(x => (Convert.ToDecimal(x.RevAmt)));
+
+            TransferList2 = await myvwTransferService.GetvwTransfersDate(StDate.AddDays(0), EnDate.AddDays(1));
+            if (vClientArray != null && vClientArray.Length > 0)
+            {
+                TransferList2 = TransferList2.Where(v => vClientArray.Contains(v.TrdClientCodeTo)).ToList();
+            }
+            if (vItemArray != null && vItemArray.Length > 0)
+            {
+                TransferList2 = TransferList2.Where(v => vItemArray.Contains(v.TrdListNo)).ToList();
+            }
+            if (vGrpArray != null && vGrpArray.Length > 0)
+            {
+                TransferList2 = TransferList2.Where(v => vGrpArray.Contains(v.ItemGrpCode)).ToList();
+            }
+            TransferList2 = TransferList2.Where(q => q.TrdRev == false && (q.TrdLotChange == "" || q.TrdLotChange == null)).ToList();
+            TotNonAlertValue2 = TransferList2.Sum(x => (Convert.ToDecimal(x.NonAlertAmt)));
+            TotL2H2To = TotNonAlertValue2 + TotRevValue2;
+
+            await InvokeAsync(StateHasChanged);
+            this.SpinnerVisible = false;
+
+        }
+        catch (Exception ex)
+        {
+            this.SpinnerVisible = false;
+            await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+            return;
+        }
+    }
+
+}
+
+<style type="text/css" media="screen and (max-width:900px)">
+    .media-css {
+        margin-left: 170px !important;
+    }
+</style>

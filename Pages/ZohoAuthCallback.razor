@@ -1,0 +1,77 @@
+﻿@page "/zohoauthcallback"
+@using DigiEquipSys.Services
+@inject ZohoTokenService ZohoTokenService
+@inject NavigationManager Nav
+@inject ILogger<ZohoAuthCallback> Logger
+<h3>Completing Zoho Login...</h3>
+
+@code {
+    private string? code;
+    private string? state;
+    private bool isProcessing = true;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await HandleCallbackAsync();
+        }
+    }
+
+    private async Task HandleCallbackAsync()
+    {
+        try
+        {
+            var uri = Nav.ToAbsoluteUri(Nav.Uri);
+            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            code = query["code"];
+            state = query["state"];
+
+            if (!string.IsNullOrEmpty(code))
+            {
+                Logger.LogInformation("Received Zoho code: {Code}", code);
+                var success = await ZohoTokenService.ExchangeCodeForTokensAsync(code);
+
+                if (success)
+                {
+                    Logger.LogInformation("Zoho tokens saved successfully");
+                    Nav.NavigateTo(!string.IsNullOrEmpty(state) ? state : "/");
+                }
+                else
+                {
+                    Logger.LogWarning("Zoho token exchange failed");
+                }
+            }
+            else
+            {
+                Logger.LogError("Zoho OAuth failed. No code returned.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error handling Zoho OAuth callback.");
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    // protected override async Task OnInitializedAsync()
+    // {
+    //         var uri = Nav.ToAbsoluteUri(Nav.Uri);
+    //         var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+    //         code = query["code"];
+    //         state = query["state"];
+
+    //         if (!string.IsNullOrEmpty(code))
+    //         {
+    //             await ZohoTokenService.ExchangeCodeForTokensAsync(code);
+    //             _shouldRedirect = true;
+    //         }
+    //         else
+    //         {
+    //             Console.WriteLine("Zoho OAuth failed.");
+    //         }
+    // }
+}

@@ -1,0 +1,381 @@
+﻿@page "/stkjournal_pg/{TrvouId:long}/{myTrdId:long}"
+@page "/stkjournal_pg/{TrvouId:long}"
+@using DigiEquipSys.Interfaces
+@using DigiEquipSys.Models
+@using DigiEquipSys.Services
+@inject IItemMasterService myItemMaster
+@* @inject ISupplierService mySupplierService*@
+@inject IStockService myStockService
+@inject IClientService myClientService
+@inject ITrHeadService myTrHeadService
+@inject ITrDetailService myTrDetailService
+@inject IvwSaleService myVwSaleService
+@inject IvwTransferService myVwTransferService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject ISessionStorageService sessionStorage
+@inject AccYear myAccYear
+<h3 class="page-title">Stock Journal</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #d4d1ce;
+        color: white
+    }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap4 {
+        stroke: red;
+    }
+</style>
+
+<style>
+    .grid-item {
+        background-color: rgba(255, 255, 255, 0.8);
+    }
+
+    .column-width {
+        width: 50px;
+    }
+
+    .custom-header-style .e-headercontent {
+        background-color: lightblue; /* Set your desired color */
+        color: white; /* Optional: Text color */
+        font-weight: bold; /* Optional: Make the text bold */
+        text-align: center; /* Optional: Center-align text */
+    }
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap4" Size="50" Label="Data loading">
+</SfSpinner>
+@if (@trvoudetails != null)
+{
+    <div class="col-lg-12">
+        <EditForm Model="@trvouaddedit">
+            <ChildContent Context="outerContext">
+
+                <div class="grid-container">
+                    <div class="grid-item">
+                        <SfTextBox Enabled="false" Placeholder="Journal No" @bind-Value="@trvouaddedit.TrhDispNo" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                    </div>
+                    <div class="grid-item">
+                        <SfDatePicker Enabled=@vEnable TValue="DateTime?" Placeholder="Journal Date" @bind-Value="@trvouaddedit.TrhDate" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Auto">
+                            <DatePickerEvents TValue="DateTime?" ValueChange="NoToFutureDate"></DatePickerEvents>
+                        </SfDatePicker>
+                    </div>
+                    <div class="grid-item">
+                        <SfTextBox Enabled=@vEnable Placeholder="Remarks" @bind-Value="@trvouaddedit.TrhRemarks" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                    </div>
+                    <div class="grid-item">
+                        <SfCheckBox Disabled="@(!vEnable)" @bind-Checked="trvouaddedit.TrhExcludeAlertAction">
+                                <LabelTemplate>
+                                <span style="font-size: 30px; color: red;">Lot Change</span>
+                                </LabelTemplate>
+                        </SfCheckBox>
+                    </div>
+  
+                    <div class="form-group" style="display: flex; align-items: center;">
+                        <label style="visibility:@(vClient !="" ? "visible" : "hidden")" for="textbox1">Description:</label>
+                        @if (vClient != "")
+                        {
+                            <SfTextBox Enabled="false" Id="textbox1" @bind-Value="@vItemDesc" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                        }
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center;">
+                        <label style="visibility:@(vClient!="" ? "visible" : "hidden")" for="textbox2">To:</label>
+                        @if (vClient != "")
+                        {
+                            <SfTextBox Enabled="false" Id="textbox2" @bind-Value="@vClient" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                        }
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center;">
+                        <label style="visibility:@(vClient!="" ? "visible" : "hidden")" for="textbox3">Qty Need:</label>
+                        @if (vClient != "")
+                        {
+                            <SfNumericTextBox Enabled="false" Id="textbox3" @bind-Value="@vJourQty"></SfNumericTextBox>
+                        }
+                    </div>
+                </div>
+
+                <br />
+                <EditForm Model="@detaddedit">
+                    <ChildContent Context="innerContext">
+                        <div class="container-fluid">
+                            <table style="border-spacing: 10px;align-content:start;">
+                                <tr>
+                                    <td style="Width:300px;padding-left: 5px; padding-right: 5px;">
+                                        <SfMultiColumnComboBox class="custom-header-style" EnableAltRow="true" GridLines="Syncfusion.Blazor.Grids.GridLine.Both" TValue="string" TItem="StockForJournal" @bind-Value="@mValue" ValueChange="OnValueChange" AllowFiltering="true" ShowClearButton=true DataSource="@StockForJournalList" PopupWidth="950px" ValueField="StkId" TextField="ItemDesc" Placeholder="Select any product">
+                                            <MultiColumnComboboxColumns>
+                                                <MultiColumnComboboxColumn Field="ItemDesc" Width="150px" Header="Description" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Left"></MultiColumnComboboxColumn>
+                                                <MultiColumnComboboxColumn Field="ClientName" Width="75px" Header="Client Name" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Left"></MultiColumnComboboxColumn>
+                                                <MultiColumnComboboxColumn Field="ItemBatchId" Width="40px" Header="Batch" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Left"></MultiColumnComboboxColumn>
+                                                <MultiColumnComboboxColumn Field="ItemListNo" Width="40px" Header="List No." TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center"></MultiColumnComboboxColumn>
+                                                <MultiColumnComboboxColumn Field="ItemLotNo" Width="40px" Header="Lot No." TextAlign="Syncfusion.Blazor.Grids.TextAlign.Left"></MultiColumnComboboxColumn>
+                                                <MultiColumnComboboxColumn Field="ItemExpiryDate" Header="Expiry Date" Format="dd/MM/yyyy" Width="60px" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center"></MultiColumnComboboxColumn>
+                                                <MultiColumnComboboxColumn Field="BalQty" Header="Bal Qty" Width="40px" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Right"></MultiColumnComboboxColumn>
+                                            </MultiColumnComboboxColumns>
+                                        </SfMultiColumnComboBox>
+                                    </td>
+                                    <td style="Width:200px;padding-left: 5px; padding-right: 5px;font-size:x-small">
+                                        @SelectedItemDesc
+                                    </td>
+                                    <td style="Width:100px;padding-left: 5px; padding-right: 5px;">
+                                        <SfTextBox Enabled="false" Placeholder="List No."
+                                                   FloatLabelType=Syncfusion.Blazor.Inputs.FloatLabelType.Auto
+                                                   @bind-Value="@detaddedit.TrdListNo">
+                                        </SfTextBox>
+                                    </td>
+                                    <td style="Width:100px;padding-left: 5px; padding-right: 5px;">
+                                        <SfTextBox Enabled="false" Placeholder="Lot No."
+                                                   FloatLabelType=Syncfusion.Blazor.Inputs.FloatLabelType.Auto
+                                                   @bind-Value="@detaddedit.TrdLotNo">
+                                        </SfTextBox>
+                                    </td>
+                                    <td style="Width:150px;padding-left: 5px; padding-right: 5px;">
+                                        <SfDatePicker Enabled="false" Placeholder="Expiry Date"
+                                                      FloatLabelType=Syncfusion.Blazor.Inputs.FloatLabelType.Auto
+                                                      @bind-Value="@detaddedit.TrdExpiryDate">
+                                        </SfDatePicker>
+                                    </td>
+
+                                    <td style="Width:200px;padding-left: 5px; padding-right: 5px;">
+                                        <SfNumericTextBox Enabled="false" Placeholder="Batch Id" 
+                                                   FloatLabelType=Syncfusion.Blazor.Inputs.FloatLabelType.Auto
+                                                   @bind-Value="@detaddedit.TrdBatchId">
+                                        </SfNumericTextBox>
+                                    </td>
+
+                                    <td style="Width:250px;padding-left: 5px; padding-right: 5px;">
+                                        <SfComboBox @ref="@ComboObj" TValue="string" TItem="ClientMaster" Value="@detaddedit.TrdClientCodeFrom"
+                                                    DataSource="@ClientMasterList" Placeholder="Transfer From" AllowFiltering="true" AllowCustom="true" Enabled=@vEnable
+                                                    ValueChanged="FromUpChange" ValueExpression="@(() => @detaddedit.TrdClientCodeFrom)">
+                                            <ComboBoxFieldSettings Value="ClientCode" Text="ClientName"></ComboBoxFieldSettings>
+                                            <ComboBoxEvents TItem="ClientMaster" TValue="string" Filtering="@OnFiltering"></ComboBoxEvents>
+                                        </SfComboBox>
+                                    </td>
+
+
+
+                                    <td style="Width:125px;padding-left: 5px; padding-right: 5px;">
+                                        <SfNumericTextBox Enabled="false" Placeholder="Purch. Price"
+                                                          FloatLabelType=Syncfusion.Blazor.Inputs.FloatLabelType.Auto
+                                                          ShowSpinButton="false"
+                                                          Format="n2" Currency=""
+                                                          Decimals="2"
+                                                          CssClass="e-style"
+                                                          @bind-Value="@detaddedit.TrdClientCodeFromUp">
+                                        </SfNumericTextBox>
+                                    </td>
+
+                                    @* <td style="Width:250px;padding-left: 5px; padding-right: 5px;">
+                                <SfDropDownList DataSource="@ClientMasterList" OnChange="ToUpChange"
+                                TItem="ClientMaster"
+                                TValue="string"
+                                Text="ClientName"
+                                @bind-Value="@detaddedit.TrdClientCodeTo"
+                                FloatLabelType=Syncfusion.Blazor.Inputs.FloatLabelType.Auto
+                                Placeholder="Transfer to "
+                                Enabled=vJourEnable>
+                                <DropDownListFieldSettings Text="ClientName" Value="ClientCode"></DropDownListFieldSettings>
+                                </SfDropDownList>
+                                </td> *@
+
+                                    <td style="Width:250px;padding-left: 5px; padding-right: 5px;">
+                                        <SfComboBox @ref="@ComboObjTo" TValue="string" TItem="ClientMaster" Value="@detaddedit.TrdClientCodeTo"
+                                                    DataSource="@ClientMasterList" Placeholder="Transfer To" AllowFiltering="true" AllowCustom="true"
+                                                    Enabled=@vJourEnable ValueChanged="ToUpChange" ValueExpression="@(() => @detaddedit.TrdClientCodeTo)">
+                                            <ComboBoxFieldSettings Value="ClientCode" Text="ClientName"></ComboBoxFieldSettings>
+                                            <ComboBoxEvents TItem="ClientMaster" TValue="string" Filtering="@OnFilteringTo"></ComboBoxEvents>
+                                        </SfComboBox>
+                                    </td>
+
+
+
+
+                                    <td style="Width:125px;padding-left: 5px; padding-right: 5px;">
+                                        <SfNumericTextBox Enabled="true" Placeholder="Transfer Qty" OnChange="QtyChanged"
+                                                          FloatLabelType=Syncfusion.Blazor.Inputs.FloatLabelType.Auto
+                                                          ShowSpinButton="false"
+                                                          Format="n2"
+                                                          Decimals="2"
+                                                          CssClass="e-style"
+                                                          @bind-Value="@detaddedit.TrdClientCodeFromQty">
+
+                                        </SfNumericTextBox>
+                                    </td>
+
+                                    <td>
+                                        <div class="e-footer-content" style="text-align: right; width: 150px;">
+                                            <div class="button-container">
+                                                <button class="btn btn-success" disabled=@vbuttonEnable2 @onclick="@DetSave"><i class="fas fa-save"></i></button>
+                                                <button class="btn btn-danger" disabled=@vbuttonEnable2 @onclick="@VouDetDelete"><i class="fa fa-trash"></i></button>
+                                                <button class="btn btn-secondary" @onclick="@CloseDialog"><i class="fa fa-times"></i></button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </ChildContent>
+                </EditForm>
+                <br />
+
+                <div class="col-lg-12 Control-section">
+                    <div class="content-wrapper">
+                        <div class="row">
+                            <SfGrid @ref="TrDetGrid" AllowTextWrap="true" DataSource="@trvoudetails" Height="400" Width="100%" AllowSelection="true" AllowFiltering="true" AllowSorting="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true">
+                                <GridEditSettings></GridEditSettings>
+                                <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                                <GridPageSettings PageSize="100" PageSizes="@(new int[] { 50, 100, 200, 400,500})"></GridPageSettings>
+                                <GridEvents RowSelected="RowSelectHandler" RowDeselected="RowDeSelectHandler" TValue="TrDetail"></GridEvents>
+
+                                <GridAggregates>
+                                    <GridAggregate>
+                                        <GridAggregateColumns>
+                                            <GridAggregateColumn Field="TrdClientCodeFromQty" Type="AggregateType.Sum" Format="n2">
+                                                <FooterTemplate Context="vMyContext">
+                                                    @{
+                                                        var vMyaggregate = (vMyContext as AggregateTemplateContext);
+
+                                                        <div>
+                                                            <p>Qty: @vMyaggregate.Sum</p>
+                                                        </div>
+                                                    }
+                                                </FooterTemplate>
+                                            </GridAggregateColumn>
+
+                                            <GridAggregateColumn Field="TotalPrice" Type="AggregateType.Sum" Format="n2">
+                                                <FooterTemplate Context="vMyContext">
+                                                    @{
+                                                        var vMyaggregate = (vMyContext as AggregateTemplateContext);
+                                                        <div>
+                                                            <p>Amt: @vMyaggregate.Sum</p>
+                                                        </div>
+                                                    }
+                                                </FooterTemplate>
+                                            </GridAggregateColumn>
+                                        </GridAggregateColumns>
+                                    </GridAggregate>
+                                </GridAggregates>
+
+
+                                <GridColumns>
+                                    <GridColumn Field="@nameof(TrDetail.TrdId)"
+                                                HeaderText="ID"
+                                                IsIdentity="true"
+                                                IsPrimaryKey="true"
+                                                Visible=false>
+                                    </GridColumn>
+
+                                    <GridColumn Field="@nameof(TrDetail.TrdStockStkId)"
+                                                HeaderText="StkId"
+                                                Visible=false>
+                                    </GridColumn>
+
+                                    <GridColumn Field="@nameof(TrDetail.TrdListNo)" EditorSettings="@myEditParams" AllowEditing="false"
+                                                HeaderText="List No."
+                                                Width="30">
+                                    </GridColumn>
+                                    <GridColumn Field="@nameof(TrDetail.TrdLotNo)" EditorSettings="@myEditParams" AllowEditing="false"
+                                                HeaderText="Lot No."
+                                                Width="30">
+                                    </GridColumn>
+                                    <GridColumn Field="@nameof(TrDetail.TrdExpiryDate)" EditorSettings="@myEditParams" AllowEditing="false"
+                                                HeaderText="Exp. Date" Format="dd/MM/yyyy"
+                                                Width="30">
+                                    </GridColumn>
+                                    <GridColumn Field="@nameof(TrDetail.TrdBatchId)" EditorSettings="@myEditParams" AllowEditing="false"
+                                                HeaderText="Batch Id"
+                                                Width="20">
+                                    </GridColumn>
+                                    <GridForeignColumn Field="@nameof(TrDetail.TrdStkIdDesc)"
+                                                       HeaderText="Item Desc"
+                                                       ForeignKeyField="ItemId" ForeignKeyValue="ItemDesc" ForeignDataSource="@ItemMasterList"
+                                                       Width="60" AllowEditing="false">
+                                    </GridForeignColumn>
+
+                                    <GridForeignColumn Field=@nameof(TrDetail.TrdClientCodeFrom)
+                                                       HeaderText="Client From" ForeignKeyField="ClientCode"
+                                                       ForeignKeyValue="ClientName"
+                                                       ForeignDataSource="@ClientMasterList" Width="40">
+                                    </GridForeignColumn>
+
+                                    <GridColumn Field="@nameof(TrDetail.TrdClientCodeFromUp)" EditorSettings="@myEditParams" AllowFiltering="false" Format="n2"
+                                                HeaderText="Purch. Price" TextAlign="TextAlign.Right"
+                                                Width="20" AllowEditing=@vEnable>
+                                    </GridColumn>
+                                    <GridColumn Field="@nameof(TrDetail.TrdClientCodeFromQty)" EditorSettings="@myEditParams" AllowFiltering="false" Format="n2"
+                                                HeaderText="Transfer Qty" TextAlign="TextAlign.Right"
+                                                Width="20" AllowEditing=false>
+                                    </GridColumn>
+
+                                    <GridColumn Field="@nameof(TrDetail.TotalPrice)" HeaderText="Total Price" Format="n2" TextAlign="TextAlign.Right" Width="30px" AllowFiltering="false"></GridColumn>
+
+                                    <GridForeignColumn Field=@nameof(TrDetail.TrdClientCodeTo)
+                                                       HeaderText="Client To" ForeignKeyField="ClientCode"
+                                                       ForeignKeyValue="ClientName"
+                                                       ForeignDataSource="@ClientMasterList" Width="40">
+                                    </GridForeignColumn>
+
+                                    <GridColumn Field="@nameof(TrDetail.TrdClientCodeToUp)" EditorSettings="@myEditParams" AllowFiltering="false" Format="n2"
+                                                HeaderText="To Purch. Price" TextAlign="TextAlign.Right"
+                                                Width="20" AllowEditing=@vEnable>
+                                    </GridColumn>
+
+
+                                    @*  <GridForeignColumn Field=@nameof(TrDetail.TrdClientCodeTo)
+                                HeaderText="Client To" ForeignKeyField="ClientCode"
+                                ForeignKeyValue="ClientName"
+                                ForeignDataSource="@ClientMasterList" Width="40">
+                                <EditTemplate Context="myContext">
+                                <SfComboBox TValue="string" TItem="ClientMaster" @bind-Value="@((myContext as TrDetail).TrdClientCodeTo)" DataSource="@ClientMasterList">
+                                <ComboBoxFieldSettings Value="ClientCode" Text="ClientName"></ComboBoxFieldSettings>
+                                </SfComboBox>
+                                </EditTemplate>
+                                </GridForeignColumn> *@
+                                </GridColumns>
+                            </SfGrid>
+                        </div>
+                    </div>
+                </div>
+                <br /><br />
+            </ChildContent>
+        </EditForm>
+        <br />
+        <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+        <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
+            <button type="button" disabled=@vbuttonEnable class="e-btn e-normal e-primary" @onclick="TrVouSave">Save</button>
+            <button type="button" class="e-btn e-normal" @onclick="Cancel">Back</button>
+            <button type="button" disabled="@isApprove" class="e-btn e-normal" @onclick="Approve">Approve</button>
+            <button type="button" disabled="@isDisApprove" class="e-btn e-normal" @onclick="DisApprove">Disapprove</button>
+            <button type="button" class="e-btn e-normal" @onclick="ViewJournal">Go to View Journal</button>
+
+            <span style="font-weight:600;text-align:right;">Total Quantities: @TotalQty </span>
+            <span style="font-weight:600;text-align:right;">Total Amount: @TotalAmt.ToString("N2") </span>
+        </div>
+    </div>
+    <div id="report-viewer" style="height: 100vh;z-index: 1; position: absolute; top: 0; left: 0;"></div>
+}
+<style>
+    .grid-container {
+        display: grid;
+        padding: 20px;
+        max-width: 1200px; /* Maximum width of the whole container - in this case both columns */
+        grid-template-columns: 1fr 1fr 1fr 1fr; /* Relative width of each column (1fr 1fr is equivalent to, say, 33fr 33fr */
+        grid-gap: 5px; /* size of the gap between columns */
+        background-color: #ffefd5;
+    }
+
+    .flex-container {
+        display: flex;
+        flex-direction: row; /* Causes tab to move along row and then onto following row */
+        justify-content: space-evenly; /* Equal space left and right margin and between elements */
+        margin: 10px; /* This appears to be vertical margin between rows */
+        column-gap: 10px;
+        /* Tgap betwen columns */
+    }
+
+    .e-numeric.e-style .e-Control.e-numerictextbox {
+        text-align: right;
+        padding: 0px 5px 0px 0px;
+    }
+</style>

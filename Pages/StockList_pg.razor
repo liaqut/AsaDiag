@@ -1,0 +1,117 @@
+﻿@layout MainLayoutSub
+@page "/stockList_pg/{vCompType}"
+@page "/stockList_pg"
+@using DigiEquipSys.Interfaces;
+@using DigiEquipSys.Models;
+@using DigiEquipSys.Services
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Components
+
+@inject IJSRuntime JSRuntime
+@using DigiEquipSys.Api;
+@inject NavigationManager NavigationManager
+@inject IWareHouseService myWarehouseService
+@inject ISessionStorageService sessionStorage
+
+<style>
+    .e-reportviewer-toggleicon {
+        color: #fff;
+    }
+</style>
+
+<div class="control-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-4">
+                <label class="example-label">Select your Branch</label>
+                <SfDropDownList TItem="WareHouse" TValue="string" PopupHeight="150px" @bind-Value="@DropDownValue" DataSource="@WareHouseList" AllowFiltering="true" EnableVirtualization="true">
+                    <DropDownListFieldSettings Text="WhName" Value="WhCode"></DropDownListFieldSettings>
+                </SfDropDownList>
+            </div>
+            <div class="e-footer-content">
+                <br />
+                <SfButton CssClass="e-small e-success" @onclick="DispRep">
+                    Print
+                </SfButton>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="report-viewer" style="height: 90vh;"></div>
+<a href="#" @onclick="NavigateToPrevious" CssClass="e-link">
+    <SfButton CssClass="e-small e-success">BACK</SfButton>
+</a>
+@code
+{
+    [CascadingParameter]
+    public EventCallback notify { get; set; }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await notify.InvokeAsync();
+        }
+    }
+
+    [Parameter]
+    public string? vCompType { get; set; }
+    private string? myLoc;
+    public string? myWh { get; set; }
+    public string DropDownValue = "";
+    protected List<WareHouse> WareHouseList = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            myLoc = await sessionStorage.GetItemAsync<string>("adminLoc");
+            WareHouseList = await myWarehouseService.GetWareHouses();
+        }
+        catch (Exception ex)
+        {
+            //ignore
+        }
+    }
+
+    BoldReportViewerOptions viewerOptions = new BoldReportViewerOptions();
+    public async Task RenderReportViewer()
+    {
+        viewerOptions.ReportName = "StockList";
+        viewerOptions.ServiceURL = "api/Report";
+        viewerOptions.Parameters = new List<JSReportParameter>();
+
+        JSReportParameter parameter1 = new JSReportParameter();
+        parameter1.Name = "myWh";
+        parameter1.Values = new List<string>();
+        parameter1.Values.Add(myWh.ToString());
+        viewerOptions.Parameters.Add(parameter1);
+
+
+        await JSRuntime.InvokeVoidAsync("BoldReports.RenderViewer", "report-viewer", viewerOptions);
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        //RenderReportViewer();
+    }
+
+    public void DispRep()
+    {
+        myWh = DropDownValue;
+        RenderReportViewer();
+    }
+    public void NavigateToPrevious()
+    {
+        switch (vCompType)
+        {
+            case "GenTrad":
+                NavigationManager.NavigateTo($"genTrad");
+                break;
+            case "Pos":
+                NavigationManager.NavigateTo($"pos");
+                break;
+        }
+    }
+}

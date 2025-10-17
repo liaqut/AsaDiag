@@ -1,0 +1,101 @@
+﻿@page "/rcptDates_pg/{vMyItemId:long}"
+@using DigiEquipSys.Services
+@using DigiEquipSys.Models
+@using DigiEquipSys.Interfaces
+@inject IStockService myStock
+@inject IRcptDetailService myRcptService2
+@inject NavigationManager UriHelper
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+@if (@gridSource !=null)
+{
+    <div class="col-lg-12 Control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                <div id="container">
+
+        <SfGrid @ref="VendorDatesGrid" 
+                DataSource="@gridSource" AllowTextWrap="true"
+                AllowGrouping="false" AllowSorting="true" AllowFiltering="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true">
+
+            <GridColumns>
+                <GridColumn Field="@nameof(PurchDates.VendorInvNo)"
+                            HeaderText=Invoice No."
+                            AllowEditing="false"
+                            Width="30">
+                </GridColumn>
+
+                <GridColumn Field="@nameof(PurchDates.VendorInvDate)"
+                            HeaderText=Invoice Date"
+                            AllowEditing="false"
+                            Width="30">
+                </GridColumn>
+
+                <GridColumn Field="@nameof(PurchDates.VendorPurchQty)"
+                            HeaderText=Purchase Qty"
+                            AllowEditing="false"
+                            Width="30">
+                </GridColumn>
+                <GridColumn Field="@nameof(PurchDates.StockBalQty)"
+                            HeaderText=Balance Qty"
+                            AllowEditing="false"
+                            Width="30">
+                </GridColumn>
+            </GridColumns>
+        </SfGrid>
+     </div>
+    </div>
+   </div>
+   </div>
+}
+@code {
+    [CascadingParameter]
+    public EventCallback notify { get; set; }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            //myLoc = await sessionStorage.GetItemAsync<string>("adminLoc");
+            await notify.InvokeAsync();
+        }
+    }
+    [Parameter] public long vMyItemId { get; set; }
+    protected List<VwItemBal> VendorDates = new();
+    protected List<RcptDetail> RcptDetailList2 = new();
+    public class PurchDates
+    {
+        public decimal? StockBalQty { get; set; }
+        public string? VendorInvNo { get; set; }
+        public DateTime? VendorInvDate { get; set; }
+        public decimal? VendorPurchQty { get; set; }
+    }
+    public List<PurchDates> gridSource = new();
+    public SfDialog? DialogVendorDates;
+    public SfGrid<PurchDates>? VendorDatesGrid;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            RcptDetailList2 = await myRcptService2.GetRcptDetails();
+            StateHasChanged();
+            VendorDates = await myStock.GetVendDates(vMyItemId);
+            var fVendorDates = VendorDates.Where(x => x.ItemListNo != null && x.ItemLotNo != null && x.ItemExpiryDate != null && x.ItemClientCode != null).ToList();
+            var fRcptDetailList = RcptDetailList2.Where(y => y.RdListNo != null && y.RdLotNo != null && y.RdExpiryDate != null && y.RdClientCode != null).ToList();
+            var data = (from x in fVendorDates
+                        join y in fRcptDetailList
+                                 on new { ListNo = (string)x.ItemListNo, LotNo = (string)x.ItemLotNo, ExpDate = (DateTime)x.ItemExpiryDate, ClientCode = (string)x.ItemClientCode }
+                                 equals new { ListNo = (string)y.RdListNo, LotNo = (string)y.RdLotNo, ExpDate = (DateTime)y.RdExpiryDate, ClientCode = (string)y.RdClientCode }
+                        select new PurchDates { VendorInvNo = y.RdVendInvNo, VendorInvDate = y.RdVendInvDate, VendorPurchQty = y.RdQty, StockBalQty = x.BalQty }).ToList();
+            gridSource=data;
+            
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+            return ;
+        }
+    }
+}

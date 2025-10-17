@@ -1,0 +1,71 @@
+﻿@page "/monthlystat_pg"
+@inject ISessionStorageService sessionStorage
+@inject NavigationManager navManager
+@using System
+@using System.Globalization
+@using System.Linq
+@using System.Collections.Generic;
+@inject IJSRuntime JSRuntime
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Data
+<PageTitle>Index</PageTitle>
+@using Syncfusion.Blazor.Buttons
+
+<div style="display: flex; flex-direction: column; align-items: center; margin-top: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+	   	    <SfRadioButton Label="By Customer" Name="opt1" Value="ByCustomer" TChecked="string" ValueChange="@OnMethodChanged" />
+		    <SfRadioButton Label="By Month" Name="opt1" Value="ByMonth" TChecked="string" ValueChange="@OnMethodChanged"/>
+    	</div>
+		<br />
+</div>
+
+@if (SelectedMethod == "ByCustomer")
+{
+	<MonthlyStatByCustomer />
+}
+else if (SelectedMethod == "ByMonth")
+{
+	<MonthlyStatByMonth />
+}
+@code {
+	private string SelectedMethod { get; set; } = "";
+	public string iam;
+
+	[CascadingParameter]
+	public EventCallback notify { get; set; }
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			await notify.InvokeAsync();
+		}
+	}
+
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			iam = await sessionStorage.GetItemAsync<string>("adminRo");
+		}
+		catch (Exception ex)
+		{
+			await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+		}
+	}
+
+	private async Task OnMethodChanged(ChangeArgs<string> args)
+	{
+		SelectedMethod = args.Value;
+		await InvokeAsync(StateHasChanged); // Make sure the UI updates
+	}
+
+}
+
+
+
+
+
+
+
+

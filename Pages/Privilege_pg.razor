@@ -1,0 +1,154 @@
+﻿@page "/privilege_pg/{vCompType}"
+@page "/privilege_pg"
+@inject HttpClient Http
+@using DigiEquipSys.Services
+@using DigiEquipSys.Models
+@using DigiEquipSys.Interfaces
+@inject IGroupMasterService myGroupMaster
+@inject IItemMasterService myItemMaster
+@inject IStockService myStock
+@inject IAdminService myAdminServic
+@inject ISystemPagesService mySystemPagesService
+@inject ISysPagesControlService mySysPagesControl
+@inject NavigationManager UriHelper
+@using System.Dynamic
+
+<h3 class="page-title" style="color:teal">EDIT PRIVILEGES</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+
+    .e-ddl.e-input-group.e-Control-wrapper .e-input {
+        font-size: 20px;
+        font-family: emoji;
+        color: #ab3243;
+        background: #32a5ab;
+    }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap5 {
+        stroke: red;
+    }
+
+    .Control-wrapper {
+        width: 250px;
+    }
+
+    .myButton {
+        background-color: #0a0a23;
+        color: #fff;
+        border: 2px solid #E9E9E9;
+        border-width: 2px 2px 2px 2px;
+        border-radius: 10px;
+        padding: 15px;
+        min-height: 30px;
+        min-width: 120px;
+    }
+
+        .myButton:hover {
+            background-color: #002ead;
+            transition: 0.7s;
+        }
+
+</style>
+
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap5" Size="50">
+</SfSpinner>
+
+@if (SysPagesControlList != null && SystemPagesList != null)
+{
+    <div class="col-lg-6 Control-section">
+        <div class="content-wrapper">
+            <div class="Control-wrapper">
+                <SfDropDownList TItem="AdminInfo"
+                                TValue="string"
+                                DataSource="@AdminInfoList"
+                                Placeholder="Select Your User"
+                                PopupHeight="400px"
+                                PopupWidth="350px"
+                                AllowFiltering="true">
+                    <DropDownListFieldSettings Text="Email" Value="Email"></DropDownListFieldSettings>
+                    <DropDownListEvents TItem="AdminInfo" TValue="string" ValueChange="OnChange"></DropDownListEvents>
+                </SfDropDownList>
+            </div>
+            <br />
+            <div class="row">
+                <SfGrid @ref="SysPagesControlGrid" Height="500px"
+                        DataSource="@SysPagesControlList"
+                        AllowSorting="true" AllowFiltering="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                        ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                        Toolbar="@(new List<string>() { "Edit","Cancel", "Update", "Print" })">
+                    <GridEvents OnActionBegin="ActionBeginHandler" TValue="SysPagesControl"></GridEvents>
+                    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                    <GridEditSettings AllowAdding="false" AllowEditing="true" AllowDeleting="false" Mode="EditMode.Normal"></GridEditSettings>
+                    <GridPageSettings PageSize="20" PageSizes="@(new int[] {20, 30, 50, 100, 200, 400,500})"></GridPageSettings>
+
+                    <GridTemplates>
+                        <EmptyRecordTemplate>
+                            <span>No Records Found</span>
+                        </EmptyRecordTemplate>
+                    </GridTemplates>
+                    <GridSortSettings>
+                        <GridSortColumns>
+                            <GridSortColumn Field="SysPagesControlId" Direction="SortDirection.Ascending"></GridSortColumn>
+                        </GridSortColumns>
+                    </GridSortSettings>
+
+                    <GridColumns>
+                        <GridColumn Field="@nameof(SysPagesControl.SysPagesId)"
+                                    HeaderText="ID"
+                                    IsIdentity="true"
+                                    IsPrimaryKey="true"
+                                    Visible=false>
+                        </GridColumn>
+
+                        <GridForeignColumn Field="@nameof(SysPagesControl.SysPagesControlId)"
+                                           HeaderText="Menu Name"
+                                           ForeignKeyField="PageId" ForeignKeyValue="PageDetail" ForeignDataSource="@SystemPagesList"
+                                           Width="50"
+                                           AllowEditing="false">
+                        </GridForeignColumn>
+
+                        <GridColumn Field="@nameof(SysPagesControl.SysPagesAuthorized)" 
+                                    HeaderText="Authorized"
+                                    Width="10">
+                        </GridColumn>
+                        <GridColumn HeaderText="Action" Width="10">
+                            <GridCommandColumns>
+                                <GridCommandColumn Type="CommandButtonType.Edit"
+                                                   ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-edit",
+                                      CssClass="e-flat"
+                                    })">
+                                </GridCommandColumn>
+                                <GridCommandColumn Type="CommandButtonType.Save"
+                                                   ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-update",
+                                      CssClass="e-flat"
+                                    })">
+                                </GridCommandColumn>
+                                <GridCommandColumn Type="CommandButtonType.Cancel"
+                                                   ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-cancel-icon",
+                                      CssClass="e-flat"
+                                    })">
+                                </GridCommandColumn>
+                            </GridCommandColumns>
+                        </GridColumn>
+                    </GridColumns>
+                </SfGrid>
+                <br />
+            </div>
+            <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+            @*<div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
+        <SfButton @onclick="@((args) => UriHelper.NavigateTo("gentrad"))" IsPrimary="true" IconPosition=@IconPosition.Left>Back</SfButton>
+        </div>*@
+            <a href="#" @onclick="NavigateToPrevious" CssClass="e-link">
+                <SfButton CssClass="e-small e-success">BACK</SfButton>
+            </a>
+        </div>
+    </div>
+}

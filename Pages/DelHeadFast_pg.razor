@@ -1,0 +1,164 @@
+﻿@page "/delHeadFast_pg/{DelnoteId:long}/{vCompType}"
+@page "/delHeadFast_pg/{DelnoteId:long}"
+@using DigiEquipSys.Interfaces
+@using DigiEquipSys.Models
+@using DigiEquipSys.Services
+@inject IItemMasterService myItemMaster
+@inject IGroupMasterService myGrpMaster
+@inject ICatMasterService myCatMaster
+@inject IItemUnitService myUnitMaster
+@inject NavigationManager NavigationManager
+@inject ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime
+@inject IClientService myClientMaster
+@inject IGenScanSpecService myScanSpecService
+@inject IGenCityService myCityService
+@inject IClientCityService myClientCityService
+@inject AccYear myAccYear
+@inject IStockService myStockService
+
+<h3 class="page-title">Delivery Note</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap4 {
+        stroke: red;
+    }
+</style>
+<style>
+    .grid-item {
+        background-color: rgba(255, 255, 255, 0.8);
+    }
+
+    .custom-header-style .e-headercontent {
+        background-color: lightblue; /* Set your desired color */
+        color: white; /* Optional: Text color */
+        font-weight: bold; /* Optional: Make the text bold */
+        text-align: center; /* Optional: Center-align text */
+    }
+
+</style>
+
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap4" Size="50" Label="Data loading">
+</SfSpinner>
+@if (@Deldetls != null)
+{
+    <div class="col-lg-12">
+        <EditForm Model="@Delnoteaddedit" FormName="myDelHead">
+            <div class="grid-container">
+                <div class="grid-item">
+                    <SfTextBox Enabled="false" Placeholder="Del No" @bind-Value="@Delnoteaddedit.DelDispNo" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                    <SfDatePicker Enabled=@vEnable TValue="DateTime?" Placeholder="Sale Date" @bind-Value="@Delnoteaddedit.DelDate" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Auto">
+                        <DatePickerEvents TValue="DateTime?" ValueChange="NoToFutureDate"></DatePickerEvents>
+                    </SfDatePicker>
+                </div>
+
+                <div class="grid-item">
+                    <SfComboBox @ref="@ComboObj" TValue="int?" TItem="ClientMaster" @bind-Value="@Delnoteaddedit.DelClientId" DataSource="@clientlist" Placeholder="Select a Client" AllowFiltering="true" AllowCustom="true" Enabled=@vEnable>
+                        <ComboBoxFieldSettings Value="ClientId" Text="ClientName"></ComboBoxFieldSettings>
+                        <ComboBoxEvents TItem="ClientMaster" TValue="int?" ValueChange="myclientcity" Filtering="OnFiltering"></ComboBoxEvents>
+                    </SfComboBox>
+
+                    <SfDropDownList DataSource="@myClientCityList" AllowFiltering="true"
+                                    TItem="tblClientCity"
+                                    TValue="int?"
+                                    Text="CityId"
+                                    @bind-Value="@Delnoteaddedit.DelCityId"
+                                    Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Auto"
+                                    Placeholder="Select City/Place"
+                                    Enabled=@vEnable>
+                        <DropDownListFieldSettings Text="CityName" Value="CityId"></DropDownListFieldSettings>
+                    </SfDropDownList>
+                </div>
+                <div class="grid-item">
+                    <SfTextBox Enabled="@vEnable" Placeholder="Our Ref" @bind-Value="@Delnoteaddedit.PoNumber" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                </div>
+            </div>
+        </EditForm>
+        <br />
+        <div class="col-lg-12 Control-section">
+            <div class="content-wrapper">
+                <div class="row">
+                    <SfGrid @ref="DelDetGrid" DataSource="@Deldetls" Height="500" Width="100%" AllowTextWrap="true" AllowSorting="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                            ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                            Toolbar="@(new List<string>() { "Add", "Delete", "Cancel", "Update", "Print","Manual" })">
+                        <GridEditSettings ShowConfirmDialog="false" NewRowPosition="NewRowPosition.Bottom" AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode=EditMode.Batch></GridEditSettings>
+                        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                        <GridPageSettings PageSize="100" PageSizes="@(new int[] { 50, 100, 200, 400,500})"></GridPageSettings>
+                        <GridEvents TValue="DelDetl" RowSelected="RowSelectHandler" OnToolbarClick="ToolbarClickHandler" CellSaved="CellSavedHandler" OnBatchSave="BatchSaveHandler"></GridEvents>
+                        <GridColumns>
+                            <GridColumn Field="@nameof(DelDetl.DelDetId)"
+                                        HeaderText="ID"
+                                        IsIdentity="true"
+                                        IsPrimaryKey="true"
+                                        Visible=false>
+                            </GridColumn>
+                            <GridColumn Field="@nameof(DelDetl.DelScanCode)" HeaderText="Scan Code" Width="100" AllowEditing="true"></GridColumn>
+
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+            </div>
+        </div>
+
+
+        <br />
+        <div class="e-footer-content" style="text-align: left; width: 100%;">
+            <div class="button-container">
+                <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+                <button type="submit" disabled=@vbuttonEnable class="e-btn e-normal e-primary" @onclick="@DelVouSave">Save</button>
+                <button type="button" class="e-btn e-normal" @onclick="@Cancel">Back</button>
+                <button type="button" disabled=@isChkList class="e-btn e-normal" @onclick="ProcessList">Process</button>
+            </div>
+        </div>
+        <br />
+        <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+        <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
+    </div>
+}
+<style>
+    .grid-container {
+        display: grid;
+        padding: 20px;
+        max-width: 1200px; /* Maximum width of the whole container - in this case both columns */
+        grid-template-columns: 1fr 1fr 1fr; /* Relative width of each column (1fr 1fr is equivalent to, say, 33fr 33fr */
+        grid-gap: 5px; /* size of the gap between columns */
+        background-color: #ffefd5;
+    }
+
+    .flex-container {
+        display: flex;
+        flex-direction: row; /* Causes tab to move along row and then onto following row */
+        justify-content: space-evenly; /* Equal space left and right margin and between elements */
+        margin: 10px; /* This appears to be vertical margin between rows */
+        column-gap: 10px;
+        /* Tgap betwen columns */
+    }
+
+    .e-numeric.e-style .e-Control.e-numerictextbox {
+        text-align: right;
+        padding: 0px 5px 0px 0px;
+    }
+</style>
+
+<style>
+    .e-grid .e-headercell, .e-grid .e-detailheadercell {
+        padding-right: 0 !important;
+    }
+
+    .e-grid .e-headercelldiv {
+        padding-right: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .e-grid .e-filtermenudiv {
+        margin: 0 93%;
+    }
+</style>
+
+

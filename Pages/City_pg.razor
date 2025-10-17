@@ -1,0 +1,126 @@
+﻿@page "/city_pg"
+@inject HttpClient Http
+@using DigiEquipSys.Services
+@using DigiEquipSys.Models
+@using DigiEquipSys.Interfaces
+@inject IGenCityService myGenCity
+@inject IGenCountryService myGenCountry
+@inject NavigationManager UriHelper
+
+<h3 class="page-title">City/Place List</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap5 {
+        stroke: red;
+    }
+    .Control-wrapper{
+        width: 250px;
+    }
+    .myButton{
+    background-color:#0a0a23;
+    color: #fff;
+    border: 2px solid #E9E9E9;
+    border-width: 2px 2px 2px 2px;
+    border-radius:10px; 
+    padding:15px;
+    min-height:30px; 
+    min-width: 120px;
+    }
+    .myButton:hover{
+      background-color:#002ead;
+      transition: 0.7s;
+        }
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap5" Size="50" >
+</SfSpinner>
+
+@if (CountryList != null  && CityList !=null )
+{
+    <div class="col-lg-12 Control-section">
+        <div class="content-wrapper">
+            <div class="Control-wrapper">
+                <SfDropDownList TItem="GenCountry" 
+                                TValue="string"
+                                DataSource="@CountryList"
+                                Placeholder="Select Country"
+                                PopupHeight="200px"
+                                PopupWidth="250px"
+                                AllowFiltering="true">
+                    <DropDownListFieldSettings Text="CountryName" Value="CountryCode"></DropDownListFieldSettings>
+                    <DropDownListEvents TItem="GenCountry" TValue="string" ValueChange="OnChange"></DropDownListEvents>
+                </SfDropDownList>
+            </div>
+            <br />
+            <div>
+                <SfGrid @ref="CityGrid" DataSource="@CityList" Height="550"  AllowSorting="true" AllowFiltering="true" AllowPaging="false" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                    ContextMenuItems="@(new List<object>() { "AutoFit", "AutoFitAll", "SortAscending", "SortDescending", "Copy", "ExcelExport", "CsvExport", "FirstPage", "PrevPage", "LastPage", "NextPage" })">
+                    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                    <GridEvents RowSelected="RowSelectHandler" TValue="GenCity"></GridEvents>
+                    <GridColumns>
+                        <GridColumn Field=@nameof(GenCity.CityId) AllowFiltering="false" HeaderText="Id" IsIdentity="true" IsPrimaryKey="true" Visible="false"></GridColumn>
+                        <GridColumn Field=@nameof(GenCity.CityCode) AllowFiltering="false" HeaderText="Code" TextAlign="@TextAlign.Left" Width="20"> </GridColumn>
+                        <GridColumn Field=@nameof(GenCity.CityName) AllowFiltering="true" HeaderText="City/Place Name" Width="100"></GridColumn>
+                        <GridColumn Field=@nameof(GenCity.CityCountryCode) AllowFiltering="true" HeaderText="Country" Width="60"></GridColumn>
+                     </GridColumns>
+                </SfGrid>
+            </div>
+            <div class="e-footer-content">
+                <br />
+                <SfButton class="myButton" CssClass="e-small e-success" @onclick="AddCity">
+                    Add City
+                </SfButton>
+
+                <SfButton class="myButton" CssClass="e-small e-success" @onclick="EditCity">
+                    Edit City/Place
+                </SfButton>
+                <SfButton class="myButton" CssClass="e-small e-success" @onclick="DeleteCity">
+                    Delete City
+                </SfButton>
+                <SfButton class="myButton" CssClass="e-small e-success" @onclick="PrintCity">
+                    Print City
+                </SfButton>
+            </div>
+            <SfDialog @ref="DialogAddCity" IsModal="true" Width="750px" ShowCloseIcon="true" Visible="false" Header="City List">
+                <DialogEvents Opened="@onOpen"></DialogEvents>
+                <EditForm Model="@addCity" OnValidSubmit="@CitySave">
+
+                    <div>
+                        <SfTextBox Enabled="@IsEdit" Placeholder="City Code" Width="50"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@addCity.CityCode"
+                                   @ref="CityCode">
+                        </SfTextBox>
+                    </div>
+
+                    <div>
+                        <SfTextBox Enabled="true" Placeholder="City/Place Name" Width="100"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@addCity.CityName"
+                                   @ref="CityDesc">
+                        </SfTextBox>
+                    </div>
+                    <br /><br />
+                    <div class="e-footer-content">
+                        <div class="button-container">
+                            <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+                            <button type="submit" class="e-btn e-normal e-primary">Save</button>
+                            <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Close</button>
+                        </div>
+                    </div>
+                </EditForm>
+            </SfDialog>
+            <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+            <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
+            <br />
+            <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
+                <SfButton @onclick="@((args) => UriHelper.NavigateTo("others_pg"))" IsPrimary="true" IconPosition=@IconPosition.Left>Back</SfButton>
+            </div>
+        </div>
+    </div>
+}

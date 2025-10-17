@@ -1,0 +1,105 @@
+﻿@page "/ssale_pg"
+@using DigiEquipSys.Interfaces;
+@using DigiEquipSys.Models
+@using DigiEquipSys.Services
+@inject NavigationManager NavigationManager
+@inject IAdminService myAdminService
+@inject ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime
+
+<PageTitle>
+    Delivery Note
+</PageTitle>
+<h3 class="page-title">Secondary Sale (SS) </h3>
+
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap4 {
+        stroke: red;
+    }
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap4" Size="50" Label="Data loading">
+</SfSpinner>
+@if (@Delnotelist != null)
+{
+    {
+        <div class="col-lg-12 Control-section">
+            <div class="content-wrapper">
+                <div class="row">
+                    <SfGrid DataSource="@Delnotelist" Toolbar="Toolbaritems" Height="600" Width="100%" AllowFiltering="true" AllowSorting="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true">
+                        <GridEvents TValue="SdelHead" RowSelected="RowSelectHandler" OnToolbarClick="ToolbarClickHandler"></GridEvents>
+                        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                        <GridPageSettings PageSize="100" PageSizes="@(new int[] { 50, 100, 200, 400,500})"></GridPageSettings>
+                        <GridColumns>
+
+                            <GridColumn Field="@nameof(SdelHead.SdelId)"
+                                        HeaderText="Id"
+                                        TextAlign="@TextAlign.Left"
+                                        Width="10" Visible="false" >
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(SdelHead.SdelDispNo)"
+                                        HeaderText="Transaction No"
+                                        TextAlign="@TextAlign.Left"
+                                        Width="200">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(SdelHead.SdelDate)"
+                                        HeaderText="Transaction Date"
+                                        Format="d"
+                                        Type="ColumnType.Date"
+                                        TextAlign="@TextAlign.Center"
+                                        Width="200">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(SdelHead.SdelDateFrom)"
+                                        HeaderText="Period From"
+                                        TextAlign="@TextAlign.Left"
+                                        Width="100">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(SdelHead.SdelDateTo)"
+                                        HeaderText="Period To"
+                                        TextAlign="@TextAlign.Left"
+                                        Width="100">
+                            </GridColumn>
+                            @*<GridColumn Field="@nameof(SdelHead.SdelApproved)"
+                                        HeaderText="Approved"
+                                        TextAlign="@TextAlign.Left"
+                                        Width="200">
+                            </GridColumn>*@
+
+                            <GridColumn>
+                                <Template>
+                                    @{
+                                        var adet = (context as SdelHead);
+                                        <div>
+                                            <SfButton @onclick="@((args) => Navigate(adet.SdelId))" IsPrimary="true" IconPosition=@IconPosition.Left>Secondary Sale</SfButton>
+                                        </div>
+                                    }
+                                </Template>
+                            </GridColumn>
+                            <GridColumn>
+
+                            </GridColumn>
+                        </GridColumns>
+                    </SfGrid>
+                    <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+                </div>
+            </div>
+        </div>
+        <div class="e-footer-content">
+            <br />
+            <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
+                <a href="#" @onclick="NavigateToPrevious" CssClass="e-link">
+                    <SfButton CssClass="e-small e-success">BACK</SfButton>
+                </a>
+            </div>
+        </div>
+    }
+}

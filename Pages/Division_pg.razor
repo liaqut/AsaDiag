@@ -1,0 +1,129 @@
+﻿@page "/division_pg"
+@inject HttpClient Http
+@using DigiEquipSys.Services
+@using DigiEquipSys.Models
+@using DigiEquipSys.Interfaces
+@inject IDivisionService myBranch
+@inject IBranchService myCompany
+@inject NavigationManager UriHelper
+
+<h3 class="page-title">Branches List</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap5 {
+        stroke: red;
+    }
+
+    .Control-wrapper {
+        width: 250px;
+    }
+
+    .myButton {
+        background-color: #0a0a23;
+        color: #fff;
+        border: 2px solid #E9E9E9;
+        border-width: 2px 2px 2px 2px;
+        border-radius: 10px;
+        padding: 15px;
+        min-height: 30px;
+        min-width: 120px;
+    }
+
+        .myButton:hover {
+            background-color: #002ead;
+            transition: 0.7s;
+        }
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap5" Size="50">
+</SfSpinner>
+
+@if (CompanyList != null && BranchList != null)
+{
+    <div class="col-lg-12 Control-section">
+        <div class="content-wrapper">
+            <div class="Control-wrapper">
+                <SfDropDownList TItem="Branch"
+                                TValue="string"
+                                DataSource="@CompanyList"
+                                Placeholder="Select Company"
+                                PopupHeight="200px"
+                                PopupWidth="250px"
+                                AllowFiltering="true">
+                    <DropDownListFieldSettings Text="BranchDesc" Value="BranchCode"></DropDownListFieldSettings>
+                    <DropDownListEvents TItem="Branch" TValue="string" ValueChange="OnChange"></DropDownListEvents>
+                </SfDropDownList>
+            </div>
+            <br />
+            <div>
+                <SfGrid @ref="BranchGrid" DataSource="@BranchList" Height="550" AllowSorting="true" AllowFiltering="true" AllowPaging="false" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                        ContextMenuItems="@(new List<object>() { "AutoFit", "AutoFitAll", "SortAscending", "SortDescending", "Copy", "ExcelExport", "CsvExport", "FirstPage", "PrevPage", "LastPage", "NextPage" })">
+                    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                    <GridEvents RowSelected="RowSelectHandler" TValue="Division"></GridEvents>
+                    <GridColumns>
+                        <GridColumn Field=@nameof(Division.LocId) AllowFiltering="false" HeaderText="Id" IsIdentity="true" IsPrimaryKey="true" Visible="false"></GridColumn>
+                        <GridColumn Field=@nameof(Division.LocCode) AllowFiltering="false" HeaderText="Code" TextAlign="@TextAlign.Left" Width="20"> </GridColumn>
+                        <GridColumn Field=@nameof(Division.LocDesc) AllowFiltering="true" HeaderText="Branch Location/Name" Width="100"></GridColumn>
+                        <GridColumn Field=@nameof(Division.LocBranchCode) AllowFiltering="true" HeaderText="Company" Width="60"></GridColumn>
+                    </GridColumns>
+                </SfGrid>
+            </div>
+            <div class="e-footer-content">
+                <br />
+                <SfButton class="myButton" CssClass="e-small e-success" @onclick="AddBranch">
+                    Add Branch
+                </SfButton>
+
+                <SfButton class="myButton" CssClass="e-small e-success" @onclick="EditBranch">
+                    Edit Branch Name / Location
+                </SfButton>
+                <SfButton class="myButton" CssClass="e-small e-success" @onclick="DeleteBranch">
+                    Delete Branch
+                </SfButton>
+                <SfButton class="myButton" CssClass="e-small e-success" @onclick="PrintBranch">
+                    Print Branch
+                </SfButton>
+            </div>
+            <SfDialog @ref="DialogAddBranch" IsModal="true" Width="750px" ShowCloseIcon="true" Visible="false" Header="City List">
+                <DialogEvents Opened="@onOpen"></DialogEvents>
+                <EditForm Model="@addBranch" OnValidSubmit="@BranchSave">
+
+                    <div>
+                        <SfTextBox Enabled="@IsEdit" Placeholder="Branch Code" Width="50"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@addBranch.LocCode"
+                                   @ref="LocCode">
+                        </SfTextBox>
+                    </div>
+
+                    <div>
+                        <SfTextBox Enabled="true" Placeholder="Branch Name / Location" Width="100"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@addBranch.LocDesc"
+                                   @ref="LocDesc">
+                        </SfTextBox>
+                    </div>
+                    <br /><br />
+                    <div class="e-footer-content">
+                        <div class="button-container">
+                            <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+                            <button type="submit" class="e-btn e-normal e-primary">Save</button>
+                            <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Close</button>
+                        </div>
+                    </div>
+                </EditForm>
+            </SfDialog>
+            <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+            <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
+            <br />
+            <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
+                <SfButton @onclick="@((args) => UriHelper.NavigateTo("blank_pg"))" IsPrimary="true" IconPosition=@IconPosition.Left>Back</SfButton>
+            </div>
+        </div>
+    </div>
+}

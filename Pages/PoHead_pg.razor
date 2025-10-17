@@ -1,0 +1,263 @@
+﻿@page "/poHead_pg/{PovouId:long}/{vCompType}"
+@page "/poHead_pg/{PovouId:long}"
+@page "/poHead_pg/{vCompType}"
+@using DigiEquipSys.Interfaces
+@using DigiEquipSys.Models
+@using DigiEquipSys.Services
+@inject IItemMasterService myItemMaster
+@inject IItemUnitService myUnitService
+@inject IGroupMasterService myGroupService
+@inject ICatMasterService myCatService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject ISessionStorageService sessionStorage
+@inject IClientService myClientService
+@inject AccYear myAccYear
+
+<PageTitle>
+    Purchase Order
+</PageTitle>
+@* <h3 class="page-title">Purchase Order</h3> *@
+<h2 class="form-title text-center mb-4">🧾Purchase Order Entry</h2>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-bootstrap4 {
+        stroke: red;
+    }
+</style>
+<style>
+    .grid-item {
+        background-color: rgba(255, 255, 255, 0.8);
+    }
+</style>
+
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap4" Size="50" Label="Data loading">
+</SfSpinner>
+@if (@povoudetails != null)
+{
+    <div class="col-lg-12">
+        <EditForm Model="@povouaddedit">
+            <ChildContent Context="outerContext">
+                <div class="grid-container">
+                    <div class="grid-item">
+                        <SfTextBox Enabled="false" Placeholder="Po No" @bind-Value="@povouaddedit.PohDispNo" FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                        <SfDatePicker TValue="DateTime?" Placeholder="Po Date" @bind-Value="@povouaddedit.PohDate" FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Auto">
+                            <DatePickerEvents TValue="DateTime?" ValueChange="NoToFutureDate"></DatePickerEvents>
+                        </SfDatePicker>
+                    </div>
+                    
+                    <div class="grid-item">
+                        <SfComboBox @ref="@ComboObj1" TValue="int?" TItem="SupplierMaster" Enabled="@vEnabled"  @bind-Value="@povouaddedit.PohVendId" DataSource="@suppList" Placeholder="Select a Vendor" AllowFiltering="true" AllowCustom="true"
+                             FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always">
+                            <ComboBoxFieldSettings Value="SuppId" Text="SuppName"></ComboBoxFieldSettings>
+                            <ComboBoxEvents TItem="SupplierMaster" TValue="int?" Filtering="OnFiltering1"></ComboBoxEvents>
+                        </SfComboBox>
+                        <SfComboBox @ref="@ComboObj2" TValue="int?" TItem="ClientMaster" Enabled="@vEnabled" @bind-Value="@povouaddedit.PohCustId" DataSource="@clientList" Placeholder="Select a Customer" AllowFiltering="true" AllowCustom="true"
+                                    FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always">
+                            <ComboBoxFieldSettings Value="ClientId" Text="ClientName"></ComboBoxFieldSettings>
+                            <ComboBoxEvents TItem="ClientMaster" TValue="int?" Filtering="OnFiltering2"></ComboBoxEvents>
+                        </SfComboBox>
+                    </div>
+
+                    <div class="grid-item">
+                        <SfTextBox Placeholder="Vendor Ref" @bind-Value="@povouaddedit.PohVendRef" FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                        <SfTextBox Placeholder="Remarks" @bind-Value="@povouaddedit.PohRemarks" FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                    </div>
+
+                    <div class="grid-item">
+                        <SfDropDownList DataSource="@currList" EnableVirtualization="true" 
+                                        TItem="GenCurrency"
+                                        TValue="string"
+                                        Text="Curr"
+                                        @bind-Value="@povouaddedit.PohCurr"
+                                        FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Auto"
+                                        Placeholder="Currency"
+                                        Enabled="@vEnabled">
+                            <DropDownListFieldSettings Text="CurrLongName" Value="CurrShortName"></DropDownListFieldSettings>
+                        </SfDropDownList>
+                        <SfNumericTextBox ShowSpinButton="false" Placeholder="Conv. Rate" @bind-Value="@povouaddedit.PohConvRate" FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfNumericTextBox>
+                    </div>
+
+                </div>
+            </ChildContent>
+        </EditForm>
+        <br />
+
+                <div class="col-lg-12 control-section">
+                    <div class="content-wrapper">
+                        <div class="row">
+
+                            <SfGrid @ref="PoDetGrid" AllowTextWrap="true" DataSource="@povoudetails" Height="500" Width="100%" AllowFiltering="true" AllowSorting="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                                    ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                                    Toolbar="@(new List<string>() { "Add", "Delete", "Cancel", "Update", "Print" })">
+                                <GridEditSettings ShowConfirmDialog="false" NewRowPosition="NewRowPosition.Bottom" AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Batch"></GridEditSettings>
+                                <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                                <GridPageSettings PageSize="100" PageSizes="@(new int[] { 50, 100, 200, 400,500})"></GridPageSettings>
+                                <GridEvents RowSelected="RowSelectHandler" OnToolbarClick="ToolbarClickHandler" OnActionComplete="ActionCompleteHandler" TValue="PoDetail" CellSaved="CellSavedHandler" OnBatchSave="BatchSaveHandler"></GridEvents>
+
+                                <GridColumns>
+                                    <GridColumn Field="@nameof(PoDetail.PodId)"
+                                                HeaderText="ID"
+                                                IsIdentity="true"
+                                                IsPrimaryKey="true"
+                                                Visible=false>
+                                    </GridColumn>
+
+                                    <GridForeignColumn Field="@nameof(PoDetail.PodStkIdDesc)" ForeignKeyField="ItemId" ForeignKeyValue="ItemDesc" ForeignDataSource="@ItemMasterList" HeaderText="Item Description" Width="50px">
+                                        <EditTemplate>
+                                            <SfComboBox @ref="@ComboObj" TValue="long?" TItem="ItemMaster" @bind-Value="@podetaddedit.PodStkIdDesc" DataSource="@ItemMasterListDistinct" Placeholder="Select a Product" AllowFiltering="true" AllowCustom="true"> 
+                                                <ComboBoxFieldSettings Value="ItemId" Text="ItemDesc"></ComboBoxFieldSettings>
+                                                <ComboBoxEvents TItem="ItemMaster" TValue="long?" Filtering="OnFiltering" Created="CreateHandler"></ComboBoxEvents>
+                                            </SfComboBox>
+                                        </EditTemplate>
+                                    </GridForeignColumn>
+
+                                    <GridColumn Field="@nameof(PoDetail.PodListNo)" EditorSettings="@myEditParams" AllowEditing="false"
+                                                HeaderText="List No."
+                                                Width="20">
+                                    </GridColumn>
+
+                                      <GridForeignColumn Field="@nameof(PoDetail.PodStkIdGrp)"
+                                                       HeaderText="Group Desc"
+                                                       ForeignKeyField="GrpNo" ForeignKeyValue="GrpDesc" ForeignDataSource="@ItemGroupList"
+                                                       Width="30" AllowEditing="false">
+                                    </GridForeignColumn>
+                                    <GridForeignColumn Field="@nameof(PoDetail.PodStkIdCat)"
+                                                       HeaderText="Categ Desc"
+                                                       ForeignKeyField="CatNo" ForeignKeyValue="CatDesc" ForeignDataSource="@ItemCatList"
+                                                       Width="30" AllowEditing="false">
+                                    </GridForeignColumn>
+                                    <GridForeignColumn Field="@nameof(PoDetail.PodStkIdUnit)"
+                                                       HeaderText="Unit"
+                                                       ForeignKeyField="ItemUnitDesc" ForeignKeyValue="ItemUnitDesc" ForeignDataSource="@ItemUnitList" AllowFiltering="false"
+                                                       Width="25" AllowEditing="false">
+                                    </GridForeignColumn>
+                                    <GridForeignColumn Field="@nameof(PoDetail.PodHsnCode)"
+                                                       HeaderText="HSN Code"
+                                                       ForeignKeyField="ItemHsnCode" ForeignKeyValue="ItemHsnCode" ForeignDataSource="@ItemMasterList" AllowFiltering="false"
+                                                       Width="20" AllowEditing="false">
+                                    </GridForeignColumn>
+
+                                    <GridForeignColumn Field="@nameof(PoDetail.PodGstPct)"
+                                                       HeaderText="GST %"
+                                                       ForeignKeyField="ItemGst" ForeignKeyValue="ItemGst" ForeignDataSource="@ItemMasterList" AllowFiltering="false"
+                                                       Width="12" AllowEditing="false">
+                                    </GridForeignColumn> 
+
+                                    <GridColumn Field="@nameof(PoDetail.PodQty)" EditorSettings="@myEditParams" AllowFiltering="false"
+                                                HeaderText="PO Qty"
+                                                Width="30">
+                                    </GridColumn>
+
+                                    <GridColumn Field="@nameof(PoDetail.PodUp)" EditorSettings="@myEditParams" AllowFiltering="false"
+                                                HeaderText="Unit Price"
+                                                Width="30">
+                                    </GridColumn>
+                                    <GridColumn Field="@nameof(PoDetail.PodDiscPct)" EditorSettings="@myEditParams" AllowFiltering="false"
+                                                HeaderText="Discount (%)"
+                                                Width="20">
+                                    </GridColumn>
+                                    <GridColumn Field="@nameof(PoDetail.PodDiscAmt)" EditorSettings="@myEditParams" AllowFiltering="false"
+                                                HeaderText="Disc. Amt"
+                                                Width="30">
+                                    </GridColumn>
+                                    <GridColumn Field=@nameof(PoDetail.PodAmount) AllowFiltering="false" AllowEditing="false" EditorSettings="@myEditParams" HeaderText="Total Amount" TextAlign="@TextAlign.Right" Format="n2" Width="30"></GridColumn>
+                                    <GridAggregates>
+                                        <GridAggregate>
+                                            <GridAggregateColumns>
+                                                <GridAggregateColumn Field=@nameof(PoDetail.PodAmount) Type="AggregateType.Sum" Format="n2">
+                                                    <FooterTemplate Context="NetContext">
+                                                        @{
+                                                            var aggregate = NetContext as AggregateTemplateContext;
+                                                            double MyValue = Convert.ToDouble(@GetTotalAggregate());
+                                                            <div id="total">Total: </div>
+                                                            <div style="position: absolute; right: 10px;">@MyValue.ToString("#,###,###.00")</div>
+                                                        }
+                                                    </FooterTemplate>
+                                                </GridAggregateColumn>
+                                            </GridAggregateColumns>
+                                        </GridAggregate>
+                                    </GridAggregates>
+                                </GridColumns>
+                            </SfGrid>
+                        </div>
+                    </div>
+                </div>
+                <br /><br />
+                <div class="e-footer-content" style="text-align: left; width: 100%;">
+                    <div class="button-container">
+                        <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+                        <button type="submit" disabled=@vSave class="e-btn e-normal e-primary" @onclick="@PoVouSave">Save</button>
+                        <button type="button" class="e-btn e-normal" @onclick="@Cancel">Back</button>
+                        <button type="button" disabled=@isButtonDisabled class="e-btn e-normal btn-success" @onclick="@PoVouPrint">Print</button>
+                        <button type="button" disabled=@isZoho class="e-btn e-normal btn-success" @onclick="@PoInvToZoho">Invoice to Zoho</button>
+                    </div>
+                </div>
+        <br />
+        <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+        <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
+    </div>
+    <div id="report-viewer" style="height: 100vh;z-index: 1; position: absolute; top: 20; left: 20;"></div>
+}
+<style>
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 1200px; /* Maximum width of the whole container - in this case both columns */
+    }
+
+    .flex-container {
+        display: flex;
+        flex-direction: row; /* Causes tab to move along row and then onto following row */
+        justify-content: space-evenly; /* Equal space left and right margin and between elements */
+        margin: 10px; /* This appears to be vertical margin between rows */
+        column-gap: 10px;
+        align-items:start;
+        /* Tgap betwen columns */
+    }
+
+    .grid-item {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .e-control.e-textbox,
+    .e-dropdownlist,
+    .e-numerictextbox,
+    .e-datepicker {
+        font-size: 14px;
+        border-radius: 8px;
+    }
+
+        .e-float-input input,
+        .e-input-group input,
+        .e-numerictextbox input {
+            padding: 10px;
+        }
+
+    .e-float-text {
+        font-weight: 500;
+        color: #555;
+    }
+
+    .form-title {
+        font-size: 24px;
+        margin-bottom: 1rem;
+        color: #333;
+        font-weight: 600;
+        text-align: center;
+    }
+</style> 

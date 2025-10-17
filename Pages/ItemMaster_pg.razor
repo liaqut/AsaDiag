@@ -1,0 +1,264 @@
+﻿@page "/itemmaster_pg/{vCompType}"
+@page "/itemmaster_pg"
+@inject HttpClient Http
+@using DigiEquipSys.Services
+@using DigiEquipSys.Models
+@using DigiEquipSys.Interfaces
+@inject IItemMasterService myItemMaster
+@inject IGroupMasterService myGroupMaster
+@inject ICatMasterService myCatMaster
+@inject IItemUnitService myItemUnit
+@inject ISupplierService mySupplierService
+@inject IClientService myClientService
+@inject NavigationManager UriHelper
+@inject ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime
+@inject ZohoTokenService ZohoTokenService
+@inject ZohoApiService ZohoService
+
+<h3 class="page-title">Item Master</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color:white
+    }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap5 {
+        stroke: red;
+    }
+</style>
+<style>
+    .dialog-header {
+        font-size: 1.0rem;
+        font-weight: bold;
+        margin-bottom: 4px;
+        color: #333;
+    }
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap5" Size="50">
+</SfSpinner>
+<button @onclick="ConnectToZoho">Connect to Zoho</button>
+
+@if (ItemMasterList != null)
+{
+    <div class="col-lg-12 Control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                <SfGrid @ref="ItemMasterGrid" Height="550px" Toolbar="Toolbaritems"
+                    DataSource="@ItemMasterList" AllowTextWrap
+                    AllowSorting="true" AllowFiltering="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true" 
+                    ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})">
+                    <GridEvents RowSelected="RowSelectHandler" TValue="ItemMaster" OnToolbarClick="ToolbarClickHandler"></GridEvents>
+                    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                    <GridEditSettings AllowEditOnDblClick="false" AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode=EditMode.Normal Dialog="DialogParams"></GridEditSettings>
+                    <GridPageSettings PageSize="50" PageSizes="@(new int[] {20, 30, 50, 100, 200, 400,500})"></GridPageSettings>
+
+                    <GridTemplates>
+                        <EmptyRecordTemplate>
+                            <span>No Records Found</span>
+                        </EmptyRecordTemplate>
+                    </GridTemplates>
+                    <GridColumns>
+                        <GridColumn Field="@nameof(ItemMaster.ItemId)"
+                                HeaderText="ID"
+                                IsIdentity="true"
+                                IsPrimaryKey="true"
+                                Visible=false>
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(ItemMaster.ItemListNo)"
+                                HeaderText="List No."
+                                Width="50"
+                                AllowEditing="@IsEdit">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(ItemMaster.ItemProdCode)"
+                                    HeaderText="Product Code"
+                                    Width="50">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(ItemMaster.ItemDesc)"
+                                    HeaderText="Item Desc"
+                                    Width="100">
+                        </GridColumn>
+                        <GridForeignColumn Field=@nameof(ItemMaster.ItemGrpCode) HeaderText="Group" Width="60" ForeignKeyField="GrpNo" ForeignKeyValue="GrpDesc" ForeignDataSource="@GroupMasterList">
+                        </GridForeignColumn>
+
+                        <GridForeignColumn Field=@nameof(ItemMaster.ItemCatCode) HeaderText="Category" Width="60" ForeignKeyField="CatNo" ForeignKeyValue="CatDesc" ForeignDataSource="@CategMasterList">
+                         </GridForeignColumn>
+
+                       <GridForeignColumn Field=@nameof(ItemMaster.ItemUnit)
+                                       HeaderText="Unit" ForeignKeyField="ItemUnitDesc"
+                                       ForeignKeyValue="ItemUnitDesc"
+                                       ForeignDataSource="@ItemUnitList" Width="40">
+                        </GridForeignColumn>
+                        <GridColumn Field="@nameof(ItemMaster.ItemCostPrice)" Format="n2"
+                                    HeaderText="Purchase Price" TextAlign="TextAlign.Right"
+                                    Width="50">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(ItemMaster.ItemSellPrice)" Format="n2"
+                                    HeaderText="Selling Price" TextAlign="TextAlign.Right"
+                                    Width="50">
+                        </GridColumn>
+
+
+                           <GridColumn HeaderText="Margin Value" Format="n2" TextAlign="TextAlign.Center" Width="30" Visible="@(myRole == "01")">
+                                <Template>
+                                    @{
+                                        var imast = context as ItemMaster;
+                                        var Amt = (@imast.ItemSellPrice - @imast.ItemCostPrice);
+                                        <div>@((Amt ?? 0).ToString("n2"))</div>
+                                    }
+                                </Template>
+                            </GridColumn>
+
+                            <GridColumn HeaderText="Margin %" Format="n2" TextAlign="TextAlign.Center" Width="30" Visible="@(myRole == "01")">
+                                <Template>
+                                    @{
+                                        var imast = context as ItemMaster;
+                                        var Amt = @imast.ItemSellPrice==0 ? 0 : ((@imast.ItemSellPrice - @imast.ItemCostPrice) / @imast.ItemSellPrice * 100);
+                                        <div>@((Amt ?? 0).ToString("n2"))</div>
+                                    }
+                                </Template>
+                            </GridColumn>
+
+
+                        <GridForeignColumn Field=@nameof(ItemMaster.ItemClientCode)
+                                           HeaderText="Client Name" ForeignKeyField="ClientCode"
+                                           ForeignKeyValue="ClientName"
+                                           ForeignDataSource="@ClientMasterList" Width="40">
+                        </GridForeignColumn>
+
+                        <GridForeignColumn Field=@nameof(ItemMaster.ItemSuppCode) 
+                                           HeaderText="Supplier Name" ForeignKeyField="SuppCode"
+                                           ForeignKeyValue="SuppName"
+                                           ForeignDataSource="@SupplierMasterList" Width="40">
+                        </GridForeignColumn>
+                        <GridColumn Field="@nameof(ItemMaster.ItemZohoItemId)" 
+                                    HeaderText="Zoho Item Id" TextAlign="TextAlign.Left"
+                                    Width="100">
+                        </GridColumn>
+
+                    </GridColumns>
+                </SfGrid>
+                <br />
+                <SfDialog @ref="DialogAddItemMaster" IsModal="true" Width="750px" ShowCloseIcon="true" Visible="false" Header="Item Master">
+                    <EditForm Model="@itemmaster" OnValidSubmit="@ItemMasterSave">
+
+                        <div class="Control-wrapper">
+                            <SfComboBox @ref="@ComboItem" TValue="string" TItem="ItemMaster" @bind-Value="@itemmaster.ItemListNo" DataSource="@ItemMasterListDistinct" Placeholder="Select an Item" AllowFiltering="true" AllowCustom="true">
+                                <ComboBoxFieldSettings Value="ItemListNo" Text="ItemDesc"></ComboBoxFieldSettings>
+                                <ComboBoxEvents TItem="ItemMaster" TValue="string" ValueChange="@OnItemChanged" Filtering="OnFiltering"></ComboBoxEvents>
+                            </SfComboBox>
+                        </div>
+                        <br />
+
+                        <div class="sftextbox-header">
+                            <h4 class="dialog-header">List Number</h4>
+                            <SfTextBox Enabled="@IsEdit" Placeholder=" List No." Width="50" 
+                                       Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                       @bind-Value="@itemmaster.ItemListNo">
+                            </SfTextBox>
+                        </div>
+
+                        <div class="sftextbox-header">
+                            <h4 class="dialog-header">Product Code</h4>
+                            <SfTextBox Enabled="true" Placeholder="Product Code" Width="100"
+                                       Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                       @bind-Value="@itemmaster.ItemProdCode">
+                            </SfTextBox>
+                        </div>
+
+                        <div class="sftextbox-header">
+                            <h4 class="dialog-header">Item Description</h4>
+                            <SfTextBox Enabled="true" Placeholder="Item Desc" Width="100"
+                                       Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                       @bind-Value="@itemmaster.ItemDesc">
+                            </SfTextBox>
+                        </div>
+
+                        <div class="sftextbox-header">
+                            <h4 class="dialog-header">Item Unit</h4>
+                            <SfComboBox TValue="string" TItem="ItemUnit" @bind-Value="@itemmaster.ItemUnit" DataSource="@ItemUnitList" Placeholder="Select Unit">
+                                <ComboBoxFieldSettings Value="ItemUnitDesc" Text="ItemUnitDesc"></ComboBoxFieldSettings>
+                            </SfComboBox>
+                        </div>
+
+                        <div class="sftextbox-header">
+                            <h4 class="dialog-header">Group Name</h4>
+                            <SfComboBox TValue="string" TItem="GroupMaster" @bind-Value="@itemmaster.ItemGrpCode" DataSource="@GroupMasterList" Placeholder="Select a Group">
+                                <ComboBoxFieldSettings Value="GrpNo" Text="GrpDesc"></ComboBoxFieldSettings>
+                                <ComboBoxEvents TItem="GroupMaster" TValue="string" ValueChange="@OnGroupChanged"></ComboBoxEvents>
+                            </SfComboBox>
+                        </div>
+                        <div class="sftextbox-header">
+                            <h4 class="dialog-header">Category Name</h4>
+                            <SfComboBox TValue="string" TItem="CategMaster" @bind-Value="@itemmaster.ItemCatCode" DataSource="@CategMasterList" Placeholder="Select a Category">
+                                <ComboBoxFieldSettings Value="CatNo" Text="CatDesc"></ComboBoxFieldSettings>
+                                <ComboBoxEvents TItem="CategMaster" TValue="string" OnOpen="@OnCatOpen"></ComboBoxEvents>
+                            </SfComboBox>
+                        </div>
+                        <div class="sftextbox-header">
+                            <h4 class="dialog-header">Purchase Price</h4>
+                            <SfNumericTextBox Enabled="true" Placeholder="Purchase Price" Width="100" OnChange="ChangePurchPrice"
+                                       Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                       @bind-Value="@itemmaster.ItemCostPrice">
+                            </SfNumericTextBox>
+                        </div>
+                        <div class="sftextbox-header">
+                            <h4 class="dialog-header">Selling Price</h4>
+                            <SfNumericTextBox Enabled="true" Placeholder="Selling Price" Width="100"  OnChange="ChangeSellPrice"
+                                       Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                       @bind-Value="@itemmaster.ItemSellPrice">
+                            </SfNumericTextBox>
+                        </div>
+                        <div class="sftextbox-header">
+                            <h4 class="dialog-header">Client Name</h4>
+                            <SfComboBox TValue="string" TItem="ClientMaster" @bind-Value="@itemmaster.ItemClientCode" DataSource="@ClientMasterList" Placeholder="Select a Customer">
+                                <ComboBoxFieldSettings Value="ClientCode" Text="ClientName"></ComboBoxFieldSettings>
+                            </SfComboBox>
+                        </div>
+                        <div class="sftextbox-header">
+                            <h4 class="dialog-header">Supplier Name</h4>
+                            <SfComboBox TValue="string" TItem="SupplierMaster" @bind-Value="@itemmaster.ItemSuppCode" DataSource="@SupplierMasterList" Placeholder="Select a Supplier">
+                                <ComboBoxFieldSettings Value="SuppCode" Text="SuppName"></ComboBoxFieldSettings>
+                            </SfComboBox>
+                        </div>
+                        <div class="sftextbox-header">
+                            <h4 class="dialog-header">GST</h4>
+                            <SfNumericTextBox Enabled="true" Placeholder="GST" Width="100"
+                                              Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                              @bind-Value="@itemmaster.ItemGst">
+                            </SfNumericTextBox>
+                        </div>
+                        <div class="sftextbox-header">
+                            <h4 class="dialog-header">HSN Code</h4>
+                            <SfTextBox Enabled="true" Placeholder="HSN Code" Width="100"
+                                       Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                       @bind-Value="@itemmaster.ItemHsnCode">
+                            </SfTextBox>
+                        </div>
+
+                        <br /><br />
+                        <div class="e-footer-content">
+                            <div class="button-container">
+                                <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+                                <button type="submit" class="e-btn e-normal e-primary">Save</button>
+                                <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Close</button>
+                            </div>
+                        </div>
+                    </EditForm>
+                </SfDialog>
+                <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+                <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
+                <ConfirmPurchPricePage @ref="DialogPurchPrice" PurchPriceHeaderMessage="@PurchPriceHeaderMessage" PurchPriceContentMessage="@PurchPriceContentMessage" ConfirmationChanged="ConfirmPurchPrice" />
+                <ConfirmSellPricePage @ref="DialogSellPrice" SellPriceHeaderMessage="@SellPriceHeaderMessage" SellPriceContentMessage="@SellPriceContentMessage" ConfirmationChanged="ConfirmSellPrice" />
+
+                <a href="#" @onclick="NavigateToPrevious" CssClass="e-link">
+                    <SfButton CssClass="e-small e-success">BACK</SfButton>
+                </a>
+            </div>
+        </div>
+    </div>
+}
+

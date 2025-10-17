@@ -1,0 +1,321 @@
+is_global = true
+build_property.TargetFramework = net8.0
+build_property.TargetFramework = net8.0
+build_property.TargetPlatformMinVersion = 
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = DigiEquipSys
+build_property.RootNamespace = DigiEquipSys
+build_property.ProjectDir = D:\DigiEquipSys2\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 8.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = D:\DigiEquipSys2
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 8.0
+build_property.EnableCodeStyleSeverity = 
+
+[D:/DigiEquipSys2/Components/App.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBcHAucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Components/Routes.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSb3V0ZXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/AddUser_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRkVXNlcl9wZy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Blank_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQmxhbmtfcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Branches_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQnJhbmNoZXNfcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/CatMaster_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2F0TWFzdGVyX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/CheckListDel_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2hlY2tMaXN0RGVsX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/CheckList_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2hlY2tMaXN0X3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/ChkListInv_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2hrTGlzdEludl9wZy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/City_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2l0eV9wZy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/CommCharge_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ29tbUNoYXJnZV9wZy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Country_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ291bnRyeV9wZy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Currency_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ3VycmVuY3lfcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Customer_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ3VzdG9tZXJfcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/DelHeadFast_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGVsSGVhZEZhc3RfcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/DelHead_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGVsSGVhZF9wZy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Del_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGVsX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Division_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGl2aXNpb25fcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Error.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXJyb3IucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/GroupMaster_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcR3JvdXBNYXN0ZXJfcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW5kZXgucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/ItemMaster_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSXRlbU1hc3Rlcl9wZy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/ItemUnit_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSXRlbVVuaXRfcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/ItSpecs.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSXRTcGVjcy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTG9naW4ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/MonthlyStatByCustomer.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTW9udGhseVN0YXRCeUN1c3RvbWVyLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/MonthlyStatByMonth.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTW9udGhseVN0YXRCeU1vbnRoLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/MonthlyStat_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTW9udGhseVN0YXRfcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/OpStock_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcT3BTdG9ja19wZy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Others_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcT3RoZXJzX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/PasswordEntry.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUGFzc3dvcmRFbnRyeS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Pending_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUGVuZGluZ19wZy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/PoHead_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUG9IZWFkX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/PoRcvd_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUG9SY3ZkX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Po_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUG9fcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Po_Rep.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUG9fUmVwLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Privilege_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJpdmlsZWdlX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/PurchStat_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHVyY2hTdGF0X3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/PushInvoiceToZoho.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHVzaEludm9pY2VUb1pvaG8ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/RcptDates_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmNwdERhdGVzX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/RcptEdit_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmNwdEVkaXRfcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/RcptHeadEdit_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmNwdEhlYWRFZGl0X3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/RcptHeadFast_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmNwdEhlYWRGYXN0X3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/RcptHead_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmNwdEhlYWRfcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Rcpt_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmNwdF9wZy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/RcvdMore_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmN2ZE1vcmVfcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/SalesStat_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2FsZXNTdGF0X3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/SsaleHead_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3NhbGVIZWFkX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Ssale_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3NhbGVfcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/StkChk_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RrQ2hrX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/StkJournal_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RrSm91cm5hbF9wZy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/StkJourn_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RrSm91cm5fcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Supplier_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3VwcGxpZXJfcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/Test.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVGVzdC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/UnderConstruction.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVW5kZXJDb25zdHJ1Y3Rpb24ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/UpdPriceCost_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVXBkUHJpY2VDb3N0X3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/UpdPriceSale_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVXBkUHJpY2VTYWxlX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/ViewIncoming_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVmlld0luY29taW5nX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/ViewJournals_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVmlld0pvdXJuYWxzX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/ViewOutgoing_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVmlld091dGdvaW5nX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/ViewStockTrans_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVmlld1N0b2NrVHJhbnNfcGcucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/ViewStock_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVmlld1N0b2NrX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/ZohoAuthCallback.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcWm9ob0F1dGhDYWxsYmFjay5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Shared/ConfirmPage.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXENvbmZpcm1QYWdlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Shared/ConfirmPurchPricePage.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXENvbmZpcm1QdXJjaFByaWNlUGFnZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Shared/ConfirmSellPricePage.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXENvbmZpcm1TZWxsUHJpY2VQYWdlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Shared/FindUser_pg.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXEZpbmRVc2VyX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Shared/WarningPage.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXFdhcm5pbmdQYWdlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/_Imports.razor]
+build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Shared/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXE1haW5MYXlvdXQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-krdonogo4b
+
+[D:/DigiEquipSys2/Shared/MainLayoutSub.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXE1haW5MYXlvdXRTdWIucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-3enmvvtqks
+
+[D:/DigiEquipSys2/Shared/NavMenu.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXE5hdk1lbnUucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-w50q3esfog
+
+[D:/DigiEquipSys2/Pages/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXJyb3IuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 

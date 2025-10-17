@@ -1,0 +1,48 @@
+﻿@page "/reportviewer/{myMaster}"
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Components
+@using DigiEquipSys.Models
+
+@inject IJSRuntime JSRuntime
+@using DigiEquipSys.Api;
+
+<h3>ReportViewer</h3>
+
+<div id="report-viewer" style="height: 100vh;"></div>
+
+@code {
+
+    [Parameter]
+    public string? myMaster { get; set; }
+    //ReportOptions viewerOptions = new();
+    BoldReportViewerOptions viewerOptions = new BoldReportViewerOptions();
+
+    public async Task RenderReportViewer()
+    {
+        viewerOptions.ReportName = "Coa1";
+        viewerOptions.ServiceURL = "api/Report";
+        viewerOptions.Parameters = new List<JSReportParameter>();
+
+        if (myMaster != "")
+        {
+            JSReportParameter parameter = new JSReportParameter();
+            parameter.Name = "Macc_Code";
+            parameter.Values = new List<string>();
+            parameter.Values.Add(myMaster);
+            viewerOptions.Parameters.Add(parameter);
+            await JSRuntime.InvokeVoidAsync("BoldReports.RenderViewer", "report-viewer", viewerOptions);
+        }
+        else
+        {
+            //await JSRuntime.InvokeAsync<object>("Alert", "You Must Select the Master Code");
+            await JSRuntime.InvokeVoidAsync("alert", "You Must Select the Master Code");
+        }
+
+
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        RenderReportViewer();
+    }
+}

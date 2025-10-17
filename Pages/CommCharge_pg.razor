@@ -1,0 +1,142 @@
+﻿@page "/commcharge_pg"
+@inject HttpClient Http;
+@using DigiEquipSys.Services
+@using DigiEquipSys.Models
+@using DigiEquipSys.Interfaces
+@inject ICommChargeService myCommCharge
+@inject NavigationManager UriHelper
+@inject ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime
+
+<h3 class="page-title">Commission Charges</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color:white
+    }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap5 {
+        stroke: red;
+    }
+</style>
+<style>
+    .dialog-header {
+        font-size: 1.0rem;
+        font-weight: bold;
+        margin-bottom: 4px;
+        color: #333;
+    }
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap5" Size="50">
+</SfSpinner>
+@if (CommChargeList != null)
+{
+    <div class="col-lg-12 Control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                <div class="Control-wrapper" style="width:350px;">
+                    <SfDateRangePicker TValue="DateTime?" Placeholder="Choose a Date Range" FullScreen="true" ShowClearButton="true">
+                        <DateRangePickerEvents TValue="DateTime?" ValueChange="ValueChangeHandler"></DateRangePickerEvents>
+                    </SfDateRangePicker>
+                </div>
+                <br />
+                <SfGrid @ref="CommChargeGrid" Height="550px" Toolbar="Toolbaritems"
+                        DataSource="@CommChargeList" AllowTextWrap
+                        AllowSorting="true" AllowFiltering="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                        ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})">
+                    <GridEvents RowSelected="RowSelectHandler" TValue="CommCharge" OnToolbarClick="ToolbarClickHandler"></GridEvents>
+                    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                    <GridEditSettings AllowEditOnDblClick="false" AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode=EditMode.Normal Dialog="DialogParams"></GridEditSettings>
+                    <GridPageSettings PageSize="50" PageSizes="@(new int[] {20, 30, 50, 100, 200, 400,500})"></GridPageSettings>
+
+                    <GridTemplates>
+                        <EmptyRecordTemplate>
+                            <span>No Records Found</span>
+                        </EmptyRecordTemplate>
+                    </GridTemplates>
+                    <GridColumns>
+                        <GridColumn Field="@nameof(CommCharge.CommId)"
+                                    HeaderText="ID"
+                                    IsIdentity="true"
+                                    IsPrimaryKey="true"
+                                    Visible=false>
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(CommCharge.CommDate)"
+                                    Type="ColumnType.Date" Format="dd/MM/yyyy"
+                                    HeaderText="Date"
+                                    Width="100">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(CommCharge.CommDesc)"
+                                    HeaderText="Description"
+                                    Width="250">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(CommCharge.CommAmt)" Format="n2"
+                                    HeaderText="Amount" TextAlign="TextAlign.Right"
+                                    Width="50">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(CommCharge.CommRemarks)"
+                                    HeaderText="Remarks"
+                                    Width="250">
+                        </GridColumn>
+
+                    </GridColumns>
+                </SfGrid>
+                <br />
+                <SfDialog @ref="DialogAddCommCharge" IsModal="true" Width="750px" ShowCloseIcon="true" Visible="false" Header="Charges">
+                    <EditForm Model="@commcharge" OnValidSubmit="@CommChargeSave">
+
+                        <div class="sftextbox-header">
+                            <h4 class="dialog-header">Date</h4>
+                            <SfDatePicker Enabled="true" Placeholder="Date"
+                                          FloatLabelType=Syncfusion.Blazor.Inputs.FloatLabelType.Auto
+                                          @bind-Value="@commcharge.CommDate">
+                            </SfDatePicker>
+                        </div>
+
+                        <div class="sftextbox-header">
+                            <h4 class="dialog-header">Description</h4>
+                            <SfTextBox Enabled="true" Placeholder="Description/Name" Width="250"
+                                       Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                       @bind-Value="@commcharge.CommDesc">
+                            </SfTextBox>
+                        </div>
+
+                        <div class="sftextbox-header">
+                            <h4 class="dialog-header">Amount</h4>
+                            <SfNumericTextBox Enabled="true" Placeholder="Commission" Width="100"
+                                              Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                              @bind-Value="@commcharge.CommAmt">
+                            </SfNumericTextBox>
+                        </div>
+
+                        <div class="sftextbox-header">
+                            <h4 class="dialog-header">Remarks</h4>
+                            <SfTextBox Enabled="true" Placeholder="Remarks" Width="250"
+                                       Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                       @bind-Value="@commcharge.CommRemarks">
+                            </SfTextBox>
+                        </div>
+                        <br /><br />
+                        <div class="e-footer-content">
+                            <div class="button-container">
+                                <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+                                <button type="submit" class="e-btn e-normal e-primary">Save</button>
+                                <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Close</button>
+                            </div>
+                        </div>
+                    </EditForm>
+                </SfDialog>
+                <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+                <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
+
+                <a href="#" @onclick="NavigateToPrevious" CssClass="e-link">
+                    <SfButton CssClass="e-small e-success">BACK</SfButton>
+                </a>
+            </div>
+        </div>
+    </div>
+}
+

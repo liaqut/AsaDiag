@@ -1,0 +1,35 @@
+﻿@page "/others_pg"
+@inject ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime
+
+<h3 class="page-title">Static Tables</h3>
+<br />
+<a href="/country_pg">Countries List</a> &nbsp;&nbsp;&nbsp;
+<a href="/city_pg">Cities List</a> &nbsp;&nbsp;&nbsp;
+
+<br />
+@code {
+    [CascadingParameter]
+    public EventCallback notify { get; set; }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await notify.InvokeAsync();
+        }
+    }
+    private string? myLoc;
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            myLoc = await sessionStorage.GetItemAsync<string>("adminLoc");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+            return;
+        }
+    }
+
+}

@@ -1,0 +1,207 @@
+/* _content/DigiEquipSys/Shared/MainLayout.razor.rz.scp.css */
+.page[b-krdonogo4b] {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+main[b-krdonogo4b] {
+    flex: 1;
+}
+
+.sidebar[b-krdonogo4b] {
+    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+}
+
+.top-row[b-krdonogo4b] {
+    background-color: #f7f7f7;
+    border-bottom: 1px solid #d6d5d5;
+    justify-content: flex-end;
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+}
+
+    .top-row[b-krdonogo4b]  a, .top-row .btn-link[b-krdonogo4b] {
+        white-space: nowrap;
+        margin-left: 1.5rem;
+    }
+
+    .top-row a:first-child[b-krdonogo4b] {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+@media (max-width: 640.98px) {
+    .top-row:not(.auth)[b-krdonogo4b] {
+        display: none;
+    }
+
+    .top-row.auth[b-krdonogo4b] {
+        justify-content: space-between;
+    }
+
+    .top-row a[b-krdonogo4b], .top-row .btn-link[b-krdonogo4b] {
+        margin-left: 0;
+    }
+}
+
+@media (min-width: 641px) {
+    .page[b-krdonogo4b] {
+        flex-direction: row;
+    }
+
+    .sidebar[b-krdonogo4b] {
+        width: 250px;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        overflow-y: auto;
+    }
+
+    .top-row[b-krdonogo4b] {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    .top-row[b-krdonogo4b], article[b-krdonogo4b] {
+        padding-left: 2rem !important;
+        padding-right: 1.5rem !important;
+    }
+}
+/* _content/DigiEquipSys/Shared/MainLayoutSub.razor.rz.scp.css */
+.page[b-3enmvvtqks] {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+main[b-3enmvvtqks] {
+    flex: 1;
+}
+
+.sidebar[b-3enmvvtqks] {
+    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+}
+
+.top-row[b-3enmvvtqks] {
+    background-color: #f7f7f7;
+    border-bottom: 1px solid #d6d5d5;
+    justify-content: flex-end;
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+}
+
+    .top-row[b-3enmvvtqks]  a, .top-row .btn-link[b-3enmvvtqks] {
+        white-space: nowrap;
+        margin-left: 1.5rem;
+    }
+
+    .top-row a:first-child[b-3enmvvtqks] {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+@media (max-width: 640.98px) {
+    .top-row:not(.auth)[b-3enmvvtqks] {
+        display: none;
+    }
+
+    .top-row.auth[b-3enmvvtqks] {
+        justify-content: space-between;
+    }
+
+    .top-row a[b-3enmvvtqks], .top-row .btn-link[b-3enmvvtqks] {
+        margin-left: 0;
+    }
+}
+
+@media (min-width: 641px) {
+    .page[b-3enmvvtqks] {
+        flex-direction: row;
+    }
+
+    .sidebar[b-3enmvvtqks] {
+        width: 250px;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        overflow-y: auto;
+    }
+
+    .top-row[b-3enmvvtqks] {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    .top-row[b-3enmvvtqks], article[b-3enmvvtqks] {
+        padding-left: 2rem !important;
+        padding-right: 1.5rem !important;
+    }
+}
+/* _content/DigiEquipSys/Shared/NavMenu.razor.rz.scp.css */
+.navbar-toggler[b-w50q3esfog] {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.top-row[b-w50q3esfog] {
+    height: 3.5rem;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.navbar-brand[b-w50q3esfog] {
+    font-size: 1.1rem;
+}
+
+.oi[b-w50q3esfog] {
+    width: 2rem;
+    font-size: 1.1rem;
+    vertical-align: text-top;
+    top: -2px;
+}
+
+.nav-item[b-w50q3esfog] {
+    font-size: 0.9rem;
+    padding-bottom: 0.5rem;
+}
+
+    .nav-item:first-of-type[b-w50q3esfog] {
+        padding-top: 1rem;
+    }
+
+    .nav-item:last-of-type[b-w50q3esfog] {
+        padding-bottom: 1rem;
+    }
+
+    .nav-item[b-w50q3esfog]  a {
+        color: #d7d7d7;
+        border-radius: 4px;
+        height: 3rem;
+        display: flex;
+        align-items: center;
+        line-height: 3rem;
+    }
+
+        .nav-item[b-w50q3esfog]  a.active {
+            background-color: rgba(255,255,255,0.25);
+            color: white;
+        }
+
+        .nav-item[b-w50q3esfog]  a:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+@media (min-width: 641px) {
+    .navbar-toggler[b-w50q3esfog] {
+        display: none;
+    }
+
+    .collapse[b-w50q3esfog] {
+        /* Never collapse the sidebar for wide screens */
+        display: block;
+    }
+}

@@ -1,0 +1,118 @@
+﻿@page "/po_pg"
+@using DigiEquipSys.Interfaces;
+@using DigiEquipSys.Models
+@using DigiEquipSys.Services
+@inject NavigationManager NavigationManager
+@inject ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime
+
+<PageTitle>
+    Purchase Order
+</PageTitle>
+@* <h3 class="page-title">Purchase Order</h3> *@
+<h2 class="form-title text-center mb-4">🧾Purchase Order Entry</h2>
+
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+
+    .form-title {
+        font-size: 24px;
+        margin-bottom: 1rem;
+        color: #333;
+        font-weight: 600;
+        text-align: center;
+    }
+    .e-spinner-pane .e-spinner-inner .e-spin-bootstrap4 {
+        stroke: red;
+    }
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap4" Size="50" Label="Data loading">
+</SfSpinner>
+@if (@PoVouList != null)
+{
+        <div class="col-lg-12 control-section">
+            <div class="content-wrapper">
+                <div class="row">
+ 
+                    <SfGrid @ref="PoHeadGrid" DataSource="@PoVouList" Toolbar="Toolbaritems" Height="600" Width="100%" AllowTextWrap="true" AllowFiltering="true" AllowSorting="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true">
+                        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                        <GridPageSettings PageSize="100" PageSizes="@(new int[] { 50, 100, 200, 400,500})"></GridPageSettings>
+                        <GridEvents RowSelected="RowSelectHandler" OnToolbarClick="ToolbarClickHandler" TValue="PoHead"></GridEvents>
+
+
+                        <GridColumns>
+                        <GridColumn Field="@nameof(PoHead.PohId)"
+                                HeaderText="Id"
+                                IsIdentity="true"
+                                IsPrimaryKey="true"
+                                Visible="false">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(PoHead.PohNo)"
+                                HeaderText="PO No"
+                                TextAlign="@TextAlign.Left"
+                                Width="30">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(PoHead.PohDate)"
+                                HeaderText="Date"
+                                Format="d"
+                                Type="ColumnType.Date"
+                                TextAlign="@TextAlign.Center"
+                                Width="30">
+                        </GridColumn>
+
+                        <GridForeignColumn Field=@nameof(PoHead.PohVendId)
+                                       HeaderText="Supplier" ForeignKeyField="SuppId"
+                                       ForeignKeyValue="SuppName"
+                                       ValidationRules="@(new ValidationRules{ Required=true})"
+                                       ForeignDataSource="@suppList" Width="50">
+                        </GridForeignColumn>
+
+                        @* <GridColumn Field="@nameof(PoHead.PohVendRef)"
+                                HeaderText="Vendor Ref"
+                                TextAlign="@TextAlign.Left"
+                                Width="50">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(PoHead.PohCurr)"
+                                HeaderText="Currency"
+                                TextAlign="@TextAlign.Left"
+                                Width="40">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(PoHead.PohConvRate)" 
+                                HeaderText="Conv. Rate"
+                                Format="n2"
+                                TextAlign="@TextAlign.Left"
+                                Width="40">
+                        </GridColumn> *@
+                      
+                        <GridColumn Field="@nameof(PoHead.PohRemarks)"
+                                HeaderText="Remarks"
+                                TextAlign="@TextAlign.Left"
+                                Width="50">
+                        </GridColumn>
+                        </GridColumns>
+                    </SfGrid>
+                    <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+                    <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
+                </div>
+            </div>
+        </div>
+   <div class="e-footer-content">
+        <br />
+        <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
+            @* <SfButton CssClass="e-small e-success" @onclick="DispVouchers">
+               Print Vouchers
+           </SfButton> *@
+            <a href="#" @onclick="NavigateToPrevious" CssClass="e-link">
+                <SfButton CssClass="e-small e-success">BACK</SfButton>
+            </a>
+        </div>
+    </div>
+}

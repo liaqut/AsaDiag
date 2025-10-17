@@ -1,0 +1,241 @@
+﻿@page "/updPriceSale_pg"
+@inject NavigationManager navManager
+@using DigiEquipSys.Interfaces
+@using DigiEquipSys.Models
+@using DigiEquipSys.Services
+@inject IStockService myStockService
+@inject ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime
+@inject IStockTransService myStockTransService
+@inject IvwSaleService myvwSaleService
+
+<h3 class="page-title">PRICE UPDATE (Selling)</h3>
+<div class="container-fluid">
+    <table style="border-spacing: 10px;align-content:start;">
+        <tr>
+            <td style="Width:500px;padding-left: 5px; padding-right: 5px;">
+                <SfMultiColumnComboBox EnableAltRow="true" GridLines="Syncfusion.Blazor.Grids.GridLine.Both" TValue="string"
+                                       TItem="VwStockForSpriceUpd" @bind-Value="@mValue" ValueChange="OnValueChange" AllowFiltering="true" ShowClearButton=true
+                                       DataSource="@StockForSpriceUpdList" PopupWidth="1025px" ValueField="ItemDesc" TextField="ItemDesc" Placeholder="Select any product">
+                    <MultiColumnComboboxColumns>
+                        <MultiColumnComboboxColumn Field="ItemDesc" Width="250px" Header="Description" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Left"></MultiColumnComboboxColumn>
+                        <MultiColumnComboboxColumn Field="ClientName" Width="100px" Header="Client Name" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Left"></MultiColumnComboboxColumn>
+                        <MultiColumnComboboxColumn Field="ItemBatchId" Width="40px" Header="Batch" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Left"></MultiColumnComboboxColumn>
+                        <MultiColumnComboboxColumn Field="ItemListNo" Width="40px" Header="List No." TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center"></MultiColumnComboboxColumn>
+                        <MultiColumnComboboxColumn Field="ItemSp" Width="40px" Header="Selling Price" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Left"></MultiColumnComboboxColumn>
+                    </MultiColumnComboboxColumns>
+                </SfMultiColumnComboBox>
+            </td>
+            <td style="padding-right:30px;">
+                <b>Client:</b> @SelectedClient
+            </td>
+            <td style="padding-right:30px;">
+                <b>Batch:</b> @SelectedBatch
+            </td>
+            <td style="padding-right:30px;">
+                <b>List No:</b> @SelectedListNo
+            </td>
+            <td style="padding-right:30px;">
+                <b>Price:</b> @SelectedPrice
+            </td>
+            <td style="padding-right:30px;">
+                <b>New Selling Price:</b>
+                <InputNumber @bind-Value="newPrice" class="form-control" style="width:100px;" />
+            </td>
+            <td style="padding-right:30px;">
+                <button class="btn btn-primary" @onclick="OnOkClicked">OK</button>
+            </td>
+            <td style="padding-right:90px;">
+                <button class="btn btn-primary" disabled="@IsUpdateDisabled" @onclick="OnUpdateClicked">UPDATE</button>
+            </td>
+            <td style="padding-right:120px;">
+                <button class="btn btn-primary" @onclick="OnRefreshClicked">REFRESH</button>
+            </td>
+        </tr>
+    </table>
+</div>
+@if (outwardItems != null)
+{
+    <h3 class="page-title">OUTWARD ITEMS</h3>
+    <div class="col-lg-12 Control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                <SfGrid @ref="OutwardGrid" AllowTextWrap="true" DataSource="@outwardItems" Height="300" Width="100%" AllowSelection="false" AllowFiltering="false" AllowSorting="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true">
+                    <GridEditSettings></GridEditSettings>
+                    <GridPageSettings PageSize="100" PageSizes="@(new int[] { 50, 100, 200, 400, 500 })"></GridPageSettings>
+
+                    <GridColumns>
+                        <GridColumn Field="@nameof(VwSale.DelDispNo)"
+                                    HeaderText="Receipt No."
+                                    AllowEditing="false"
+                                    Width="30">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(VwSale.DelDate)" Format="dd/MM/yyyy"
+                                    HeaderText="Receipt Date"
+                                    AllowEditing="false"
+                                    Width="30">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(VwSale.DelListNo)"
+                                    HeaderText="List No."
+                                    AllowEditing="false"
+                                    Width="25">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(VwSale.DelLotNo)"
+                                    HeaderText="Lot No."
+                                    AllowEditing="false"
+                                    Width="25">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(VwSale.DelExpiryDate)" Format="dd/MM/yyyy"
+                                    HeaderText="Exp. Date"
+                                    AllowEditing="false"
+                                    Width="30">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(VwSale.ItemDesc)"
+                                    HeaderText="Item Desc"
+                                    AllowEditing="false"
+                                    Width="40">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(VwSale.ItemUnit)"
+                                    HeaderText="Unit"
+                                    Width="20"
+                                    AllowEditing="false">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(VwSale.DelBatchId)"
+                                    HeaderText="Batch Id"
+                                    Width="20"
+                                    AllowEditing="false">
+                        </GridColumn>
+
+                        <GridColumn Field=@nameof(VwSale.ClientName)
+                                    HeaderText="Client Name" Width="30"
+                                    AllowEditing="false">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(VwSale.DelUprice)" Format="n2"
+                                    HeaderText="Selling Up."
+                                    AllowEditing="false"
+                                    AllowFiltering=false
+                                    TextAlign="TextAlign.Right"
+                                    Width="30">
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(VwSale.DelQty)"
+                                    HeaderText="Del.Qty"
+                                    AllowEditing="false"
+                                    AllowFiltering=false
+                                    TextAlign="TextAlign.Right"
+                                    Width="30">
+                        </GridColumn>
+
+                    </GridColumns>
+                </SfGrid>
+            </div>
+        </div>
+    </div>
+    <br />
+}
+
+@code
+{
+    [CascadingParameter]
+    public EventCallback notify { get; set; }
+    private string? myRole;
+    private string? myLoc;
+    private string? myUser;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            myUser = await sessionStorage.GetItemAsync<string>("adminEmail");
+            myLoc = await sessionStorage.GetItemAsync<string>("adminLoc");
+            await notify.InvokeAsync();
+            StateHasChanged();
+
+        }
+    }
+    private string mValue { get; set; }
+    public string SelectedItemDesc { get; set; }
+    private string SelectedClient { get; set; }
+    private string SelectedBatch { get; set; }
+    private string SelectedListNo { get; set; }
+    private decimal SelectedPrice { get; set; }
+    private decimal newPrice { get; set; }
+
+    private SfGrid<VwSale>? OutwardGrid;
+    protected List<VwSale>? outwardItems = new();
+    private bool IsUpdateDisabled = true;
+
+
+    protected List<VwStockForSpriceUpd> StockForSpriceUpdList = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        StockForSpriceUpdList = await myStockService.GetStockForSpriceUpd();
+    }
+
+    public async Task OnValueChange(ValueChangeEventArgs<string, VwStockForSpriceUpd> args)
+    {
+        if (args.ItemData != null)
+        {
+            SelectedItemDesc = args.ItemData.ItemDesc;
+            SelectedClient = args.ItemData.ClientName;
+            SelectedBatch = args.ItemData.ItemBatchId.ToString();
+            SelectedListNo = args.ItemData.ItemListNo.ToString();
+            SelectedPrice = (decimal)args.ItemData.ItemSp;
+            newPrice = 0.00M;
+        }
+        else
+        {
+            SelectedItemDesc = SelectedClient = SelectedBatch = SelectedListNo = "";
+            SelectedPrice = 0.00M; newPrice = 0.00M;
+        }
+        IsUpdateDisabled = true;
+    }
+
+    private async Task OnOkClicked()
+    {
+        outwardItems = await myvwSaleService.GetvwSales(SelectedClient, SelectedListNo, SelectedBatch, SelectedPrice);
+        IsUpdateDisabled = false;
+
+    }
+
+    private async Task OnUpdateClicked()
+    {
+        try
+        {
+            if (newPrice==0.00M)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Zero Price is not acceptable to Update");
+                return;
+            }
+            await myStockTransService.UpdateSmultipleTablesAsync(SelectedClient, SelectedListNo, SelectedBatch, SelectedPrice, newPrice);
+            Task.Delay(200);
+            outwardItems = await myvwSaleService.GetvwSales(SelectedClient, SelectedListNo, SelectedBatch, newPrice);
+            OutwardGrid.Refresh();
+
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+            return;
+        }
+    }
+
+    private async Task OnRefreshClicked()
+    {
+        mValue = "";
+        IsUpdateDisabled = true;
+        outwardItems = new List<VwSale>();
+        await OutwardGrid.Refresh();
+        SelectedItemDesc = SelectedClient = SelectedBatch = SelectedListNo = "";
+        SelectedPrice = 0.00M; newPrice = 0.00M;
+        StockForSpriceUpdList = new List<VwStockForSpriceUpd>();
+        StockForSpriceUpdList = await myStockService.GetStockForSpriceUpd();
+        StateHasChanged();
+    }
+}

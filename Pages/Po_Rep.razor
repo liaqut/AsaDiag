@@ -1,0 +1,56 @@
+﻿@page "/po_rep/{PovouId:long}/{pono:long}/"
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Components
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+<h3>Report</h3>
+<div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
+    <button type="button" class="e-btn e-normal" @onclick="Cancel">Back</button>
+</div>
+<div id="report-viewer" style="height: 100vh;width:100vw;z-index: 1; position: absolute; top: 20; left: 20;"></div>
+
+@code {
+
+    [Parameter] public long pono {  get; set; }
+    [Parameter] public long PovouId { get; set; }
+
+    BoldReportViewerOptions viewerOptions = new BoldReportViewerOptions();
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            //await Task.Yield();
+            await RenderReportViewer();
+        }
+    }
+
+    public async Task RenderReportViewer()
+    {
+        try
+        {
+            viewerOptions.ReportName = "PurchaseOrder2";
+            viewerOptions.ServiceURL = "api/BoldReportsAPI";
+            viewerOptions.Parameters = new List<JSReportParameter>();
+
+            JSReportParameter parameter1 = new JSReportParameter();
+            parameter1.Name = "PohNo";
+            parameter1.Values = new List<string>();
+            parameter1.Values.Add(pono.ToString());
+            viewerOptions.Parameters.Add(parameter1);
+
+
+            await JSRuntime.InvokeVoidAsync("BoldReports.RenderViewer", "report-viewer", viewerOptions);
+            StateHasChanged();
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public async Task Cancel()
+    {
+        NavigationManager.NavigateTo("pohead_pg/" + PovouId);
+    }
+}

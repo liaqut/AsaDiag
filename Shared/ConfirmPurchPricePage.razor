@@ -1,0 +1,37 @@
+﻿@using Syncfusion.Blazor.Popups
+
+<SfDialog @ref="DialogPurchPrice" @bind-Visible="@IsVisible"
+          AllowDragging="true" IsModal="true"
+          Width="500px" ShowCloseIcon="true">
+    <DialogTemplates>
+        <Header> @PurchPriceHeaderMessage </Header>
+        <Content>@PurchPriceContentMessage</Content>
+    </DialogTemplates>
+    <DialogButtons>
+        <DialogButton Content="Confirm" IsPrimary="true" OnClick="() => OnConfirmationChange(true)" />
+        <DialogButton Content="Cancel" IsPrimary="false" OnClick="() => OnConfirmationChange(false)" />
+    </DialogButtons>
+</SfDialog>
+
+@code {
+    SfDialog? DialogPurchPrice;
+    public bool IsVisible { get; set; } = false;
+
+    [Parameter] public string? PurchPriceHeaderMessage { get; set; }
+    [Parameter] public string? PurchPriceContentMessage { get; set; }
+
+    [Parameter] public EventCallback<bool> ConfirmationChanged { get; set; }
+
+    public void OpenDialog()
+    {
+        this.IsVisible = true;
+        this.StateHasChanged();
+    }
+
+    protected async Task OnConfirmationChange(bool value)
+    {
+        this.IsVisible = false;
+        await ConfirmationChanged.InvokeAsync(value);
+    }
+
+}

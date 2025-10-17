@@ -1,0 +1,205 @@
+﻿@using DigiEquipSys.Models;
+@using DigiEquipSys.Interfaces;
+@inject IMenuInfo myMenu
+@inject HttpClient Http
+@inject IBranchService myBranch
+@inject ISessionStorageService sessionStorage
+@inject NavigationManager navManager;
+@inject IJSRuntime JSRuntime
+
+<div class="top-row pl-4 navbar navbar-dark">
+    <a style="margin:auto; text-align:center; display:block;" class="navbar-brand" href="">@branch.BranchDesc</a>
+    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    @if (menuList == null)
+    {
+        <p><em>Loading....</em></p>
+    }
+    else
+    {
+        <ul class="nav flex-column">
+            @foreach (var mn in menuList)
+            {
+                @if (@adminId == 1)
+                {
+                    @if (mn.ParentMenuId == 0)
+                    {
+                        <li class="nav-item px-3">
+                            <NavLink class="nav-link" href="@mn.PageName" @onclick="() => GetIsClicked(mn)">
+                                <span class="@mn.IconName" aria-hidden="true"></span>@mn.MenuName
+                            </NavLink>
+                            <ul class="nav flex-column">
+                                @foreach (var mn1 in menuList)
+                                {
+                                    @if (mn.MenuId == mn1.ParentMenuId)
+                                    {
+                                        @if (expandSubNav && mn.MenuId == clickedMenu)
+                                        {
+                                            <li style="font-size:smaller">
+                                                <NavLink class="nav-link" href="@mn1.PageName" @onclick="() => GetIsClicked(mn1)">
+                                                    <span class="@mn1.IconName" aria-hidden="true"></span>@mn1.MenuName
+                                                </NavLink>
+                                            </li>
+                                        }
+                                    }
+                                }
+                            </ul>
+                        </li>
+                    }
+                }
+                else
+                {
+                    @if (mn.MenuId > 0)  //mn.MenuId < 5 || mn.MenuId>6
+                    {
+                        @if (mn.ParentMenuId == 0)
+                        {
+                            <li class="nav-item px-3">
+                                <NavLink class="nav-link" href="@mn.PageName" @onclick="() => GetIsClicked(mn)">
+                                    <span class="@mn.IconName" aria-hidden="true"></span>@mn.MenuName
+                                </NavLink>
+                                <ul class="nav flex-column">
+                                    @foreach (var mn1 in menuList)
+                                    {
+                                        @if (mn.MenuId == mn1.ParentMenuId)
+                                        {
+                                            @if (expandSubNav && mn.MenuId == clickedMenu)
+                                            {
+                                                <li style="font-size:smaller">
+                                                    <NavLink class="nav-link" href="@mn1.PageName" @onclick="() => GetIsClicked(mn1)">
+                                                        <span class="@mn1.IconName" aria-hidden="true"></span>@mn1.MenuName
+                                                    </NavLink>
+                                                </li>
+                                            }
+                                        }
+                                    }
+                                </ul>
+                            </li>
+                        }
+                    }
+                }
+            }
+        </ul>
+    }
+</div>
+
+
+@code {
+
+    [CascadingParameter] public MainLayout Layout { get; set; }
+
+    [CascadingParameter]
+    public EventCallback notify { get; set; }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await notify.InvokeAsync();
+        }
+    }
+
+    private bool collapseNavMenu = true;
+    private bool expandSubNav;
+    private int clickedMenu = 0;
+    private bool hasPageName = true;
+    private int prevClickedMenu = 0;
+    public string iam;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        if (hasPageName == true)
+        {
+            collapseNavMenu = !collapseNavMenu;
+        }
+    }
+
+    public void GetIsClicked(MenuInfo mn)
+    {
+        clickedMenu = mn.MenuId;
+
+        if (mn.ParentMenuId == 21 && iam !="01")
+        {
+            navManager.NavigateTo($"passwordentry/{mn.PageName}");
+        }
+        if (prevClickedMenu != clickedMenu)
+        {
+            expandSubNav = false;
+            if (mn.PageName != null || mn.MenuName == "Home")
+            {
+                hasPageName = true;
+            }
+            else
+            {
+                if (iam == "03" && (mn.MenuName=="Reports" || mn.MenuName=="Setup Files"))
+                {
+                    expandSubNav = false;
+                }
+                else
+                {
+                    expandSubNav = !expandSubNav;
+                }
+                hasPageName = false;
+            }
+        }
+        else
+        {
+            if (iam == "03" && (mn.MenuName == "Reports" || mn.MenuName == "Setup Files"))
+            {
+                expandSubNav = false;
+            }
+            else
+            {
+                expandSubNav = !expandSubNav;
+            }
+        }
+        prevClickedMenu = clickedMenu;
+    }
+
+    protected List<MenuInfo> menuList = new();
+    public int adminId { get; set; } 
+    protected Branch branch = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            iam = await sessionStorage.GetItemAsync<string>("adminRo");
+            menuList = await myMenu.GetMenuDetails();  //await Http.GetFromJsonAsync<List<MenuInfo>>("api/MenuInfo");
+
+            var adminSession = await sessionStorage.GetItemAsync<string>("adminKey");
+            if (adminSession != null)
+            {
+                adminId = Convert.ToInt32(adminSession);
+
+                //Original below line
+                //branch = await myBranch.GetBranchAdmin(adminId);
+                //Temporary 
+
+                if (navManager.Uri == null || navManager.Uri.EndsWith("/"))
+                {
+                    branch = await myBranch.GetBranchAdmin(1);
+                    navManager.NavigateTo("index");
+                }
+                else
+                {
+                    navManager.NavigateTo(navManager.Uri);
+                }
+            }
+            else
+            {
+                navManager.NavigateTo("login");
+            }
+        }
+        catch(Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+            return;
+        }
+    }
+}
+
+

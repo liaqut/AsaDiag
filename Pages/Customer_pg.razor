@@ -1,0 +1,282 @@
+﻿@page "/customer_pg/{vhref}"
+@page "/customer_pg"
+@using DigiEquipSys.Interfaces
+@using DigiEquipSys.Models
+@using DigiEquipSys.Services
+@using Syncfusion.Blazor.Buttons
+@inject NavigationManager UriHelper
+@inject ISessionStorageService sessionStorage
+@inject IClientCityService myclientcityservice
+@inject IJSRuntime JSRuntime
+@inject ZohoTokenService ZohoTokenService
+@inject ZohoApiService ZohoService
+
+<h3 class="page-title">Customers</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font:1.5rem;
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap4 {
+        stroke: red;
+    }
+</style>
+<style>
+    .dialog-header {
+        font-size: 1.0rem;
+        font-weight: bold;
+        margin-bottom: 4px;
+        color: #333;
+    }
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap4" Size="50" Label="Data loading">
+</SfSpinner>
+<button @onclick="ConnectToZoho">Connect to Zoho</button>
+@if (AdetailList != null )
+{
+    <div class="col-lg12 Control-section">
+        <div class="content-wrapper">
+            <div class="Control-wrapper">
+                <SfGrid  @ref="CustomerGrid" DataSource="@AdetailList" AllowTextWrap="true"
+                        AllowSorting="true" AllowFiltering="true" AllowPaging="true" AllowResizing="true" AllowReordering="true"
+                        ContextMenuItems="@(new List<object>() { "AutoFit", "AutoFitAll", "SortAscending", "SortDescending", "Copy", "ExcelExport", "CsvExport", "FirstPage", "PrevPage", "LastPage", "NextPage" })"
+                        Toolbar="ToolbarItems">
+                    <GridEvents OnDataBound="DataBoundHandler" OnActionBegin="ActionBeginHandler" RowSelected="RowSelectHandler" TValue="ClientMaster" OnToolbarClick="ToolbarClickHandler"></GridEvents>
+                    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                    <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal" NewRowPosition="NewRowPosition.Bottom"></GridEditSettings>
+                    <GridPageSettings PageSize="20" PageSizes="@(new int[] {20, 30, 50, 100, 200, 400,500})"></GridPageSettings>
+                    <GridTemplates>
+                        <EmptyRecordTemplate>
+                            <span>Custom no record message</span>
+                        </EmptyRecordTemplate>
+                    </GridTemplates>
+                    <GridColumns>
+                        <GridColumn Field="@nameof(ClientMaster.ClientId)"
+                                    HeaderText="Id"
+                                    IsIdentity="true"
+                                    IsPrimaryKey="true"
+                                    Visible="false">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(ClientMaster.ClientCode)"
+                                    HeaderText="Code"
+                                    Width="100"
+                                    AllowEditing="false">
+                            <Template>
+                                @{
+                                    var data = (context as ClientMaster);
+                                }
+                                <SfTooltip Content="Don't Enter in this Fields (Auto Numbering)">
+                                    <span>@data.ClientCode</span>
+                                </SfTooltip>
+                            </Template>
+                            <EditTemplate>
+                                @{
+                                    var data = (context as ClientMaster);
+                                }
+                                <SfTooltip Content="Don't Enter in this Fields (Auto Numbering)">
+                                    <span>@data.ClientCode</span>
+                                </SfTooltip>
+                            </EditTemplate>
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(ClientMaster.ClientName)"
+                                    HeaderText="Customer Name"
+                                    Width="250">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(ClientMaster.ClientContactPerson)"
+                                    HeaderText="Contact Person"
+                                    Width="150">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(ClientMaster.ClientTel)"
+                                    HeaderText="Mobile No."
+                                    Width="200">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(ClientMaster.ClientVendCode)"
+                                    HeaderText="Client Vendor "
+                                    Width="150">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(ClientMaster.ClientEmail)"
+                                    HeaderText="eMail "
+                                    Width="300">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(ClientMaster.ClientZohoClientId)"
+                                    HeaderText="Zoho Customer Id"
+                                    AllowFiltering="true" AllowEditing="false"
+                                    Width="200">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(ClientMaster.ClientRemarks)"
+                                    HeaderText="Remarks "
+                                    Width="300">
+                        </GridColumn>
+                         <GridColumn Visible="@IsEdit">
+                            <Template>
+                                @{
+                                    var adet = (context as ClientMaster);
+                                    <div>
+                                        <SfButton @onclick="@((args) => Navigate(adet.ClientId))" IsPrimary="true" IconPosition=@IconPosition.Left>Detail</SfButton>
+                                    </div>
+                                }
+                            </Template>
+                        </GridColumn>
+
+                    </GridColumns>
+                </SfGrid>
+                <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+                <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
+                <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
+                    <SfButton @onclick="@((args) => NavigateToPrevious())" IsPrimary="true" IconPosition=@IconPosition.Left>Back</SfButton>
+                </div>
+            </div>
+            <SfDialog @ref="DialogClientsAddEdit" IsModal="true" Width="700px" Height="850px" ShowCloseIcon="true" Visible="false">
+                <DialogTemplates>
+                    <Header>Client Details</Header>
+                </DialogTemplates>
+                <EditForm Model="@clientsaddedit" OnValidSubmit="@ClientsSave">
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Client Name</h4>
+                        <SfTextBox Enabled="false" Placeholder="Client Name"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@clientsaddedit.ClientName">
+                        </SfTextBox>
+                    </div>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Contact Person</h4>
+                        <SfTextBox Enabled="true" Placeholder="Contact Person"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Never"
+                                   @bind-Value="@clientsaddedit.ClientContactPerson">
+                        </SfTextBox>
+                    </div>
+@*                     <div class="sftextbox-header">
+                        <h4 class="dialog-header">Country</h4>
+
+                        <SfDropDownList DataSource="@countryList" AllowFiltering="true"
+                                        TItem="GenCountry"
+                                        TValue="string"
+                                        Text="Country"
+                                        @bind-Value="@clientsaddedit.ClientCountry"
+                                        Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Auto"
+                                        Placeholder="Select Country"
+                                        Enabled="true">
+                            <DropDownListFieldSettings Text="CountryName" Value="CountryCode"></DropDownListFieldSettings>
+                            <DropDownListEvents TItem="GenCountry" TValue="string" OnValueSelect="OnChangeCountry"></DropDownListEvents>
+                        </SfDropDownList>
+                    </div>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">City</h4>
+                        <SfDropDownList DataSource="@cityList" AllowFiltering="true"
+                                        TItem="GenCity"
+                                        TValue="string"
+                                        Text="City"
+                                        @bind-Value="@clientsaddedit.ClientCity"
+                                        Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Auto"
+                                        Placeholder="Select City"
+                                        Enabled="true">
+                            <DropDownListFieldSettings Text="CityName" Value="CityCode"></DropDownListFieldSettings>
+                        </SfDropDownList>
+                    </div> *@
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Client Address</h4>
+                        <SfTextBox Enabled="true" Placeholder="Client Address"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@clientsaddedit.ClientAddr">
+                        </SfTextBox>
+                    </div>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Client Telephone</h4>
+
+                        <SfTextBox Enabled="false" Placeholder="Client Tel"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@clientsaddedit.ClientTel">
+                        </SfTextBox>
+                    </div>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Client eMail</h4>
+                        <SfTextBox Enabled="true" Placeholder="Client Email"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@clientsaddedit.ClientEmail">
+                        </SfTextBox>
+                    </div>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Client Web Address</h4>
+                        <SfTextBox Enabled="true" Placeholder="Client Url"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@clientsaddedit.ClientUrl">
+                        </SfTextBox>
+                    </div>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Client Vendor Code</h4>
+                        <SfTextBox Enabled="true" Placeholder="Client Vendor Code"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@clientsaddedit.ClientVendCode">
+                        </SfTextBox>
+                    </div>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Client CR Number</h4>
+                        <SfTextBox Enabled="true" Placeholder="Client CR"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@clientsaddedit.ClientCrNumber">
+                        </SfTextBox>
+                    </div>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Remarks</h4>
+                        <SfTextBox Enabled="true" Placeholder="Remarks"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@clientsaddedit.ClientRemarks">
+                        </SfTextBox>
+                    </div>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Cities/Places Belongs to this Customer</h4>
+                        <SfGrid @ref="ClientCityGrid" DataSource="@clientcitylist"
+                                AllowSorting="true" AllowFiltering="false" AllowPaging="true" AllowResizing="true" AllowReordering="true"
+                                Toolbar="@(new List<string>() { "Add", "Delete", "Edit", "Cancel", "Update" })">
+                            <GridEvents OnActionBegin="ActionBeginHandlerClientCity"  TValue="ClientCity"></GridEvents>
+                            <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
+                            <GridColumns>
+
+                                <GridColumn Field="@nameof(ClientCity.ClientCityId)"
+                                            HeaderText="Code"
+                                            Width="100" Visible="false">
+                                </GridColumn>
+                                <GridColumn Field="@nameof(ClientCity.ClientId)"
+                                            HeaderText="Contact Person"
+                                            Width="150" Visible="false">
+                                </GridColumn>
+                                <GridForeignColumn Field=@nameof(ClientCity.CityId) HeaderText="City" Width="60" ForeignKeyField="CityId" ForeignKeyValue="CityName" ForeignDataSource="@cityList">
+                                <EditTemplate Context="myContext">
+                                        <SfComboBox TValue="int?" TItem="GenCity" @bind-Value="@((myContext as ClientCity).CityId)" DataSource="@cityList" Placeholder="Select a City">
+                                    <ComboBoxFieldSettings Value="CityId" Text="CityName"></ComboBoxFieldSettings>
+                                </SfComboBox>
+                                </EditTemplate>
+                                </GridForeignColumn>
+                            </GridColumns>
+                        </SfGrid>
+                    </div>
+
+                    <br />
+                    <div class="e-footer-content" style="text-align: right; width: 100%;">
+                        <div class="button-container">
+                            <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+                            <button type="submit" class="e-btn e-normal e-primary">Save</button>
+                            @*<button type="button" class="e-btn e-normal" @onclick="@DeleteDialog">Delete</button>*@
+                            <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Close</button>
+                        </div>
+                    </div>
+                </EditForm>
+            </SfDialog>
+        </div>
+    </div>
+}

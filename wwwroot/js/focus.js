@@ -1,0 +1,1 @@
+﻿window.setFocusToElement = (element) => { if (element) { element.focus(); } }

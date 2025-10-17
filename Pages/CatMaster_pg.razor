@@ -1,0 +1,128 @@
+﻿@page "/catmaster_pg"
+@inject HttpClient Http
+@using DigiEquipSys.Services
+@using DigiEquipSys.Models
+@using DigiEquipSys.Interfaces
+@inject IGroupMasterService mygroupservice
+@inject ICatMasterService mycatservice
+@inject NavigationManager UriHelper
+
+<h3 class="page-title">Item Categories</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap5 {
+        stroke: red;
+    }
+    .Control-wrapper{
+        width: 250px;
+    }
+    .myButton{
+    background-color:#0a0a23;
+    color: #fff;
+    border: 2px solid #E9E9E9;
+    border-width: 2px 2px 2px 2px;
+    border-radius:10px;
+    padding:15px;
+    min-height:30px;
+    min-width: 120px;
+    }
+    .myButton:hover{
+      background-color:#002ead;
+      transition: 0.7s;
+        }
+    }
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap5" Size="50">
+</SfSpinner>
+
+@if (groupList != null && catList != null)
+{
+    <div class="col-lg-12 Control-section">
+        <div class="content-wrapper">
+            <div class="Control-wrapper">
+                <SfDropDownList TItem="GroupMaster"
+                                TValue="string"
+                                DataSource="@groupList"
+                                Placeholder="Select a Group"
+                                PopupHeight="200px"
+                                PopupWidth="250px"
+                                AllowFiltering="true">
+                    <DropDownListFieldSettings Text="GrpDesc" Value="GrpId"></DropDownListFieldSettings>
+                    <DropDownListEvents TItem="GroupMaster" TValue="string" ValueChange="OnChange"></DropDownListEvents>
+                </SfDropDownList>
+            </div>
+            <br />
+            <div>
+                <SfGrid @ref="catGrid" DataSource="@catList" Height="550" AllowSorting="true" AllowFiltering="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                        ContextMenuItems="@(new List<object>() { "AutoFit", "AutoFitAll", "SortAscending", "SortDescending", "Copy", "ExcelExport", "CsvExport", "FirstPage", "PrevPage", "LastPage", "NextPage" })">
+                    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                    <GridEvents RowSelected="RowSelectHandler" TValue="CategMaster"></GridEvents>
+                    <GridEditSettings NewRowPosition="NewRowPosition.Bottom"></GridEditSettings>
+                    <GridColumns>
+                        <GridColumn Field=@nameof(CategMaster.CatId) AllowFiltering="false" HeaderText="Id" IsIdentity="true" IsPrimaryKey="true" Visible="false"></GridColumn>
+                        <GridColumn Field=@nameof(CategMaster.CatNo) AllowFiltering="false" HeaderText="Code" TextAlign="@TextAlign.Left" Width="20"> </GridColumn>
+                        <GridColumn Field=@nameof(CategMaster.CatDesc) AllowFiltering="true" HeaderText="Categ Name" Width="100"></GridColumn>
+                        <GridColumn Field=@nameof(CategMaster.CatShortDesc) AllowFiltering="true" HeaderText="Short Desc" Width="30"></GridColumn>
+                    </GridColumns>
+                </SfGrid>
+            </div>
+            <div class="e-footer-content">
+                <br />
+                <SfButton class="myButton" CssClass="e-small e-primary" @onclick="AddCategory">
+                    Add Category
+                </SfButton>
+
+                <SfButton class="myButton" CssClass="e-small e-primary" @onclick="EditCategory">
+                    Edit Category
+                </SfButton>
+                <SfButton class="myButton" CssClass="e-small e-primary" @onclick="DeleteCategory">
+                    Delete Category
+                </SfButton>
+                <SfButton class="myButton" CssClass="e-small e-primary" @onclick="PrintCategory">
+                    Print Category
+                </SfButton>
+            </div>
+            <SfDialog @ref="DialogAddCat" IsModal="true" Width="750px" ShowCloseIcon="true" Visible="false" Header="Category List">
+                <DialogEvents Opened="@onOpen"></DialogEvents>
+                <EditForm MoDel="@addCat" OnValidSubmit="@catSave">
+
+                    <div>
+                        <SfTextBox Enabled="@IsEdit" Placeholder="Category Code" Width="50"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@addCat.CatNo"
+                                   @ref="catCode">
+                        </SfTextBox>
+                    </div>
+
+                    <div>
+                        <SfTextBox Enabled="true" Placeholder="Category Name" Width="100"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@addCat.CatDesc"
+                                   @ref="catDesc">
+                        </SfTextBox>
+                    </div>
+                    <br /><br />
+                    <div class="e-footer-content">
+                        <div class="button-container">
+                            <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+                            <button type="submit" class="e-btn e-normal e-primary">Save</button>
+                            <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Close</button>
+                        </div>
+                    </div>
+                </EditForm>
+            </SfDialog>
+            <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+            <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
+            <br />
+            <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
+                <SfButton @onclick="@((args) => UriHelper.NavigateTo("blank_pg"))" IsPrimary="true" IconPosition=@IconPosition.Left>Back</SfButton>
+            </div>
+        </div>
+    </div>
+}

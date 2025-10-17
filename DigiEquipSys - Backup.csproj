@@ -1,0 +1,67 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>1881c3e9-4fff-4a06-ad38-35ce4d29417c</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Api\**" />
+    <Content Remove="Api\**" />
+    <EmbeddedResource Remove="Api\**" />
+    <None Remove="Api\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Pages\OpStockPos_pg.cs" />
+    <Compile Remove="Pages\UserBranch_pg.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="Pages\DailySalesReport_pg.razor" />
+    <Content Remove="Pages\ItemList_pg.razor" />
+    <Content Remove="Pages\OpStockPos_pg.razor" />
+    <Content Remove="Pages\ReportViewer.razor" />
+    <Content Remove="Pages\StockList_pg.razor" />
+    <Content Remove="Pages\StockMovementSumm.razor" />
+    <Content Remove="Pages\UserBranch_pg.razor" />
+    <Content Remove="wwwroot\particles-interop.js" />
+    <Content Remove="wwwroot\script.js" />
+    <Content Remove="wwwroot\style.css" />
+    <Content Remove="wwwroot\xapp.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
+    <PackageReference Include="Blazored.SessionStorage" Version="2.4.0" />
+    <PackageReference Include="BlazorInputFile" Version="0.2.0" />
+    <PackageReference Include="BoldReports.AspNet.Core" Version="10.1.11" />
+    <PackageReference Include="BoldReports.Web" Version="10.1.11" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.8" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.12.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.8">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildDelansitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Syncfusion.Blazor.Charts" Version="27.1.48" />
+    <PackageReference Include="Syncfusion.Blazor.Core" Version="27.1.48" />
+    <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="27.1.48" />
+    <PackageReference Include="Syncfusion.Blazor.Grid" Version="27.1.48" />
+    <PackageReference Include="Syncfusion.Blazor.Layouts" Version="27.1.48" />
+    <PackageReference Include="Syncfusion.Blazor.MultiColumnComboBox" Version="27.1.48" />
+    <PackageReference Include="Syncfusion.Blazor.Navigations" Version="27.1.48" />
+    <PackageReference Include="Syncfusion.Blazor.PivotTable" Version="27.1.48" />
+    <PackageReference Include="Syncfusion.Blazor.Popups" Version="27.1.48" />
+    <PackageReference Include="Syncfusion.Blazor.Spinner" Version="27.1.48" />
+    <PackageReference Include="Syncfusion.Blazor.Themes" Version="27.1.48" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.8" />
+    <PackageReference Include="System.Net.Http.Json" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>

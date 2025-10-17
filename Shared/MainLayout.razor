@@ -1,0 +1,209 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager navManager;
+@inject ISessionStorageService sessionStorage
+@inject ISysPagesControlService mySysPagesControlService
+@inject ISystemPagesService mySystemPageService
+@* @using BlazorExceptionGlobalHandling.ExceptionHandling; *@
+@using DigiEquipSys.Interfaces;
+@using DigiEquipSys.Models;
+@inject IJSRuntime JsRuntime
+@using DigiEquipSys.Services
+@using Microsoft.AspNetCore.Authentication;
+@using Microsoft.AspNetCore.Authentication.Cookies;
+<div class="page" style="background-color:#F2F2F2">
+
+    @if (isAdminLoggedIn==true)
+    {
+            <div class="sidebar @NavMenuClass">
+                <NavMenu />
+           </div>
+    }
+    <main>
+        @if (isAdminLoggedIn==true)
+        {
+            <div class="top-row px-4 bg-primary bg-gradient text-white">
+                <div class="container-fluid toggler-container">
+                    @*<CultureSwithcher/>*@
+                    <button title="Navigation menu" class="navbar-toggler custom-toggler bg-dark text-white" @onclick="ToggleMenu">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <span>@vUser</span>
+                     <a href="#" @onclick="Logout" style="float:right; color:lavender">Logout</a>
+                </div>
+            </div>
+        }
+        <article class="content px-4">
+           @*  <CustomErrorBoundary @ref="errorBoundary"> *@
+                  @*   <ChildContent> *@
+                        <CascadingValue Value="event_notify">
+                            @Body
+                        </CascadingValue>
+                   @* </ChildContent> *@
+@*                    <ErrorContent Context="Exception">
+                    <div class="alert bg-danger text-white alert-dismissible">
+                        <h3>@Exception.GetType()</h3>
+                        <h3>@Exception.Message</h3>
+                        <button class="btn btn-info" @onclick="() => errorBoundary.Recover()">Clear</button>
+                    </div>
+                </ErrorContent> *@
+            @* </CustomErrorBoundary> *@
+        </article>
+    </main>
+</div>
+@code
+{
+    public string vPage { get; set; }
+
+    private string? vUser;
+    private bool collapseMenu = true;
+    private string? vRole;
+
+    private string? NavMenuClass => collapseMenu ? "collapse" : null;
+
+    // private string myUser;
+    // private string myRole;
+    // private string myLoc;
+
+    protected List<SystemPage> SystemPagesList = new();
+    protected SysPagesControl myPageControl = new();
+
+    private System.Timers.Timer _timer;
+    private const int Timeout = 10;
+
+
+    public bool isAdminLoggedIn = false;
+    EventCallback event_notify => EventCallback.Factory.Create(this,NotifyLayout);
+
+    // private CustomErrorBoundary? errorBoundary;
+
+    // protected async Task OnInitializedAsync()
+    // {
+    //     errorBoundary = new CustomErrorBoundary();
+    // }
+
+    public async void Logout()
+    {
+        await sessionStorage.ClearAsync();
+        await NotifyLayout();
+        navManager.NavigateTo("login");
+    }
+
+    public async Task NotifyLayout()
+    {
+        var adminSession = await sessionStorage.GetItemAsync<string>("adminKey");
+        vRole = await sessionStorage.GetItemAsync<string>("adminRo");
+        if (adminSession!=null)
+        {
+            vUser = await sessionStorage.GetItemAsync<string>("adminEmail");
+            isAdminLoggedIn = true;
+            string[] currUrl = navManager.Uri.Split('/');
+            string myPage = currUrl[3];
+            vPage = myPage;
+            SystemPagesList = await mySystemPageService.GetSystemPages("Acc");
+            int myPageId = (from x in SystemPagesList where x.PageUrl.ToLower() == myPage.ToLower().Trim() select x.PageId).FirstOrDefault();
+            if (myPageId > 0)
+            {
+                myPageControl = await mySysPagesControlService.GetSysPagesControls(vUser, myPageId);
+                if (myPageControl != null)
+                {
+                    if (myPageControl.SysPagesId == 404)
+                    {
+                        isAdminLoggedIn = false;
+                        await sessionStorage.ClearAsync();
+                    }
+                    else
+                    {
+                        isAdminLoggedIn = true;
+                    }
+                }
+                else
+                {
+                    var iam = await sessionStorage.GetItemAsync<string>("adminRo");
+                    if (iam != "01")
+                    {
+                        await JsRuntime.InvokeVoidAsync("alert", "Not a Valid Login!");
+                        isAdminLoggedIn = false;
+                        await sessionStorage.ClearAsync();
+                        navManager.NavigateTo("login");
+                    }
+                }
+            }
+            if (vRole != "03")
+            {
+                if (vPage == "rcptHeadEdit_pg" || vPage == "rcptHead_pg" || vPage == "DelHead_pg" || vPage == "index" || vPage == "ssaleHead_pg" || vPage == "viewstock_pg" || vPage == "viewincoming_pg" || vPage == "viewoutgoing_pg" || vPage == "checkList_pg" || vPage == "viewjournals_pg")
+                {
+                    collapseMenu = true;
+                }
+                else
+                {
+                    collapseMenu = false;
+                }
+            }
+            if ((vRole=="02" || vRole=="03") && vPage=="index")
+            {
+                collapseMenu = false;
+            }
+        }
+        else
+        {
+            isAdminLoggedIn = false;
+            await sessionStorage.ClearAsync();
+            navManager.NavigateTo("login");
+        }
+
+
+
+        // var adminSession = await sessionStorage.GetItemAsync<string>("adminKey");
+        // if (adminSession != null)
+        // {
+        //     vUser = await sessionStorage.GetItemAsync<string>("adminEmail");
+        //     myUser = await sessionStorage.GetItemAsync<string>("adminEmail");
+        //     myLoc = await sessionStorage.GetItemAsync<string>("adminLoc");
+        //     myRole = await sessionStorage.GetItemAsync<string>("adminRo");
+        //     if (myRole == "01" || myRole == "02")
+        //     {
+        //         isAdminLoggedIn = true;
+        //     }
+        //     else
+        //     {
+        //         string[] currUrl = navManager.Uri.Split('/');
+        //         string myPage = currUrl[3];
+
+        //         int myPageId = (from x in SystemPagesList where x.PageUrl == myPage.Trim()() select x.PageId).FirstOrDefault();
+        //         if (myPageId > 0)
+        //         {
+        //             myPageControl = await mySysPagesControlService.GetSysPagesControls(myUser, myPageId);
+        //             if (myPageControl != null)
+        //             {
+        //                 isAdminLoggedIn = true;
+        //             }
+        //             else
+        //             {
+        //                 await JsRuntime.InvokeVoidAsync("alert", "Not a Valid Login!");
+        //                 isAdminLoggedIn = false;
+        //                 navManager.NavigateTo("login");
+        //             }
+        //         }
+        //         else
+        //         {
+        //             // await JsRuntime.InvokeVoidAsync("alert", "Not a Valid Login!");
+        //             // isAdminLoggedIn = false;
+        //             // navManager.NavigateTo("login");
+        //         }
+        //     }
+        // }
+        // else
+        // {
+        //     isAdminLoggedIn = false;
+        //     navManager.NavigateTo("login");
+        // }
+
+
+
+    }
+    private void ToggleMenu()
+    {
+        collapseMenu = !collapseMenu;
+    }
+
+}

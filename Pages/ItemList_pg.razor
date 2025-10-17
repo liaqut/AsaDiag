@@ -1,0 +1,75 @@
+﻿@page "/itemList_pg/{vCompType}"
+@page "/itemList_pg"
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Components
+@inject ISessionStorageService sessionStorage
+@inject NavigationManager UriHelper
+@inject IJSRuntime JSRuntime
+@using DigiEquipSys.Api;
+
+<style>
+    .e-reportviewer-toggleicon {
+        color: #fff;
+    }
+</style>
+
+<div id="report-viewer" style="height: 90vh;"></div>
+<a href="#" @onclick="NavigateToPrevious" CssClass="e-link">
+    <SfButton CssClass="e-small e-success">BACK</SfButton>
+</a>
+
+@code
+{
+    [CascadingParameter]
+    public EventCallback notify { get; set; }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await notify.InvokeAsync();
+        }
+    }
+
+    [Parameter]
+    public string? vCompType { get; set; }
+    private string? myLoc;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            myLoc = await sessionStorage.GetItemAsync<string>("adminLoc");
+        }
+        catch (Exception ex)
+        {
+            //ignore
+        }
+    }
+
+    BoldReportViewerOptions viewerOptions = new BoldReportViewerOptions();
+    public async Task RenderReportViewer()
+    {
+        viewerOptions.ReportName = "ItemMasterList";
+        viewerOptions.ServiceURL = "api/Report";
+        viewerOptions.Parameters = new List<JSReportParameter>();
+        await JSRuntime.InvokeVoidAsync("BoldReports.RenderViewer", "report-viewer", viewerOptions);
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        RenderReportViewer();
+    }
+
+    public void NavigateToPrevious()
+    {
+        switch (vCompType)
+        {
+            case "GenTrad":
+                UriHelper.NavigateTo($"genTrad");
+                break;
+            case "Pos":
+                UriHelper.NavigateTo($"pos");
+                break;
+        }
+    }
+}

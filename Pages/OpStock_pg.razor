@@ -1,0 +1,276 @@
+﻿@page "/opstock_pg/{vCompType}"
+@page "/opstock_pg"
+@inject HttpClient Http
+@using DigiEquipSys.Services
+@using DigiEquipSys.Models
+@using DigiEquipSys.Interfaces
+@inject IGroupMasterService myGroupMaster
+@inject ICatMasterService myCatMaster
+@inject IItemUnitService myUnit
+@inject IItemMasterService myItemMaster
+@inject IStockService myStock
+@inject ISupplierService mySupplierService
+@inject IClientService myClientService
+@inject NavigationManager UriHelper
+@using System.Dynamic
+@inject ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime
+@attribute [StreamRendering]
+<PageTitle>
+    Opening Stock
+</PageTitle>
+@* <h3 class="page-title" style="color:teal">Opening Stock</h3> *@
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+    .e-ddl.e-input-group.e-Control-wrapper .e-input {
+    font-size: 20px;
+    font-family: emoji;
+    color: #ab3243;
+    background: #32a5ab;
+}
+</style>
+<style>
+    .dialog-header {
+        font-size: 1.0rem;
+        font-weight: bold;
+        margin-bottom: 4px;
+        color: #333;
+    }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap5 {
+        stroke: red;
+    }
+
+    .Control-wrapper {
+        width: 250px;
+    }
+
+    .myButton {
+        background-color: #0a0a23;
+        color: #fff;
+        border: 2px solid #E9E9E9;
+        border-width: 2px 2px 2px 2px;
+        border-radius: 10px;
+        padding: 15px;
+        min-height: 30px;
+        min-width: 120px;
+    }
+
+        .myButton:hover {
+            background-color: #002ead;
+            transition: 0.7s;
+        }
+
+</style>
+
+
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap5" Size="50">
+</SfSpinner>
+
+@if (ItemMasterList != null)
+{
+    <div class="col-lg-12 Control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                <SfGrid @ref="StockGrid" Height="600px"
+                        DataSource="@StockList" AllowTextWrap="true"
+                    AllowSorting="false" AllowFiltering="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                    ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                        Toolbar="@(new List<string>() {"Print","ExcelExport"})">
+                    <GridEvents OnActionBegin="ActionBeginHandler" TValue="Stock" OnToolbarClick="ToolbarClickHandler" RowSelected="RowSelectHandler"></GridEvents>
+                    <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                    <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
+                    <GridPageSettings PageSize="20" PageSizes="@(new int[] {20, 30, 50, 100,  200, 400,500})"></GridPageSettings>
+                    <GridTemplates>
+                        <EmptyRecordTemplate>
+                            <span>No Records Found</span>
+                        </EmptyRecordTemplate>
+                    </GridTemplates>
+                    <GridColumns>
+                        <GridColumn Field="@nameof(Stock.StkId)"
+                                HeaderText="ID"
+                                IsIdentity="true"
+                                IsPrimaryKey="true"
+                                Visible=false>
+                        </GridColumn>
+
+                        <GridColumn Field="@nameof(Stock.ItemListNo)" EditorSettings="@myEditParams" 
+                                    HeaderText="List No."
+                                    AllowEditing="false"
+                                    Width="30">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(Stock.ItemLotNo)" EditorSettings="@myEditParams"
+                                    HeaderText="Lot No."
+                                    AllowEditing="false"
+                                    Width="30">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(Stock.ItemExpiryDate)" EditorSettings="@myEditParams" Format="dd/MM/yyyy"
+                                    HeaderText="Exp. Date"
+                                    AllowEditing="false"
+                                    Width="30">
+                        </GridColumn>
+                        <GridForeignColumn Field="@nameof(Stock.ItemStkIdDesc)" 
+                                       HeaderText="Item Desc"
+                                       ForeignKeyField="ItemId" ForeignKeyValue="ItemDesc" ForeignDataSource="@ItemMasterList"
+                                       Width="75"
+                                       AllowEditing="false">
+                        </GridForeignColumn>
+
+                        <GridForeignColumn Field="@nameof(Stock.ItemStkIdGrp)"
+                                HeaderText="Grp Desc"
+                                           ForeignKeyField="GrpNo" ForeignKeyValue="GrpDesc" ForeignDataSource="@GroupMasterList"
+                                Width="30"
+                                AllowEditing="false">
+                        </GridForeignColumn>
+
+                        <GridForeignColumn Field="@nameof(Stock.ItemStkIdCat)"
+                                           HeaderText="Categ Desc"
+                                           ForeignKeyField="CatNo" ForeignKeyValue="CatDesc" ForeignDataSource="@CategMasterList"
+                                           Width="30"
+                                           AllowEditing="false">
+                        </GridForeignColumn>
+
+                        <GridForeignColumn Field="@nameof(Stock.ItemStkIdUnit)"
+                                       HeaderText="Unit"
+                                           ForeignKeyField="ItemUnitDesc" ForeignKeyValue="ItemUnitDesc" ForeignDataSource="@ItemUnitList"
+                                       Width="25"
+                                       AllowEditing="false">
+                        </GridForeignColumn>
+
+                        <GridForeignColumn Field=@nameof(Stock.ItemClientCode) AllowEditing="false"
+                                           HeaderText="Client Name" ForeignKeyField="ClientCode"
+                                           ForeignKeyValue="ClientName"
+                                           ForeignDataSource="@ClientMasterList" Width="40">
+                        </GridForeignColumn>
+
+                        <GridForeignColumn Field=@nameof(Stock.ItemSuppCode) AllowEditing="false"
+                                           HeaderText="Supplier Name" ForeignKeyField="SuppCode"
+                                           ForeignKeyValue="SuppName"
+                                           ForeignDataSource="@SupplierMasterList" Width="40">
+                        </GridForeignColumn>
+
+                        <GridColumn Field="@nameof(Stock.ItemUp)" EditorSettings="@myEditParams" Format="N2"
+                                    HeaderText="Opening Price" AllowEditing="@IsEdit" Visible="@IsVisRole"
+                                Width="30">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(Stock.ItemSp)" EditorSettings="@myEditParams" Format="N2" Visible="false"
+                                    HeaderText="Selling Price" AllowEditing="@IsEdit"
+                                    Width="30">
+                        </GridColumn>
+                        <GridColumn Field="@nameof(Stock.ItemOpQty)" EditorSettings="@myEditParams" Format="N2" 
+                                HeaderText="Op. Qty" Width="30" AllowEditing="@IsEdit">
+                        </GridColumn>
+
+                        <GridColumn HeaderText="Action" Width="20" Visible="false">
+                            <GridCommandColumns>
+                                <GridCommandColumn Type="CommandButtonType.Edit"
+                                    ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-edit",
+                                      CssClass="e-flat"
+                                    })">
+                                </GridCommandColumn>
+                                <GridCommandColumn Type="CommandButtonType.Save"
+                                    ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-update",
+                                      CssClass="e-flat"
+                                    })">
+                                </GridCommandColumn>
+                                <GridCommandColumn Type="CommandButtonType.Cancel"
+                                    ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-cancel-icon",
+                                      CssClass="e-flat"
+                                    })">
+                                </GridCommandColumn>
+                            </GridCommandColumns>
+                        </GridColumn>
+                    </GridColumns>
+                </SfGrid>
+                <br />
+            </div>
+            <div class="e-footer-content">
+                <br />
+                <SfButton class="myButton" Disabled="true" CssClass="e-small e-success" @onclick="AddStock">
+                    Add Stock
+                </SfButton>
+
+                <SfButton class="myButton" Disabled="true" CssClass="e-small e-success" @onclick="DeleteStock">
+                    Delete Stock
+                </SfButton>
+                <a href="#" @onclick="NavigateToPrevious" CssClass="e-link">
+                    <SfButton CssClass="e-small e-success">BACK</SfButton>
+                </a>
+            </div>
+            <SfDialog @ref="DialogAddStock" IsModal="true" Width="750px" ShowCloseIcon="true" Visible="false" Header="Stock">
+                @* <DialogEvents Opened="@onOpen"></DialogEvents> *@
+                <EditForm Model="@stock" OnValidSubmit="@StockSave">
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">List Number</h4>
+                        <SfTextBox Enabled="@IsEdit" Placeholder="List Number" Width="50"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@stock.ItemListNo">
+                        </SfTextBox>
+                    </div>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Lot Number</h4>
+                        <SfTextBox Enabled="true" Placeholder="Lot Number" Width="100"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                   @bind-Value="@stock.ItemLotNo">
+                        </SfTextBox>
+                    </div>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Expiry Date</h4>
+                        <SfDatePicker Placeholder="Expiry date" Width="100" @bind-Value="@stock.ItemExpiryDate"
+                             Format="dd/MM/yyyy">
+                         </SfDatePicker>
+                    </div>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Client Name</h4>
+                        <SfComboBox TValue="string" TItem="ClientMaster" @bind-Value="@stock.ItemClientCode" DataSource="@ClientMasterList" Placeholder="Select a Customer">
+                            <ComboBoxFieldSettings Value="ClientCode" Text="ClientName"></ComboBoxFieldSettings>
+                        </SfComboBox>
+                    </div>
+                    <div class="sftextbox-header">
+                            <h4 class="dialog-header">Supplier Name</h4>
+                        <SfComboBox TValue="string" TItem="SupplierMaster" @bind-Value="@stock.ItemSuppCode" DataSource="@SupplierMasterList" Placeholder="Select a Supplier">
+                                <ComboBoxFieldSettings Value="SuppCode" Text="SuppName"></ComboBoxFieldSettings>
+                            </SfComboBox>
+                    </div>
+
+                    <div class="sftextbox-header">
+                        <h4 class="dialog-header">Opening Quantity</h4>
+                        <SfNumericTextBox Enabled="true" Placeholder="Opening Quantity" Width="100" Format="N2"
+                                   Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                          @bind-Value="@stock.ItemOpQty">
+                        </SfNumericTextBox>
+                    </div>
+
+                    <br /><br />
+                    <div class="e-footer-content">
+                        <div class="button-container">
+                            <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+                            <button type="submit" class="e-btn e-normal e-primary">Save</button>
+                            <button type="button" class="e-btn e-normal" @onclick="@CloseDialog">Close</button>
+                        </div>
+                    </div>
+                </EditForm>
+            </SfDialog>
+            <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+            <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
+        </div>
+    </div>
+}
+else
+{
+    <div class="my-data">
+        No Data Found...
+    </div>
+}

@@ -1,0 +1,3 @@
+[0628/160016.575:ERROR:tcp_socket_win.cc(352)] bind() returned an error: Only one usage of each socket address (protocol/network address/port) is normally permitted. (0x2740)
+[0628/160016.575:ERROR:devtools_http_handler.cc(297)] Cannot start http server for devtools.
+[0628/160026.791:INFO:CONSOLE(2)] "Synchronous XMLHttpRequest on the main thread is deprecated because of its detrimental effects to the end user's experience. For more help, check https://xhr.spec.whatwg.org/.", source: http://localhost:8601/Scripts/jquery.min.js (2)

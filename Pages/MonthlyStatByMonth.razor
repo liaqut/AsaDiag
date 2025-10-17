@@ -1,0 +1,790 @@
+﻿@inject ISessionStorageService sessionStorage
+@inject NavigationManager navManager
+@using DigiEquipSys.Interfaces
+@using DigiEquipSys.Models
+@using DigiEquipSys.Services
+@using System
+@using System.Globalization
+@using System.Linq
+@using System.Collections.Generic;
+@inject AccYear accYear
+@inject IStockService myStockService
+@inject IStockTransService myStockTransService
+@inject IJSRuntime JSRuntime
+@inject IGroupMasterService myGroupMaster
+@inject IClientService myClientService
+@inject IItemMasterService myItemMasterService
+@inject IvwReceiptService myvwReceiptService
+@inject IvwSaleService myvwSaleService
+@inject IvwTransferService myvwTransferService
+@inject ITrDetailService myTrDetailService
+@inject ICommChargeService myCommChargeService
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Data
+<PageTitle>Index</PageTitle>
+@using Syncfusion.Blazor.Layouts
+@using Syncfusion.Blazor.Charts
+@using Syncfusion.Blazor.Buttons
+
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap4" Size="50" Label="Data loading">
+</SfSpinner>
+
+<div style="display: flex; flex-direction: column; align-items: center; margin-top: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+           <label style="white-space: nowrap;">Change Date</label>
+           <SfDateRangePicker TValue="DateTime?" Placeholder="Choose a Date Range" Start="CalendarView.Year" Depth="CalendarView.Year"  FullScreen="true" ShowClearButton="true" Width="400px"
+                           @bind-StartDate="@selectedRangeAll.selectedRangeFromAll"
+                           @bind-EndDate="@selectedRangeAll.selectedRangeToAll">
+                          <DateRangePickerEvents TValue="DateTime?" ValueChange="ValueChangeHandlerAll"></DateRangePickerEvents>
+            </SfDateRangePicker>
+    	</div>
+		<br />
+		<div style="display: flex; align-items: center; gap: 10px;">
+            <label style="white-space: nowrap;">Groups</label>
+	        <SfMultiSelect @ref="GrpObj" TValue="string[]" TItem="GroupMaster" AllowFiltering="true" Mode="@VisualMode.CheckBox" DataSource="@GroupMasterList" ShowSelectAll="true" PopupHeight="350px" Width="250px" ShowDropDownIcon="true">
+                <MultiSelectFieldSettings Text="GrpDesc" Value="GrpNo"></MultiSelectFieldSettings>
+                <MultiSelectEvents TItem="GroupMaster" TValue="string[]" ValueChange="@OnGroupChanged" Filtering="OnGroupFiltering"></MultiSelectEvents>
+            </SfMultiSelect>
+
+            <span style="margin-right: 10px;"></span>
+            <label style="white-space: nowrap;">Customers</label>
+            <SfMultiSelect @ref="CliObj" TValue="string[]" TItem="ClientMaster" AllowFiltering="true" Mode="@VisualMode.CheckBox" DataSource="@ClientMasterList" ShowSelectAll="true" PopupHeight="350px" Width="250px" ShowDropDownIcon="true">
+                 <MultiSelectFieldSettings Text="ClientName" Value="ClientCode"></MultiSelectFieldSettings>
+                 <MultiSelectEvents TItem="ClientMaster" TValue="string[]" ValueChange="@OnClientChanged" Filtering="OnClientFiltering"></MultiSelectEvents>
+            </SfMultiSelect>
+            <span style="margin-right: 10px;"></span>
+            <label style="white-space: nowrap;">Kits</label>
+            <SfMultiSelect @ref="ComboObj" TValue="string[]" TItem="ItemMaster" AllowFiltering="true" Mode="@VisualMode.CheckBox" DataSource="@ItemMasterList" ShowSelectAll="true" PopupHeight="350px" Width="350px" ShowDropDownIcon="true">
+                <MultiSelectFieldSettings Text="ItemDesc" Value="ItemListNo"></MultiSelectFieldSettings>
+                <MultiSelectEvents TItem="ItemMaster" TValue="string[]" ValueChange="@OnItemChanged" Filtering="OnFiltering"></MultiSelectEvents>
+            </SfMultiSelect>
+       </div>
+</div>
+
+ <SfDashboardLayout Columns="10" CellSpacing="@(new double[]{20,20})" MediaQuery="max-width:700px">
+        <DashboardLayoutPanels>
+
+            @if (purchaseSource != null)
+            {
+                <DashboardLayoutPanel Column="0" Row="0" SizeX="10" SizeY="4">
+                    <HeaderTemplate>
+						Purchases
+                    </HeaderTemplate>
+                    <ContentTemplate>
+                        <div style="display: flex; flex-direction: column; height: 100%;">
+                            <div style="flex: 1; overflow: auto;">
+                                <SfChart Title="" Palettes="@palettes">
+                                    <ChartPrimaryXAxis Title="" ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+                                    <ChartLegendSettings Visible="true"></ChartLegendSettings>
+                                    <ChartPrimaryYAxis Title="Purchases"></ChartPrimaryYAxis>
+                                    <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+                                    <ChartSeriesCollection>
+                                        <ChartSeries Name="Purchase" DataSource="@purchaseSource" XName="vMon" YName="vAmount" Type="ChartSeriesType.Column">
+                                            <ChartMarker>
+                                                <ChartDataLabel Visible="true"></ChartDataLabel>
+                                            </ChartMarker>
+                                        </ChartSeries>
+                                    </ChartSeriesCollection>
+                                </SfChart>
+							</div>
+                            <div style="margin-top: 15px; border-top: 1px solid #ccc; padding-top: 10px; text-align: left; font-family: Arial, sans-serif;">
+								<strong style="font-size: 18px; font-weight: bold; color: #2c3e50;">Total Purchase:</strong>
+								<span style="font-size: 18px; font-weight: bold; color: #27ae60;">@TotPurchasesPs.ToString("N0")</span>
+                            </div>
+                        </div>
+
+                    </ContentTemplate>
+                </DashboardLayoutPanel>
+            }
+
+            @if (chartSource != null)
+            {
+                <DashboardLayoutPanel Column="0" Row="5" SizeX="10" SizeY="4">
+                    <HeaderTemplate>
+						Sales
+                    </HeaderTemplate>
+                    <ContentTemplate>
+                        <div style="display: flex; flex-direction: column; height: 100%;">
+                            <div style="flex: 1; overflow: auto;">
+                                <SfChart Title="" Palettes="@palettes2">
+                                    <ChartPrimaryXAxis Title="" ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+                                    <ChartLegendSettings Visible="true"></ChartLegendSettings>
+                                    <ChartPrimaryYAxis Title="Sales"></ChartPrimaryYAxis>
+                                    <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+                                    <ChartSeriesCollection>
+                                        <ChartSeries Name="Sales" DataSource="@chartSource" XName="vMon" YName="vAmount"  Type="ChartSeriesType.Column">
+                                            <ChartMarker>
+                                                <ChartDataLabel Visible="true">
+                                                </ChartDataLabel>
+                                            </ChartMarker>
+                                        </ChartSeries>
+                                    </ChartSeriesCollection>
+                                </SfChart>
+							</div>
+                            <div style="margin-top: 15px; border-top: 1px solid #ccc; padding-top: 10px; text-align: left; font-family: Arial, sans-serif;">
+                                <strong style="font-size: 18px; font-weight: bold; color: #2c3e50;">Total Sales:</strong>
+                                <span style="font-size: 18px; font-weight: bold; color: #27ae60;">@TotSalesPs.ToString("N0")</span
+                            </div>
+                        </div>
+
+                    </ContentTemplate>
+                </DashboardLayoutPanel>
+			}
+            @if (chartSource != null)
+            {
+            <DashboardLayoutPanel Column="0" Row="10" SizeX="10" SizeY="3">
+                <HeaderTemplate>
+                    Sales Margin
+                </HeaderTemplate>
+                <ContentTemplate>
+                        <div style="display: flex; flex-direction: column; height: 100%;">
+                            <div style="flex: 1; overflow: auto;">
+                                <SfChart Title="" Palettes="@palettes3">
+                                    <ChartPrimaryXAxis Title="" ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+                                    <ChartLegendSettings Visible="true"></ChartLegendSettings>
+                                    <ChartPrimaryYAxis Title="Margin"></ChartPrimaryYAxis>
+                                    <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+                                    <ChartSeriesCollection>
+                                        <ChartSeries Name="Margin" DataSource="@chartSource" XName="vMon" YName="vGross"  Type="ChartSeriesType.Column">
+                                            <ChartMarker>
+                                                <ChartDataLabel Visible="true">
+                                                </ChartDataLabel>
+                                            </ChartMarker>
+                                        </ChartSeries>
+                                    </ChartSeriesCollection>
+                                </SfChart>
+							</div>
+                            <div style="margin-top: 15px; border-top: 1px solid #ccc; padding-top: 10px; text-align: left; font-family: Arial, sans-serif;">
+								<span style="display: inline-block; width: 40px;"></span>
+						    	<strong style="font-size: 18px; font-weight: bold; color: #2c3e50;">Margin Value:</strong>
+								<span style="font-size: 18px; font-weight: bold; color: #27ae60;">@TotMargValue.ToString("N2")</span>
+								<span style="display: inline-block; width: 40px;"></span>
+						    	<strong style="font-size: 18px; font-weight: bold; color: #2c3e50;">Margin:</strong>
+								<span style="font-size: 18px; font-weight: bold; color: #27ae60;">@TotMarg.ToString("N2")</span>
+								<span style="display: inline-block; width: 40px;"></span>
+                            </div>
+						</div>
+                </ContentTemplate>
+            </DashboardLayoutPanel>
+			}
+
+            @if (l2hSource != null)
+            {
+            <DashboardLayoutPanel Column="0" Row="14" SizeX="10" SizeY="3">
+                <HeaderTemplate>
+                    L2H
+                </HeaderTemplate>
+                <ContentTemplate>
+                        <div style="display: flex; flex-direction: column; height: 100%;">
+                            <div style="flex: 1; overflow: auto;">
+                                <SfChart Title="" Palettes="@palettes4">
+                                    <ChartPrimaryXAxis Title="" ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+                                    <ChartLegendSettings Visible="true"></ChartLegendSettings>
+                                    <ChartPrimaryYAxis Title="L2H"></ChartPrimaryYAxis>
+                                    <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+                                    <ChartSeriesCollection>
+                                        <ChartSeries Name="L2H" DataSource="@l2hSource" XName="vMon" YName="vRevAmount" Type="ChartSeriesType.Column">
+                                            <ChartMarker>
+                                                <ChartDataLabel Visible="true">
+                                                </ChartDataLabel>
+                                            </ChartMarker>
+                                        </ChartSeries>
+                                    </ChartSeriesCollection>
+                                </SfChart>
+							</div>
+                            <div style="margin-top: 15px; border-top: 1px solid #ccc; padding-top: 10px; text-align: left; font-family: Arial, sans-serif;">
+								<strong style="font-size: 18px; font-weight: bold; color: #2c3e50;">L2H (From):</strong>
+								<span style="font-size: 18px; font-weight: bold; color: #27ae60;">@TotL2H2.ToString("N0")</span>
+                            </div>
+
+						</div>
+                </ContentTemplate>
+            </DashboardLayoutPanel>
+			}
+
+		    @if (l2hSource != null)
+            {
+            <DashboardLayoutPanel Column="0" Row="18" SizeX="10" SizeY="3">
+                <HeaderTemplate>
+                    H2L
+                </HeaderTemplate>
+                <ContentTemplate>
+                        <div style="display: flex; flex-direction: column; height: 100%;">
+                            <div style="flex: 1; overflow: auto;">
+                                <SfChart Title="" Palettes="@palettes5">
+                                    <ChartPrimaryXAxis Title="" ValueType="Syncfusion.Blazor.Charts.ValueType.Category"></ChartPrimaryXAxis>
+                                    <ChartLegendSettings Visible="true"></ChartLegendSettings>
+                                    <ChartPrimaryYAxis Title="H2L"></ChartPrimaryYAxis>
+                                    <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+                                    <ChartSeriesCollection>
+                                        <ChartSeries Name="H2L" DataSource="@l2hSource" XName="vMon" YName="vAlertAmount" Type="ChartSeriesType.Column">
+                                            <ChartMarker>
+                                                <ChartDataLabel Visible="true">
+                                                </ChartDataLabel>
+                                            </ChartMarker>
+                                        </ChartSeries>
+                                    </ChartSeriesCollection>
+                                </SfChart>
+							</div>
+                            <div style="margin-top: 15px; border-top: 1px solid #ccc; padding-top: 10px; text-align: left; font-family: Arial, sans-serif;">
+								<strong style="font-size: 18px; font-weight: bold; color: #2c3e50;">H2L:</strong>
+								<span style="font-size: 18px; font-weight: bold; color: #27ae60;">@TotH2.ToString("N0")</span>
+                            </div>
+						</div>
+                </ContentTemplate>
+            </DashboardLayoutPanel>
+			}
+
+
+        </DashboardLayoutPanels>
+    </SfDashboardLayout>
+@code {
+
+	[CascadingParameter]
+	public EventCallback notify { get; set; }
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			await notify.InvokeAsync();
+		}
+	}
+	//private string SelectedMethod { get; set; } = "ByMonth";
+
+	private bool SpinnerVisible { get; set; } = false;
+	// protected List<Stock> StockList = new();
+	// protected List<StockTran> StockTransList = new();
+
+	public decimal TotDiff;
+	public decimal Marg;
+	public decimal TotNonAlertValue;
+	public decimal TotRevValue;
+	public decimal TotL2H;
+	public decimal MargRev;
+	public decimal TotAlertValue;
+	public decimal TotDiffValue;
+
+	public decimal TotSales;
+	public decimal TotPurchases;
+	public decimal TotSalesPs;
+	public decimal TotPurchasesPs;
+	public decimal TotQty;
+	public decimal TotValue;
+	public decimal TotMarg;
+	public decimal TotMargValue;
+
+	public decimal TotNonAlertValue2;
+	public decimal TotRevValue2;
+	public decimal TotL2H2;
+	public decimal TotL2H2To;
+	public decimal TotCommCharges;
+	public decimal TotStkQty;
+	public decimal TotStkAmt;
+	public decimal TotH2;	
+
+	public class DateRangeAll
+	{
+		public DateTime? selectedRangeFromAll { get; set; }
+		public DateTime? selectedRangeToAll { get; set; }
+	}
+	private DateRangeAll selectedRangeAll { get; set; } = new DateRangeAll();
+
+	public string[]? vGrpArray { get; set; }
+	public string[]? vClientArray { get; set; }
+	public string[]? vItemArray { get; set; }
+
+	protected class RenderingData
+	{
+		public string? X { get; set; }
+		public decimal? Y { get; set; }
+	}
+	protected List<RenderingData> renderingDataSumm= new();
+
+	protected class RenderingPurchData
+	{
+		public string? X { get; set; }
+		public decimal? Y { get; set; }
+	}
+	protected List<RenderingPurchData> renderingPurchDataSumm = new();
+
+	protected class Sale
+	{
+		//public string vClient { get; set; }
+		public string vMon { get; set; } // Month-Year
+		public decimal vAmount { get; set; }
+		public decimal vGross { get; set; }
+	}
+	private List<Sale> chartSource = new();
+
+	protected class Purchase
+	{
+		//public string vClient { get; set; }
+		public string? vMon { get; set; }
+		public decimal? vAmount { get; set; }
+	}
+	private List<Purchase> purchaseSource = new();
+
+	public class l2h
+	{
+		public DateTime vMonDate { get; set; }
+		//public string vClient { get; set; }
+		public string vMon { get; set; }           
+		public decimal vRevAmount { get; set; }    
+		public decimal vAlertAmount { get; set; }
+		public decimal vNonAlertAmount { get; set; }
+	}
+	private List<l2h> l2hSource = new();
+
+
+	private SfMultiSelect<string[], GroupMaster> GrpObj;
+	private SfMultiSelect<string[], ItemMaster> ComboObj;
+	private List<GroupMaster>? GroupMasterList = new();
+	private List<ItemMaster>? ItemMasterList = new();
+	private List<ItemMaster> ItemMastList = new();
+	protected List<ClientMaster>? ClientMasterList = new();
+	private SfMultiSelect<string[], ClientMaster> CliObj;
+
+	public List<TrDetail>? TrDetailList2a = new();
+	public List<TrDetail>? TrDetailListSelect2a = new();
+	public List<VwTransfer>? TransferListAll2a = new();
+	public List<VwTransfer>? TransferList2a = new();
+
+	public List<TrDetail>? TrDetailList2 = new();
+	public List<TrDetail>? TrDetailListSelect2 = new();
+	public List<VwTransfer>? TransferListAll2 = new();
+	public List<VwTransfer>? TransferList2 = new();
+	public List<VwTransfer>? TransferList3 = new();
+
+	private string Custom { get; set; }
+	public string iam;
+
+	private string[] palettes = new string[] { "#61EFCD", "#CDDE1F", "#FEC200", "#CA765A", "#2485FA", "#F57D7D", "#C152D2",
+	"#8854D9", "#3D4EB8", "#00BCD7","#4472c4", "#ed7d31", "#ffc000", "#70ad47", "#5b9bd5", "#c1c1c1", "#6f6fe2", "#e269ae", "#9e480e", "#997300" };
+
+	private string[] palettes2 = new string[]
+	{
+	"#1ABC9C", // turquoise
+    "#2ECC71", // emerald
+    "#3498DB", // blue
+    "#9B59B6", // amethyst
+    "#34495E", // wet asphalt
+    "#16A085", // greenish teal
+    "#27AE60", // green
+    "#2980B9", // strong blue
+    "#8E44AD", // deep purple
+    "#2C3E50", // dark blue-gray
+    "#E74C3C", // red
+    "#E67E22", // orange
+    "#F1C40F", // yellow
+    "#ECF0F1", // light gray
+    "#95A5A6", // gray
+    "#D35400", // pumpkin
+    "#C0392B", // dark red
+    "#BDC3C7", // silver
+    "#7F8C8D", // grayish blue
+    "#FF6F61"  // coral pink
+	};
+
+	private string[] palettes3 = new string[] { "#0d47a1", "#1976d2", "#42a5f5", "#90caf9", "#cfd8dc", "#b0bec5", "#78909c" };
+	private string[] palettes4 = new string[] { "#ff6384", "#36a2eb", "#cc65fe", "#ffce56", "#2ecc71", "#f1c40f", "#e67e22" };
+	private string[] palettes5 = new string[] { "#e57373", "#ba68c8", "#64b5f6", "#4db6ac", "#81c784", "#ffd54f", "#ff8a65" };
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			this.SpinnerVisible = true;
+			iam = await sessionStorage.GetItemAsync<string>("adminRo"); //iam = "01";
+			string datestringfromAll = "01/" + DateTime.Now.Month.ToString("00") + "/" + DateTime.Now.Year;
+			//string datestringfromAll = "01/05/" + DateTime.Now.Year;
+			selectedRangeAll.selectedRangeFromAll = DateTime.ParseExact(datestringfromAll, "dd/MM/yyyy", CultureInfo.InvariantCulture);
+			selectedRangeAll.selectedRangeToAll = DateTime.Now;
+
+			GroupMasterList = await myGroupMaster.GetGroupMasters();
+			ClientMasterList = await myClientService.GetClients();
+			ItemMasterList = await myItemMasterService.GetItemMastersDistinct();
+			ItemMastList = await myItemMasterService.GetItemMasters();
+			//StockList = await myStockService.GetAllStocks();
+			//await Ps();
+
+			this.SpinnerVisible = false;
+			await InvokeAsync(StateHasChanged);
+
+		}
+		catch (Exception ex)
+		{
+			this.SpinnerVisible = false;
+			await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+			return;
+		}
+	}
+
+	// private async Task OnMethodChanged(ChangeArgs<string> args)
+	// {
+	// 	if (args.Value=="ByCustomer")
+	// 	{
+	// 		SelectedMethod = "ByCustomer";
+	// 		    await Ps2();
+	// 	}
+	// 	else
+	// 	{
+	// 		SelectedMethod = "ByMonth";
+	// 		    await Ps();
+	// 	}
+	// }
+
+	public async Task ValueChangeHandlerAll(RangePickerEventArgs<DateTime?> args)
+	{
+		try
+		{
+			await Ps();
+		}
+		catch (Exception ex)
+		{
+			this.SpinnerVisible = false;
+			await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+			return;
+		}
+	}
+
+
+	private async Task OnGroupChanged(MultiSelectChangeEventArgs<string[]> args)
+	{
+		vGrpArray = args.Value;
+		await Ps();
+	}
+
+	private async Task OnClientChanged(MultiSelectChangeEventArgs<string[]> args)
+	{
+		vClientArray = args.Value;
+		await Ps();
+	}
+
+	private async Task OnItemChanged(MultiSelectChangeEventArgs<string[]> args)
+	{
+		vItemArray = args.Value;
+		await Ps();
+	}
+
+	private async Task OnGroupFiltering(Syncfusion.Blazor.DropDowns.FilteringEventArgs args)
+	{
+		args.PreventDefaultAction = true;
+
+		var query = string.IsNullOrWhiteSpace(args.Text)
+			? new Syncfusion.Blazor.Data.Query()
+			: new Syncfusion.Blazor.Data.Query().Where(new Syncfusion.Blazor.Data.WhereFilter()
+				{
+					Field = "GrpDesc",
+					Operator = "contains",
+					value = args.Text,
+					IgnoreCase = true
+				});
+
+		await GrpObj.FilterAsync(GroupMasterList, query);
+	}
+
+	private async Task OnFiltering(Syncfusion.Blazor.DropDowns.FilteringEventArgs args)
+	{
+		args.PreventDefaultAction = true;
+		var query = string.IsNullOrWhiteSpace(args.Text)
+			? new Syncfusion.Blazor.Data.Query()
+			: new Syncfusion.Blazor.Data.Query().Where(new Syncfusion.Blazor.Data.WhereFilter()
+				{
+					Field = "ItemDesc",
+					Operator = "contains",
+					value = args.Text,
+					IgnoreCase = true
+				});
+
+		await ComboObj.FilterAsync(ItemMasterList, query);
+	}
+
+	private async Task OnClientFiltering(Syncfusion.Blazor.DropDowns.FilteringEventArgs args)
+	{
+		args.PreventDefaultAction = true;
+
+		var query = string.IsNullOrWhiteSpace(args.Text)
+			? new Syncfusion.Blazor.Data.Query()
+			: new Syncfusion.Blazor.Data.Query().Where(new Syncfusion.Blazor.Data.WhereFilter()
+				{
+					Field = "ClientName",
+					Operator = "contains",
+					value = args.Text,
+					IgnoreCase = true
+				});
+
+		await CliObj.FilterAsync(ClientMasterList, query);
+	}
+
+	public async Task Ps()
+	{
+		try
+		{
+			this.SpinnerVisible = true;
+
+			//await myTrDetailService.UpdateTrdRev();
+			await Task.Delay(20);
+			DateTime StDate = selectedRangeAll.selectedRangeFromAll.Value;
+			DateTime EnDate = selectedRangeAll.selectedRangeToAll.Value;
+			var OutgoingList = await myvwSaleService.GetvwSalesDate(StDate.AddDays(0), EnDate.AddDays(1));
+			await Task.Delay(100);
+			var IncomingList = await myvwReceiptService.GetvwReceiptsDate(StDate.AddDays(0), EnDate.AddDays(1));
+			//StockTransList = await myStockTransService.GetStockTransByDate(StDate.AddDays(0), EnDate.AddDays(1));
+			await Task.Delay(20);
+
+			if (vGrpArray != null && vGrpArray.Length > 0)
+			{
+				var filteredList4 = OutgoingList.Where(v => vGrpArray.Contains(v.ItemGrpCode)).ToList();
+				OutgoingList = filteredList4;
+				var filteredList5 = IncomingList.Where(v => vGrpArray.Contains(v.ItemGrpCode)).ToList();
+				IncomingList = filteredList5;
+
+				//StockTransList=StockTransList.Where(v => vGrpArray.Contains(v.ItemStkIdGrp)).ToList();
+			}
+
+			if (vClientArray != null && vClientArray.Length > 0)
+			{
+				var filteredList = OutgoingList.Where(v => vClientArray.Contains(v.DelClientCode)).ToList();
+				OutgoingList = filteredList;
+				var filteredList1 = IncomingList.Where(v => vClientArray.Contains(v.RdClientCode)).ToList();
+				IncomingList = filteredList1;
+				//StockTransList=StockTransList.Where(v => vClientArray.Contains(v.ItemClientCode)).ToList();
+			}
+
+			if (vItemArray != null && vItemArray.Length > 0)
+			{
+				var filteredList2 = OutgoingList.Where(v => vItemArray.Contains(v.DelListNo)).ToList();
+				OutgoingList = filteredList2;
+				var filteredList3 = IncomingList.Where(v => vItemArray.Contains(v.RdListNo)).ToList();
+				IncomingList = filteredList3;
+				//StockTransList=StockTransList.Where(v => vItemArray.Contains(v.ItemListNo)).ToList();
+			}
+			var tt = OutgoingList
+						.Where(r => r.DelDate.HasValue)
+						.GroupBy(r => new { r.DelDate.Value.Year, r.DelDate.Value.Month })
+						.Select(g => new Sale
+								{
+									vMon = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("MMM yyyy"), // e.g., "Jan 2025"
+									vAmount = g.Sum(r => Convert.ToDecimal(r.DelTotal ?? 0.00M)),
+									vGross = g.Sum(r => Convert.ToDecimal(r.Gross ?? 0.00M))
+								})
+						.OrderBy(x => DateTime.ParseExact(x.vMon, "MMM yyyy", null)) // Optional: order chronologically
+						.ToList();
+			chartSource = tt;
+			TotSalesPs = (decimal)chartSource.Sum(x => x.vAmount);
+
+			var mm = IncomingList
+									.Where(r => r.RdVendInvDate.HasValue)
+									.GroupBy(r => new { r.RdVendInvDate.Value.Year, r.RdVendInvDate.Value.Month })
+									.Select(g => new Purchase
+											{
+												vMon = new DateTime(g.Key.Year, g.Key.Month, 1).ToString("MMM yyyy"),
+												vAmount = g.Sum(r => Convert.ToDecimal(r.RdTotal ?? 0.00M))
+											}).OrderBy(x => DateTime.ParseExact(x.vMon, "MMM yyyy", null)).ToList();
+			purchaseSource = mm;
+			TotPurchasesPs = (decimal)purchaseSource.Sum(x => x.vAmount);
+
+			var TotDiff1 = (decimal)OutgoingList.Sum(x => x.Gross);
+			TotMargValue = TotDiff1;
+
+			if (TotSalesPs > 0)
+			{
+				TotMarg = 100 * (TotDiff1 / TotSalesPs);
+			}
+			else
+			{
+				TotMarg = 0;
+			}
+
+
+			//TotStkQty = Convert.ToDecimal(StockTransList.Sum(d => (d.ItemTrOpQty ?? 0) + (d.ItemTrInQty ?? 0) + (d.ItemPurQty ?? 0) - ((d.ItemDelQty ?? 0) + (d.ItemTrOutQty ?? 0))));
+			//TotStkAmt = Convert.ToDecimal(StockTransList.Sum(d => ((d.ItemTrOpQty ?? 0) + (d.ItemTrInQty ?? 0) + (d.ItemPurQty ?? 0) - ((d.ItemDelQty ?? 0) + (d.ItemTrOutQty ?? 0)))*d.ItemCp));
+
+			var stMonth = new DateTime(StDate.Year, StDate.Month, 1);
+			var enMonth = new DateTime(EnDate.Year, EnDate.Month, 1);
+			var Qry9 = await myTrDetailService.GetTrDetls();
+
+			l2hSource = new();
+			var loopDate = stMonth;
+			TotL2H2 = 0;
+			TotH2 = 0;
+			while (loopDate <= enMonth)
+			{
+				await myTrDetailService.UpdateTrdRev();
+				DateTime myStDate = new DateTime(loopDate.Year, loopDate.Month, 1);
+				DateTime myEnDate = myStDate.AddMonths(1).AddDays(-1);
+				var Qry3 = await myTrDetailService.GetTrDetls(myStDate.AddDays(0), myEnDate.AddDays(1));
+				var Qry2 = (from q3 in Qry3
+							join im in ItemMastList on q3.TrdStkIdDesc equals im.ItemId
+							where vGrpArray == null || vGrpArray.Length == 0 || vGrpArray.Contains(im.ItemGrpCode)
+							where vClientArray == null || vClientArray.Length == 0 || vClientArray.Contains(q3.TrdClientCodeFrom)
+							where vItemArray == null || vItemArray.Length == 0 || vItemArray.Contains(q3.TrdListNo)
+							select q3).ToList();
+
+				//var Qry9 = await myTrDetailService.GetTrDetls();
+				TrDetailList2 = (from q9 in Qry9 join imast in ItemMastList on q9.TrdStkIdDesc equals imast.ItemId 
+									where vGrpArray == null || vGrpArray.Length == 0 || vGrpArray.Contains(imast.ItemGrpCode)
+									where vClientArray == null || vClientArray.Length == 0 || vClientArray.Contains(q9.TrdClientCodeFrom)
+									where vItemArray == null || vItemArray.Length == 0 || vItemArray.Contains(q9.TrdListNo)
+									select q9).ToList();
+
+				TrDetailListSelect2 = TrDetailList2;
+				var Qry = Qry2.Where(x => x.TrdReversal == "Reversal").ToList();
+				var Qry1 = Qry.ToList();
+				foreach (var q in Qry1)
+				{
+					Qry.AddRange(TrDetailListSelect2.Where(y => y.TrdId == q.TrdIdRevJourn));
+				}
+				TrDetailListSelect2 = new List<TrDetail>(Qry);
+				foreach (var transfer in TrDetailListSelect2)
+				{
+					transfer.TrdRev = true;
+					await myTrDetailService.UpdateTrDetl(transfer);
+				}
+				TransferListAll2 = await myvwTransferService.GetvwTransfers();
+				if (vClientArray != null && vClientArray.Length > 0)
+				{
+					TransferListAll2 = TransferListAll2.Where(v => vClientArray.Contains(v.TrdClientCodeTo)).ToList();
+				}
+				if (vItemArray != null && vItemArray.Length > 0)
+				{
+					TransferListAll2 = TransferListAll2.Where(v => vItemArray.Contains(v.TrdListNo)).ToList();
+				}
+				if (vGrpArray != null && vGrpArray.Length > 0)
+				{
+					TransferListAll2 = TransferListAll2.Where(v => vGrpArray.Contains(v.ItemGrpCode)).ToList();
+				}
+				var ReversalList2 = TransferListAll2.Where(q => q.TrdRev == true && (q.TrdLotChange == "" || q.TrdLotChange == null)).ToList();
+				TotRevValue2 = ReversalList2.Sum(x => (Convert.ToDecimal(x.RevAmt ?? 0)));
+
+				TransferList2 = await myvwTransferService.GetvwTransfersDate(myStDate.AddDays(0), myEnDate.AddDays(1));
+				if (vClientArray != null && vClientArray.Length > 0)
+				{
+					TransferList2 = TransferList2.Where(v => vClientArray.Contains(v.TrdClientCodeTo)).ToList();
+				}
+				if (vItemArray != null && vItemArray.Length > 0)
+				{
+					TransferList2 = TransferList2.Where(v => vItemArray.Contains(v.TrdListNo)).ToList();
+				}
+				if (vGrpArray != null && vGrpArray.Length > 0)
+				{
+					TransferList2 = TransferList2.Where(v => vGrpArray.Contains(v.ItemGrpCode)).ToList();
+				}
+
+				TransferList3 = TransferList2;
+				TransferList2 = TransferList2.Where(q => q.TrdRev == false && (q.TrdLotChange == "" || q.TrdLotChange == null)).ToList(); 
+				TotNonAlertValue2 = TransferList2.Sum(x => (Convert.ToDecimal(x.NonAlertAmt)));
+				await myvwTransferService.UpdateAction();
+				await Task.Delay(100);
+				var ActionList = TransferList3.Where(q => q.TrdAction == true  && (q.TrdLotChange == "" || q.TrdLotChange == null)).ToList();
+				TotAlertValue = ActionList.Sum(x => (Convert.ToDecimal(x.AlertAmt)));
+				l2hSource.Add(new l2h
+				{
+					vMonDate = loopDate,
+		            vMon = loopDate.ToString("MMM-yyyy"),
+					vRevAmount = TotRevValue2 + TotNonAlertValue2,
+					vAlertAmount = TotAlertValue,
+					vNonAlertAmount = TotNonAlertValue2
+				});
+				TotL2H2 = TotL2H2+TotNonAlertValue2 + TotRevValue2;
+				TotH2 = TotH2 + TotAlertValue;
+				Qry3.Clear();
+		        Qry2.Clear();
+
+                loopDate = loopDate.AddMonths(1);
+            }
+			OutgoingList.Clear();
+			IncomingList.Clear();
+   		    await InvokeAsync(StateHasChanged);
+		    this.SpinnerVisible = false;
+		}
+		catch (Exception ex)
+		{
+			this.SpinnerVisible = false;
+			await JSRuntime.InvokeVoidAsync("alert", ex.Message);
+			return;
+		}
+	}
+}
+
+<style>
+	.e-panel-header {
+		text-align: left;
+	}
+
+	.e-panel-content {
+		text-align: center;
+	}
+
+	.income-container {
+		font-size: x-large;
+		color: #17a00e;
+		margin-top: 14px;
+	}
+
+	.expense-container {
+		color: #ca765a;
+		font-size: x-large;
+		margin-top: 14px;
+	}
+
+	.in-container {
+		font-size: x-large;
+		color: #17a00e;
+		margin-top: 14px;
+		padding: 15px;
+	}
+
+	.ex-container {
+		color: #ca765a;
+		font-size: x-large;
+		margin-top: 14px;
+		padding: 15px;
+	}
+
+	.e-dashboardlayout.e-control .e-panel .e-panel-container .e-panel-header {
+		color: #754131;
+		background-color: #c9e2f7;
+	}
+
+	.category-icon {
+		float: left;
+		background-repeat: no-repeat;
+		background-position-x: center;
+		background-size: 100%;
+		height: 30px;
+		width: 30px;
+		display: inline-block;
+		margin-right: 10px;
+	}
+
+		.category-icon.food {
+			background-image: url('food.png');
+		}
+
+		.category-icon.Travel {
+			background-image: url('Travel.png');
+		}
+
+		.category-icon.housing {
+			background-image: url('housing.png');
+		}
+
+		.category-icon.extra-income {
+			background-image: url('extra income.jpg');
+		}
+
+</style>
+<style type="text/css" media="screen and (max-width:700px)">
+	.media-css {
+		margin-left: 170px !important;
+	}
+
+</style>
+
+
+
+
+
+
+

@@ -1,0 +1,318 @@
+﻿@page "/ssaleHead_pg/{DelnoteId:long}"
+@page "/ssaleHead_pg"
+@using DigiEquipSys.Interfaces
+@using DigiEquipSys.Models
+@using DigiEquipSys.Services
+@inject IItemMasterService myItemMaster
+@inject IStockService myStockService
+@inject NavigationManager NavigationManager
+@inject ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime
+@inject ISDelHeadService SdelHeadService
+@inject ISDelDetlService sDelDetlService
+@inject IClientService myClientMasterService
+@inject IvwSaleService myvwSaleService
+@inject IGroupMasterService myGroupMaster
+
+
+@inject AccYear myAccYear
+<PageTitle>
+   Secondary Sales
+</PageTitle>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white
+    }
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap4 {
+        stroke: red;
+    }
+
+    .grid-item {
+        background-color: rgba(255, 255, 255, 0.8);
+    }
+    .grid-container {
+        display: grid;
+        padding: 20px;
+        max-width: 1200px; /* Maximum width of the whole container - in this case both columns */
+        grid-template-columns: 1fr 1fr 1fr; /* Relative width of each column (1fr 1fr is equivalent to, say, 33fr 33fr */
+        grid-gap: 5px; /* size of the gap between columns */
+        background-color: #ffefd5;
+    }
+
+    .flex-container {
+        display: flex;
+        flex-direction: row; /* Causes tab to move along row and then onto following row */
+        justify-content: space-evenly; /* Equal space left and right margin and between elements */
+        margin: 10px; /* This appears to be vertical margin between rows */
+        column-gap: 10px;
+        /* Tgap betwen columns */
+    }
+
+    .e-numeric.e-style .e-Control.e-numerictextbox {
+        text-align: right;
+        padding: 0px 5px 0px 0px;
+    }
+
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        height: 75vh; /* Full viewport height */
+        width:100%;
+    }
+
+    .window {
+        display: flex;
+        justify-content: flex-start; /* Aligns items to the left on the main axis */
+        align-items: flex-start;
+        padding: 15px;
+        border: 1px solid #ccc;
+        width: 100%;
+    }
+
+    .window-1 {
+        flex: 1;
+        background-color: lightblue;
+    }
+
+    .window-2 {
+        flex: 1;
+        background-color: lightgreen;
+    }
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap4" Size="50" Label="Data loading">
+</SfSpinner>
+
+<div class="container-fluid">
+
+    <div class="Control-wrapper">
+        <SfDateRangePicker Enabled=@enabled TValue="DateTime?" Placeholder="Choose a Date Range" FullScreen="true" ShowClearButton="true" Width="250px" @bind-StartDate="@selectedRange.selectedRangeFrom"
+                           @bind-EndDate="@selectedRange.selectedRangeTo">
+            <DateRangePickerEvents TValue="DateTime?" ValueChange="ValueChangeHandler"></DateRangePickerEvents>
+        </SfDateRangePicker>
+    </div>
+    <div>
+        <SfMultiSelect TValue="string[]" TItem="GroupMaster" AllowFiltering="true" Mode="@VisualMode.CheckBox" DataSource="@GroupMasterList" ShowSelectAll="true" PopupHeight="350px" Width="250px" ShowDropDownIcon="true">
+            <MultiSelectFieldSettings Text="GrpDesc" Value="GrpNo"></MultiSelectFieldSettings>
+            <MultiSelectEvents TItem="GroupMaster" TValue="string[]" ValueChange="@ValueChangeGrp"></MultiSelectEvents>
+        </SfMultiSelect>
+    </div>
+    <br />
+    <div class="window window-1">
+        @if (OutgoingList != null)
+        {
+
+
+
+            <div class="col-lg-12 Control-section">
+                <div class="content-wrapper">
+                    <div id="container">
+                        <SfGrid @ref="OutgoingGrid" Height="225px" Width="100%"
+                                DataSource="@OutgoingList" AllowTextWrap="true"
+                                AllowGrouping="false" AllowSorting="true" AllowFiltering="true" AllowPaging="false" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                                ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                                Toolbar="@(new List<string>() { "Print" })">
+                            <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                            <GridEditSettings AllowAdding="false" AllowEditing="false" AllowDeleting="false" Mode="EditMode.Normal"></GridEditSettings>
+                            <GridEvents TValue="VwSale"></GridEvents>
+                            <GridTemplates>
+                                <EmptyRecordTemplate>
+                                    <span>No Records Found</span>
+                                </EmptyRecordTemplate>
+                            </GridTemplates>
+                            <GridColumns>
+                                <GridColumn Field="@nameof(VwSale.DelDispNo)"
+                                            HeaderText="Delivery No."
+                                            AllowEditing="false"
+                                            Width="30">
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(VwSale.DelDate)" Format="dd/MM/yyyy"
+                                            HeaderText="Delivery Date"
+                                            AllowEditing="false"
+                                            Width="30">
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(VwSale.DelApproved)"
+                                            HeaderText="Approved"
+                                            AllowEditing="false"
+                                            Width="30">
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(VwSale.DelListNo)"
+                                            HeaderText="List No."
+                                            AllowEditing="false"
+                                            Width="30">
+                                </GridColumn>
+                                <GridColumn Field="@nameof(VwSale.DelLotNo)"
+                                            HeaderText="Lot No."
+                                            AllowEditing="false"
+                                            Width="30">
+                                </GridColumn>
+                                <GridColumn Field="@nameof(VwSale.DelExpiryDate)" Format="dd/MM/yyyy"
+                                            HeaderText="Exp. Date"
+                                            AllowEditing="false"
+                                            Width="30">
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(VwSale.ItemDesc)"
+                                            HeaderText="Item Desc"
+                                            AllowEditing="false"
+                                            Width="30">
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(VwSale.GrpDesc)"
+                                            HeaderText="Group"
+                                            AllowEditing="false"
+                                            Width="30">
+                                </GridColumn>
+                                <GridColumn Field="@nameof(VwSale.CatDesc)"
+                                            HeaderText="Category"
+                                            Width="30"
+                                            AllowEditing="false">
+                                </GridColumn>
+                                <GridColumn Field="@nameof(VwSale.ItemUnit)"
+                                            HeaderText="Unit"
+                                            Width="20"
+                                            AllowEditing="false">
+                                </GridColumn>
+
+                                <GridColumn Field=@nameof(VwSale.ClientName)
+                                            HeaderText="Client Name" Width="30"
+                                            AllowEditing="false">
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(VwSale.DelUprice)" Format="n2"
+                                            HeaderText="Sale Up."
+                                            AllowEditing="false"
+                                            TextAlign="TextAlign.Right"
+                                            Width="30">
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(VwSale.DelQty)"
+                                            HeaderText="Sale Qty"
+                                            AllowEditing="false"
+                                            TextAlign="TextAlign.Right"
+                                            Width="30">
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(VwSale.DelTotal)" Format="n2"
+                                            HeaderText="Sale Amt"
+                                            AllowEditing="false"
+                                            TextAlign="TextAlign.Right"
+                                            Width="30">
+                                </GridColumn>
+                            </GridColumns>
+                        </SfGrid>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="window window-2">
+        @if (sDelDetlList != null)
+        {
+            <div class="col-lg-12 Control-section">
+                <div class="content-wrapper">
+                    <div class="row">
+                        <SfGrid @ref="sDelDetlGrid" DataSource="@sDelDetlList" Height="225" Width="100%" AllowSorting="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                                ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                                Toolbar="@(new List<string>() { "Edit", "Cancel", "Update", "Print","ExcelExport" })">
+                            <GridEditSettings ShowConfirmDialog="false" NewRowPosition="NewRowPosition.Bottom" AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
+                            <GridEvents OnActionBegin="ActionBeginHandler" TValue="SdelDetl" OnToolbarClick="ToolbarClickHandler2"></GridEvents>
+                          <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                            <GridColumns>
+                                <GridColumn Field="@nameof(SdelDetl.SdelDate)" AllowFiltering="false"
+                                            HeaderText="Date Entered" Format="dd/MM/yyyy"
+                                            Width="30">
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(SdelDetl.SdelListNo)" AllowFiltering="false"
+                                            HeaderText="List Number"
+                                            Width="30">
+                                </GridColumn>
+
+                                <GridForeignColumn Field=@nameof(SdelDetl.SdelClientCode) HeaderText="Client Name" Width="60" ForeignKeyField="ClientCode" ForeignKeyValue="ClientName" ForeignDataSource="@ClientMasterList">
+                                    <EditTemplate>
+                                        <SfComboBox @ref="@ComboObj" TValue="string" TItem="ClientMaster" @bind-Value="@((context as SdelDetl).SdelClientCode)" DataSource="@ClientMasterList" Enabled="true" Placeholder="Select a Customer" AllowFiltering="true" AllowCustom="true">
+                                            <ComboBoxFieldSettings Value="ClientCode" Text="ClientName"></ComboBoxFieldSettings>
+                                            <ComboBoxEvents TItem="ClientMaster" TValue="string" Filtering="OnFiltering"></ComboBoxEvents>
+                                        </SfComboBox>
+                                    </EditTemplate>
+                                </GridForeignColumn>
+
+                                <GridForeignColumn Field="@nameof(SdelDetl.SdelStkIdDesc)"
+                                                   HeaderText="Item Desc"
+                                                   ForeignKeyField="ItemId" ForeignKeyValue="ItemDesc" ForeignDataSource="@ItemMasterList"
+                                                   Width="75" AllowEditing="false">
+                                </GridForeignColumn>
+
+                                <GridColumn Field="@nameof(SdelDetl.SdelExpiryDate)" AllowFiltering="false"
+                                            HeaderText="Expiry Date" Format="dd/MM/yyyy"
+                                            Width="30">
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(SdelDetl.SdelClientVendCode)" AllowFiltering="true"
+                                            HeaderText="Customer Code"
+                                            Width="30" AllowEditing="true">
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(SdelDetl.SdelProdCode)" AllowFiltering="true"
+                                            HeaderText="Product Code"
+                                            Width="30" AllowEditing="true">
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(SdelDetl.SdelLotNo)" AllowFiltering="true"
+                                            HeaderText="Lot Number"
+                                            Width="30" AllowEditing="true">
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(SdelDetl.SdelQty)" AllowFiltering="true"
+                                            HeaderText="Total Qty"
+                                            Width="30" AllowEditing=true>
+                                </GridColumn>
+
+                                <GridColumn Field="@nameof(SdelDetl.SdelUprice)" AllowFiltering="true" Format="n2"
+                                            HeaderText="Unit Cost"
+                                            Width="30" AllowEditing=true>
+                                </GridColumn>
+
+                                <GridColumn HeaderText="Total Cost" Format="C2" TextAlign="TextAlign.Center" Width="20" Visible="false">
+                                    <Template>
+                                        @{
+                                            var order = context as SdelDetl;
+                                            var delQty = order?.SdelQty ?? 0;
+                                            var delPrice = order?.SdelUprice ?? 0;
+                                            var BalQty = (delQty * delPrice);
+                                            <div>@BalQty</div>
+                                        }
+                                    </Template>
+                                </GridColumn>
+                                <GridColumn HeaderText="Total Cost" Format="n2" TextAlign="TextAlign.Center" Width="20" Visible="true" Field="TotalCost" />
+
+                            </GridColumns>
+                        </SfGrid>
+                    </div>
+                    <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+                    <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
+                    <ConfirmPage @ref="DialogDeleteAll" ConfirmHeaderMessage="@ConfirmHeaderMessageAll" ConfirmContentMessage="@ConfirmContentMessageAll" ConfirmationChanged="ConfirmDeleteAll" />
+                    <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
+                        <button type="button" Enabled="true" class="e-btn e-normal e-primary" @onclick="SDelVouSave">Save</button>
+                        <button type="button" Enabled="true" class="e-btn btn-outline-danger" @onclick="SDelVouDelete">Delete</button>
+                        <button type="button" class="e-btn e-normal" @onclick="Cancel">Back</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+</div>

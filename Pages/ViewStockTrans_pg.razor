@@ -1,0 +1,320 @@
+﻿@page "/viewstocktrans_pg/{vCompType}"
+@page "/viewstocktrans_pg"
+@inject HttpClient Http
+@using DigiEquipSys.Services
+@using DigiEquipSys.Models
+@using DigiEquipSys.Interfaces
+@inject IGroupMasterService myGroupMaster
+@inject ICatMasterService myCatService
+@inject IItemUnitService myUnit
+@inject IItemMasterService myItemMaster
+@inject IStockTransService myStock
+@inject ISupplierService mySupplierService
+@inject IClientService myClientService
+@inject NavigationManager UriHelper
+@using System.Dynamic
+@inject ISessionStorageService sessionStorage
+@inject IJSRuntime JSRuntime
+
+<h3 class="page-title">View Stock</h3>
+<style>
+    .e-grid .e-headercelldiv {
+        font-weight: bold !important;
+        background-color: #604B7C;
+        color: white;
+    }
+
+    .e-grid .e-groupheadercell {
+        height: 30px;
+        background: linear-gradient();
+        color: #fff;
+    }
+
+        .e-grid .e-groupheadercell:hover {
+            height: 30px;
+            background: #ffbb60;
+            color: #fff;
+        }
+</style>
+<style>
+    .e-spinner-pane .e-spinner-inner .e-spin-Bootstrap5 {
+        stroke: red;
+    }
+
+    .Control-wrapper {
+        width: 250px;
+    }
+
+    .myButton {
+        background-color: #0a0a23;
+        color: #fff;
+        border: 2px solid #E9E9E9;
+        border-width: 2px 2px 2px 2px;
+        border-radius: 10px;
+        padding: 15px;
+        min-height: 30px;
+        min-width: 120px;
+    }
+
+        .myButton:hover {
+            background-color: #002ead;
+            transition: 0.7s;
+        }
+
+</style>
+<SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap5" Size="50">
+</SfSpinner>
+
+@if (@StockList != null)
+{
+    <div class="col-lg-12 Control-section">
+        <div class="content-wrapper">
+            <div class="row">
+                <div class="Control-wrapper">
+
+                    @* <SfTextBox Placeholder="Select Your Item Code/Description" ValueChange="@OnChangeItem"></SfTextBox> *@
+                    <SfDateRangePicker TValue="DateTime?" Placeholder="Choose a Date Range" FullScreen="true" ShowClearButton="true">
+                        <DateRangePickerEvents TValue="DateTime?" ValueChange="ValueChangeHandler"></DateRangePickerEvents>
+                    </SfDateRangePicker>
+                </div>
+@*                 <div class="Control-wrapper">
+                    <p> (you can search by item code or description)</p>
+                </div> *@
+                <br />
+                <div style="overflow-x: auto; width: 100%;">
+                    <SfGrid @ref="StockGrid" Height="500" Width="2500px"
+                            DataSource="@StockList" AllowTextWrap="true"
+                            AllowGrouping="false" AllowSorting="true" AllowFiltering="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                            ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                            Toolbar="@(new List<string>() { "Print", "ExcelExport" })">
+                        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                        <GridEditSettings AllowAdding="false" AllowEditing="false" AllowDeleting="false" Mode="EditMode.Normal"></GridEditSettings>
+                        <GridEvents TValue="StockTran" OnToolbarClick="ToolbarClickHandler" ExcelQueryCellInfoEvent="ExcelQueryCellInfoHandler"></GridEvents>
+                        <GridPageSettings PageSize="20" PageSizes="@(new int[] {20, 30, 50, 100, 200, 400,500})"></GridPageSettings>
+
+                        @*<GridGroupSettings Columns="@Initial"></GridGroupSettings>*@
+                        <GridTemplates>
+                            <EmptyRecordTemplate>
+                                <span>No Records Found</span>
+                            </EmptyRecordTemplate>
+                        </GridTemplates>
+
+                        <GridAggregates>
+                            <GridAggregate>
+                                <GridAggregateColumns>
+                                    <GridAggregateColumn Field="TotBalQty" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate>
+                                            @{
+                                                var aggregate = (context as AggregateTemplateContext);
+                                                <div>
+                                                    <p>Bal.Qty: @aggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+                                    <GridAggregateColumn Field="TotBalAmt" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate>
+                                            @{
+                                                var aggregate = (context as AggregateTemplateContext);
+                                                <div>
+                                                    <p>Bal.Amt: @aggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+                                </GridAggregateColumns>
+                            </GridAggregate>
+                        </GridAggregates>
+
+
+                        <GridColumns>
+                            <GridColumn Field="@nameof(StockTran.StkId)"
+                                        HeaderText="ID"
+                                        IsIdentity="true"
+                                        IsPrimaryKey="true"
+                                        Visible="false">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(StockTran.ItemListNo)"
+                                        HeaderText="List No."
+                                        AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(StockTran.ItemLotNo)"
+                                        HeaderText="Lot No."
+                                        AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(StockTran.ItemExpiryDate)" Format="dd/MM/yyyy"
+                                        HeaderText="Exp. Date"
+                                        AllowEditing="false"
+                                        Width="30">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(StockTran.ItemBatchId)"
+                                        TextAlign="TextAlign.Center"
+                                        HeaderText="Batch"
+                                        AllowEditing="false" Visible="false"
+                                        Width="35">
+                            </GridColumn>
+                            <GridForeignColumn Field="@nameof(StockTran.ItemStkIdDesc)"
+                                               HeaderText="Item Desc"
+                                               ForeignKeyField="ItemId" ForeignKeyValue="ItemDesc" ForeignDataSource="@ItemMasterList"
+                                               Width="70">
+                            </GridForeignColumn>
+
+                            <GridForeignColumn Field="@nameof(StockTran.ItemStkIdGrp)"
+                                               HeaderText="Grp Desc"
+                                               ForeignKeyField="GrpNo" ForeignKeyValue="GrpDesc" ForeignDataSource="@GroupMasterList"
+                                               Width="40">
+                            </GridForeignColumn>
+                            <GridForeignColumn Field="@nameof(StockTran.ItemStkIdCat)"
+                                               HeaderText="Categ Desc"
+                                               ForeignKeyField="CatNo" ForeignKeyValue="CatDesc" ForeignDataSource="@ItemCatList"
+                                               Width="30"
+                                               AllowEditing="false">
+                            </GridForeignColumn>
+                            <GridForeignColumn Field="@nameof(StockTran.ItemStkIdUnit)"
+                                               HeaderText="Unit"
+                                               ForeignKeyField="ItemUnitDesc" ForeignKeyValue="ItemUnitDesc" ForeignDataSource="@ItemUnitList"
+                                               Width="20"
+                                               AllowFiltering="false">
+                            </GridForeignColumn>
+
+                            <GridForeignColumn Field=@nameof(StockTran.ItemClientCode)
+                                               HeaderText="Client Name" ForeignKeyField="ClientCode"
+                                               ForeignKeyValue="ClientName"
+                                               ForeignDataSource="@ClientMasterList" Width="40">
+                            </GridForeignColumn>
+
+                            <GridForeignColumn Field=@nameof(StockTran.ItemSuppCode)
+                                               HeaderText="Supplier Name" ForeignKeyField="SuppCode"
+                                               ForeignKeyValue="SuppName"
+                                               ForeignDataSource="@SupplierMasterList" Width="40">
+                            </GridForeignColumn>
+
+                            @* <GridColumn Field="@nameof(StockTran.ItemSp)" Format="N2" Visible="@IsVisRole"
+                                        HeaderText="Sell. Price" AllowEditing="false"
+                                        Width="30">
+                            </GridColumn> *@
+
+                            @* <GridColumn Field="@nameof(StockTran.ItemUp)" Format="N2" Visible="@IsVisRole"
+                                        HeaderText="Purch. Price" AllowEditing="false"
+                                        Width="30">
+                            </GridColumn> *@
+
+                            <GridColumn Field="@nameof(StockTran.ItemTrOpQty)" Format="N2"
+                                        HeaderText="Op. Qty"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(StockTran.ItemTrOpAmt)" Visible="@IsVisRole" Format="N2"
+                                        HeaderText="Op. Amt"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+                            </GridColumn>
+                            @* <GridColumn HeaderText="Op. Amt." Visible="@IsVisRole" Format="N2"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+                                <Template>
+                                    @{
+                                        var data = (context as StockTran);
+                                    }
+                                    @(String.Format("{0:N2}", ((data.ItemUp ?? 0) * (data.ItemOpQty ?? 0))))
+                                </Template>
+                            </GridColumn> *@
+
+                            <GridColumn Field="@nameof(StockTran.ItemPurQty)" Format="n2"
+                                        HeaderText="Purch. Qty"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="30">
+
+                            </GridColumn>
+                            <GridColumn Field="@nameof(StockTran.ItemPurAmt)" Format="n2" Visible="@IsVisRole"
+                                        HeaderText="Purch. Amt"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="35">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(StockTran.ItemTrInQty)" Format="n2"
+                                        HeaderText="Journal InQty"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="35">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(StockTran.ItemTrInAmt)" Format="n2" Visible="@IsVisRole"
+                                        HeaderText="Journal InAmt"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="35">
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(StockTran.ItemDelQty)" Format="n2"
+                                        HeaderText="Deliv. Qty"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="35">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(StockTran.ItemDelAmt)" Format="n2" Visible="@IsVisRole"
+                                        HeaderText="Deliv. Amt"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="35">
+                            </GridColumn>
+
+
+                            <GridColumn Field="@nameof(StockTran.ItemTrOutQty)" Format="n2"
+                                        HeaderText="Jour OutQty"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="35">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(StockTran.ItemTrOutAmt)" Format="n2" Visible="@IsVisRole"
+                                        HeaderText="Jour OutAmt"
+                                        AllowFiltering=false
+                                        TextAlign="TextAlign.Right"
+                                        Width="35">
+                            </GridColumn>
+                            <GridColumn Field="vBalQty" HeaderText="Balance Qty" Format="C2" TextAlign="TextAlign.Center" Width="30" Visible="false">
+                                <Template>
+                                    @{
+                                        var order = context as StockTran;
+                                        var ItemTrOpQty = order?.ItemTrOpQty ?? 0;
+                                        var ItemPurQty = order?.ItemPurQty ?? 0;
+                                        var ItemTrInQty = order?.ItemTrInQty ?? 0;
+                                        var ItemDelQty = order?.ItemDelQty ?? 0;
+                                        var ItemTrOutQty = order?.ItemTrOutQty ?? 0;
+                                        var BalQty = (ItemTrOpQty + ItemPurQty + ItemTrInQty - (ItemDelQty + ItemTrOutQty));
+                                        <div>@BalQty</div>
+                                    }
+                                </Template>
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(StockTran.TotBalQty)" HeaderText="Balance Qty" Format="n2" TextAlign="TextAlign.Right" Width="60px"></GridColumn>
+                            <GridColumn Field="@nameof(StockTran.TotBalAmt)" HeaderText="Balance Amt" Format="n2" TextAlign="TextAlign.Right" Width="60px"></GridColumn>
+
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+                <br />
+            </div>
+            <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
+            <div class="e-footer-content" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                <div class="button-container">
+
+                    <a href="#" @onclick="NavigateToPrevious" CssClass="e-link">
+                        <SfButton CssClass="e-small e-success">BACK</SfButton>
+                    </a>
+                    <span style="font-weight:600;text-align:left;">Total Qty: @TotalQty.ToString("N2") </span>
+                    <span style="font-weight:600;text-align:left;">Total Amt: @TotalAmt.ToString("N2") </span>
+                </div>
+            </div>
+        </div>
+    </div>
+}

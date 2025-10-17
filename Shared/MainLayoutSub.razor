@@ -1,0 +1,142 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager navManager;
+@inject ISessionStorageService sessionStorage
+@* @using BlazorExceptionGlobalHandling.ExceptionHandling *@
+@using DigiEquipSys.Services
+@using DigiEquipSys.Interfaces
+@using DigiEquipSys.Models
+@using Microsoft.AspNetCore.Authentication;
+@using Microsoft.AspNetCore.Authentication.Cookies;
+@inject IJSRuntime JsRuntime
+@inject ISysPagesControlService mySysPagesControlService
+@inject ISystemPagesService mySystemPageService
+<div class="page" style="background-color:#FBF8F8">
+    <main>
+        @if (isAdminLoggedIn == true)
+        {
+                @if (navManager.Uri.Contains("/gentrad"))
+                {
+                    <DigiEquipSys.Pages.gentrad></DigiEquipSys.Pages.gentrad>
+                }
+                else
+                {
+                    @if (navManager.Uri.Contains("/pos"))
+                    {
+                        <DigiEquipSys.Pages.Pos></DigiEquipSys.Pages.Pos>
+                    }
+                    else
+                    {
+                        @if (navManager.Uri.Contains("/hrd"))
+                        {
+                            <DigiEquipSys.Pages.Hrd></DigiEquipSys.Pages.Hrd>
+                        }
+                    }
+                }
+        }
+        <article class="content px-4">
+            @*  <CustomErrorBoundary @ref="errorBoundary"> *@
+                   @*  <ChildContent> *@
+                        <CascadingValue Value="event_notify">
+                            @Body
+                        </CascadingValue>
+                   @* </ChildContent> *@
+@*                    <ErrorContent Context="Exception">
+                    <div class="alert bg-danger text-white alert-dismissible">
+                        <h3>@Exception.GetType()</h3>
+                        <h3>@Exception.Message</h3>
+                        <button class="btn btn-info" @onclick="() => errorBoundary.Recover()">Clear</button>
+                    </div>
+                </ErrorContent> *@
+            @* </CustomErrorBoundary> *@
+        </article>
+    </main>
+</div>
+@code
+{
+
+    private string? myUser;
+    private string? myRole;
+    private string? myLoc;
+    protected List<SystemPage> SystemPagesList = new();
+    protected SysPagesControl myPageControl = new();
+
+    private System.Timers.Timer _timer;
+    private const int Timeout = 10;
+
+    public bool isAdminLoggedIn = false;
+    EventCallback event_notify => EventCallback.Factory.Create(this,NotifyLayout);
+
+    // private CustomErrorBoundary? errorBoundary;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (navManager.Uri.Contains("/gentrad"))
+        {
+            SystemPagesList = await mySystemPageService.GetSystemPages("gentrad");
+        }
+        else
+        {
+            if (navManager.Uri.Contains("/hrd"))
+            {
+                SystemPagesList = await mySystemPageService.GetSystemPages("Hrd");
+            }
+        }
+        // errorBoundary = new CustomErrorBoundary();
+    }
+
+    public async void Logout()
+    {
+        await sessionStorage.ClearAsync();
+        await NotifyLayout();
+        navManager.NavigateTo("login");
+    }
+
+    public async Task NotifyLayout()
+    {
+        var adminSession = await sessionStorage.GetItemAsync<string>("adminKey");
+        if (adminSession!=null)
+        {
+            myUser = await sessionStorage.GetItemAsync<string>("adminEmail");
+            myLoc = await sessionStorage.GetItemAsync<string>("adminLoc");
+            myRole = await sessionStorage.GetItemAsync<string>("adminRo");
+            if (myRole=="01" || myRole=="02")
+            {
+                isAdminLoggedIn = true;
+            }
+            else
+            {
+                string[] currUrl = navManager.Uri.Split('/');
+                string myPage = currUrl[3];
+
+                int myPageId = (from x in SystemPagesList where x.PageUrl == myPage.Trim() select x.PageId ).FirstOrDefault();
+                if (myPageId > 0)
+                {
+                    myPageControl = await mySysPagesControlService.GetSysPagesControls(myUser, myPageId);
+                    if (myPageControl != null)
+                    {
+                        isAdminLoggedIn = true;
+                    }
+                    else
+                    {
+                        await JsRuntime.InvokeVoidAsync("alert", "Not a Valid Login!");
+                        isAdminLoggedIn = false;
+                        await sessionStorage.ClearAsync();
+                        navManager.NavigateTo("login");
+                    }
+                }
+                else
+                {
+                    // await JsRuntime.InvokeVoidAsync("alert", "Not a Valid Login!");
+                    // isAdminLoggedIn = false;
+                    // navManager.NavigateTo("login");
+                }
+            }
+        }
+        else
+        {
+            isAdminLoggedIn = false;
+            await sessionStorage.ClearAsync();
+            navManager.NavigateTo("login");
+        }
+    }
+}

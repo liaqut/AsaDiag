@@ -1,0 +1,300 @@
+﻿@page "/checklist_pg/{RcptvouId:long}/{vEdit}"
+@page "/checklist_pg/"
+@using DigiEquipSys.Interfaces
+@using DigiEquipSys.Models
+@inject NavigationManager NavigationManager
+@inject IItemMasterService myItemMaster
+@inject IRcptDetailService RcptDetailService
+@inject ISupplierService mySupplierService
+@inject IClientService myClientService
+@inject IRcptHeadService RcptHeadService
+@inject IStockService StockService
+@inject IJSRuntime JSRuntime
+@inject IItemUnitService myUnitService
+@inject IGroupMasterService myGrpService
+@inject ICatMasterService myCatService
+@inject ISessionStorageService sessionStorage
+@inject IPoHeadService myPoheadService
+@inject IPoDetailService myPoDetailService
+@inject IvwSaleService myVwSaleService
+@inject IvwTransferService myVwTransferService
+
+<h3 class="page-title">Goods Receipt (GRN)</h3>
+<style>
+         .e-grid .e-headercelldiv {
+         font-weight: bold !important;
+         background-color: #604B7C;
+         color: white
+         }
+</style>
+
+<style>
+    .grid-item {
+      background-color: rgba(255, 255, 255, 0.8);
+    }
+</style>
+<style>
+    .grid-container {
+        display: grid;
+        padding: 20px;
+        max-width: 1200px; /* Maximum width of the whole container - in this case both columns */
+        grid-template-columns: 1fr 1fr 1fr; /* Relative width of each column (1fr 1fr is equivalent to, say, 33fr 33fr */
+        grid-gap: 5px; /* size of the gap between columns */
+        background-color: #ffefd5;
+    }
+
+    .flex-container {
+        display: flex;
+        flex-direction: row; /* Causes tab to move along row and then onto following row */
+        justify-content: space-evenly; /* Equal space left and right margin and between elements */
+        margin: 10px; /* This appears to be vertical margin between rows */
+        column-gap: 10px;
+        /* Tgap betwen columns */
+    }
+
+    .e-numeric.e-style .e-Control.e-numerictextbox {
+        text-align: right;
+        padding: 0px 5px 0px 0px;
+    }
+</style>
+
+
+
+@if (rcptvoudetailsSumm != null)
+{
+    <div class="col-lg-12">
+        @if (rcpt != null)
+        {
+            <div class="grid-container">
+                <div class="grid-item">
+                    <SfTextBox Enabled=false Placeholder="Receipt No" @bind-Value="rcpt.RhDispNo" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                </div>
+                <div class="grid-item">
+                    <SfDatePicker Enabled=false Placeholder="Receipt Date" @bind-Value="rcpt.RhDate" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfDatePicker>
+                </div>
+                <div class="grid-item">
+                    <SfTextBox Enabled=false Placeholder="Remarks" @bind-Value="rcpt.RhRemarks" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                </div>
+            </div>
+        }
+        <div class="col-lg-12 Control-section">
+            <div class="content-wrapper">
+                <div class="row">
+                    <SfGrid @ref="RcptDetGridSumm"  DataSource="@rcptvoudetailsSumm" Height="500" Width="100%" AllowSorting="true" AllowPaging="true" AllowFiltering="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
+                            ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                            Toolbar="@(new List<string>() { "Edit", "Cancel", "Update", "Print"})">
+                        <GridEditSettings ShowConfirmDialog="false" NewRowPosition="NewRowPosition.Bottom" AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Normal"></GridEditSettings>
+                        <GridEvents RowUpdating="RowUpdatingHandler" RowDeleting="RowDeletingHandler" RowSelected="OnRowSelected" TValue="RcptDetailSumm"></GridEvents>
+                        <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
+                        <GridPageSettings PageSize="100" PageSizes="@(new int[] { 50, 100, 200, 400,500})"></GridPageSettings>
+ 
+                        <GridAggregates>
+                            <GridAggregate>
+                                <GridAggregateColumns>
+                                    <GridAggregateColumn Field="RdQty" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate>
+                                            @{
+                                                var aggregate = (context as AggregateTemplateContext);
+                                                <div>
+                                                    <p>Qty: @aggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+
+                                    <GridAggregateColumn Field="TotalPrice" Type="AggregateType.Sum" Format="n2">
+                                        <FooterTemplate>
+                                            @{
+                                                var aggregate = (context as AggregateTemplateContext);
+                                                <div>
+                                                    <p>Amt: @aggregate.Sum</p>
+                                                </div>
+                                            }
+                                        </FooterTemplate>
+                                    </GridAggregateColumn>
+
+
+
+                                </GridAggregateColumns>
+                            </GridAggregate>
+                        </GridAggregates>
+
+                        <GridColumns>
+                            <GridColumn Field="@nameof(RcptDetailSumm.RdScanCode)" AllowFiltering="false" AllowEditing="false"
+                                        HeaderText="Scan Code"
+                                        Width="50">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(RcptDetailSumm.RdListNo)" AllowEditing="false"
+                                        HeaderText="List No."
+                                        Width="40">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(RcptDetailSumm.RdLotNo)" AllowEditing="false"
+                                        HeaderText="Lot No."
+                                        Width="40">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(RcptDetailSumm.RdExpiryDate)" AllowEditing="false"
+                                        HeaderText="Expiry Date" Format="dd/MM/yyyy"
+                                        Width="40">
+                            </GridColumn>
+
+                            <GridForeignColumn Field="@nameof(RcptDetailSumm.RdStkIdDesc)"
+                                               HeaderText="Item Desc"
+                                               ForeignKeyField="ItemId" ForeignKeyValue="ItemDesc" ForeignDataSource="@ItemMasterList"
+                                               Width="75" AllowEditing="false">
+                            </GridForeignColumn>
+
+                            <GridForeignColumn Field="@nameof(RcptDetailSumm.RdStkIdUnit)"
+                                               HeaderText="Unit"
+                                               ForeignKeyField="ItemUnitDesc" ForeignKeyValue="ItemUnitDesc" ForeignDataSource="@ItemUnitList"
+                                               Width="30" AllowEditing="false" AllowFiltering=false>
+                            </GridForeignColumn>
+
+                            @* <GridForeignColumn Field=@nameof(RcptDetailSumm.RdSuppCode) AllowEditing="@showEditButton"
+                                               HeaderText="Supp. Name" ForeignKeyField="SuppCode"
+                                               ForeignKeyValue="SuppName"
+                                               ForeignDataSource="@SupplierMasterList" Width="40">
+                                               <EditTemplate Context="myContext2">
+                                    <SfComboBox @ref="@ComboObj2" TValue="string" Enabled="@showEditButton" TItem="SupplierMaster" @bind-Value="@((myContext2 as RcptDetailSumm).RdSuppCode)" DataSource="@SupplierMasterList" Placeholder="Select a Supplier" Width="40" PopupWidth="250" AllowFiltering="true" AllowCustom="true">
+                                                  <ComboBoxFieldSettings Value="SuppCode" Text="SuppName"></ComboBoxFieldSettings>
+                                                  <ComboBoxEvents TItem="SupplierMaster" TValue="string" Filtering="OnFiltering2"></ComboBoxEvents>
+                                              </SfComboBox>
+                                              </EditTemplate>
+                            </GridForeignColumn> *@
+
+                            <GridForeignColumn Field="@nameof(RcptDetailSumm.RdSuppCode)"
+                                               HeaderText="Supp. Name"
+                                               ForeignKeyField="SuppCode"
+                                               ForeignKeyValue="SuppName"
+                                               ForeignDataSource="@SupplierMasterList"
+                                               Width="40">
+                                @* <EditTemplate Context="rcptaddedit">
+                                    <SfComboBox TValue="string" Enabled="@showEditButton"
+                                                TItem="SupplierMaster"
+                                                DataSource="@SupplierMasterList"
+                                                @bind-Value="((RcptDetailSumm)rcptaddedit).RdSuppCode"
+                                                Placeholder="Select a Supplier" Width="40" PopupWidth="250"
+                                                AllowFiltering="true"
+                                                AllowCustom="true"
+                                                OnBlur="@(() => UpdatePurchaseOrderDropdown((RcptDetailSumm)rcptaddedit))">
+                                        <ComboBoxFieldSettings Value="SuppCode" Text="SuppName" />
+                                        <ComboBoxEvents TItem="SupplierMaster" TValue="string" Filtering="OnFiltering2"></ComboBoxEvents>
+                                    </SfComboBox>
+                                </EditTemplate> *@
+                            </GridForeignColumn>
+
+                            @* <GridColumn Field="@nameof(RcptDetailSumm.RdPohDispNo)"
+                                        HeaderText="PO Number"
+                                        AllowEditing="@showEditButton"
+                                        Width="80"> *@
+                                 @* <EditTemplate Context="rcptaddedit">
+                                    <SfComboBox TValue="string"
+                                                    TItem="PoHead"
+                                                    DataSource="@(((RcptDetailSumm)rcptaddedit).PohList)"
+                                                    @bind-Value="((RcptDetailSumm)rcptaddedit).RdPohDispNo"
+                                                    Placeholder="Select PO"
+                                                    AllowFiltering="true">
+                                        <ComboBoxFieldSettings Value="PohDispNo" Text="PohDispNo" />
+                                    </SfComboBox>
+                                </EditTemplate> *@
+                            @* </GridColumn> *@
+
+                            <GridForeignColumn Field=@nameof(RcptDetailSumm.RdClientCode) AllowEditing="@showEditButton"
+                                               HeaderText="Client Name" ForeignKeyField="ClientCode"
+                                               ForeignKeyValue="ClientName"
+                                               ForeignDataSource="@ClientMasterList" Width="40">
+                                               <EditTemplate Context="myContext">
+                                    <SfComboBox @ref="@ComboObj" TValue="string" Enabled="@showEditButton" TItem="ClientMaster" @bind-Value="@((myContext as RcptDetailSumm).RdClientCode)" DataSource="@ClientMasterList" Placeholder="Select a Customer" Width="40" PopupWidth="250" AllowFiltering="true" AllowCustom="true">
+                                                   <ComboBoxFieldSettings Value="ClientCode" Text="ClientName"></ComboBoxFieldSettings>
+                                                   <ComboBoxEvents TItem="ClientMaster" TValue="string" Filtering="OnFiltering"></ComboBoxEvents>
+                                               </SfComboBox>
+                                               </EditTemplate>
+                            </GridForeignColumn>
+
+
+                            <GridColumn Field="@nameof(RcptDetailSumm.RdInvNo)" AllowEditing="@showEditButton"
+                                        HeaderText="Inv No."
+                                        Width="30">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(RcptDetailSumm.RdInvDate)" Type="ColumnType.Date" AllowEditing="@showEditButton"
+                                        HeaderText="Inv Date" Format="dd/MM/yyyy"
+                                        Width="30">
+                            </GridColumn>
+
+                            <GridForeignColumn Field="@nameof(RcptDetailSumm.RdGrp)"
+                                               HeaderText="Group Desc"
+                                               ForeignKeyField="GrpNo" ForeignKeyValue="GrpDesc" ForeignDataSource="@ItemGroupList"
+                                               Width="30" AllowEditing="false">
+                            </GridForeignColumn>
+                            <GridForeignColumn Field="@nameof(RcptDetailSumm.RdCat)"
+                                               HeaderText="Categ Desc"
+                                               ForeignKeyField="CatNo" ForeignKeyValue="CatDesc" ForeignDataSource="@ItemCatList"
+                                               Width="30" AllowEditing="false">
+                            </GridForeignColumn>
+
+                            <GridColumn Field="@nameof(RcptDetailSumm.RdUp)" AllowFiltering="false" Format="n2" EditorSettings="@myEditParams" Visible="@IsVisRole"
+                                        HeaderText="Purch. Price" TextAlign="TextAlign.Right"
+                                        Width="30" AllowEditing=false>
+                            </GridColumn>
+
+                            <GridColumn Field="@nameof(RcptDetailSumm.RdQty)" AllowFiltering="false" Format="n2" EditorSettings="@myEditParams"
+                                        HeaderText="Rcv. Qty" TextAlign="TextAlign.Right"
+                                        Width="40" AllowEditing="@showEditButton">
+                            </GridColumn>
+                            <GridColumn Field="@nameof(RcptDetailSumm.TotalPrice)" AllowFiltering="false" Format="n2"  EditorSettings="@myEditParams" Visible="@IsVisRole"
+                                        HeaderText="Amount" TextAlign="TextAlign.Right"
+                                        Width="40" AllowEditing="@showEditButton">
+                            </GridColumn>
+
+                            <GridColumn HeaderText="Action" Width="25" Visible="@showEditButton">
+                                  @if (showEditButton==true)
+                                  {
+                                    <GridCommandColumns>
+                                    <GridCommandColumn Type="CommandButtonType.Edit" 
+                                                       ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-edit",
+                                      CssClass="e-flat"
+                                    })">
+                                    </GridCommandColumn>
+                                    <GridCommandColumn Type="CommandButtonType.Save"
+                                                       ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-update",
+                                      CssClass="e-flat"
+                                    })">
+                                    </GridCommandColumn>
+                                    <GridCommandColumn Type="CommandButtonType.Cancel"
+                                                       ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-cancel-icon",
+                                      CssClass="e-flat"
+                                    })">
+                                    </GridCommandColumn>
+                                    <GridCommandColumn Type="CommandButtonType.Delete" 
+                                                           ButtonOption="@(new CommandButtonOptions()
+                                    { IconCss="e-icons e-undo", 
+                                      CssClass="e-flat"
+                                    })">
+                                        </GridCommandColumn>
+                                    </GridCommandColumns>
+                                  }
+                            </GridColumn>
+
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+            </div>
+        </div>
+        <br />
+        <br />
+        <div class="e-footer-content" style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+            <div class="button-container" style="display: flex; align-items: center; gap: 10px;">
+                <button type="button" class="e-btn e-normal" @onclick="Previous">Back</button>
+                <button type="button" disabled="@isApprove" style="display:@(isApprove ? "none" : "block")" class="e-btn e-normal" @onclick="Approve">Approve</button>
+                <button type="button" disabled="@isDisApprove" style="display:@(isDisApprove ? "none" : "block")" class="e-btn e-normal" @onclick="DisApprove">Disapprove</button>
+                <button type="button" style="visibility:@(vEdit=="No" ? "visible" : "hidden")" class="e-btn e-normal" @onclick="GrnEdit">GRN Edit</button>
+                <span style="font-weight:600;">Overall Total Items: @TotalItems </span>
+                <span style="font-weight:600; visibility:@(IsVisRole ? "visible" : "hidden")">Total Amount: @TotalAmount.ToString("N2")</span>
+            </div>
+        </div>
+    </div>
+}
+
