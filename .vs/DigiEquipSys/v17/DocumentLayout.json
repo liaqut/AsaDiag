@@ -1,7 +1,28 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "D:\\DigiEquipSys2\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|d:\\digiequipsys2\\pages\\division_pg.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|solutionrelative:pages\\division_pg.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|d:\\digiequipsys2\\pages\\itemmaster_pg.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|solutionrelative:pages\\itemmaster_pg.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|d:\\digiequipsys2\\pages\\division_pg.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|solutionrelative:pages\\division_pg.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|d:\\digiequipsys2\\pages\\delhead_pg.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|solutionrelative:pages\\delhead_pg.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|d:\\digiequipsys2\\pages\\delhead_pg.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|solutionrelative:pages\\delhead_pg.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 1,
@@ -9,11 +30,76 @@
       "DocumentGroups": [
         {
           "DockedHeight": 252,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ItemMaster_pg.razor",
+              "DocumentMoniker": "D:\\DigiEquipSys2\\Pages\\ItemMaster_pg.razor",
+              "RelativeDocumentMoniker": "Pages\\ItemMaster_pg.razor",
+              "ToolTip": "D:\\DigiEquipSys2\\Pages\\ItemMaster_pg.razor",
+              "RelativeToolTip": "Pages\\ItemMaster_pg.razor",
+              "ViewState": "AgIAAFEAAAAAAAAAAAAAAFYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-10-18T05:08:36.7Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Division_pg.cs",
+              "DocumentMoniker": "D:\\DigiEquipSys2\\Pages\\Division_pg.cs",
+              "RelativeDocumentMoniker": "Pages\\Division_pg.cs",
+              "ToolTip": "D:\\DigiEquipSys2\\Pages\\Division_pg.cs",
+              "RelativeToolTip": "Pages\\Division_pg.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-18T05:04:31.655Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Division_pg.razor",
+              "DocumentMoniker": "D:\\DigiEquipSys2\\Pages\\Division_pg.razor",
+              "RelativeDocumentMoniker": "Pages\\Division_pg.razor",
+              "ToolTip": "D:\\DigiEquipSys2\\Pages\\Division_pg.razor",
+              "RelativeToolTip": "Pages\\Division_pg.razor",
+              "ViewState": "AgIAAD8AAAAAAAAAAAAAAEcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-10-18T05:04:34.108Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "DelHead_pg.cs",
+              "DocumentMoniker": "D:\\DigiEquipSys2\\Pages\\DelHead_pg.cs",
+              "RelativeDocumentMoniker": "Pages\\DelHead_pg.cs",
+              "ToolTip": "D:\\DigiEquipSys2\\Pages\\DelHead_pg.cs",
+              "RelativeToolTip": "Pages\\DelHead_pg.cs",
+              "ViewState": "AgIAAKsAAAAAAAAAAAAAALYAAABKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-17T11:47:16.339Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "DelHead_pg.razor",
+              "DocumentMoniker": "D:\\DigiEquipSys2\\Pages\\DelHead_pg.razor",
+              "RelativeDocumentMoniker": "Pages\\DelHead_pg.razor",
+              "ToolTip": "D:\\DigiEquipSys2\\Pages\\DelHead_pg.razor",
+              "RelativeToolTip": "Pages\\DelHead_pg.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-10-17T11:45:26.516Z",
+              "EditorCaption": ""
             }
           ]
         },

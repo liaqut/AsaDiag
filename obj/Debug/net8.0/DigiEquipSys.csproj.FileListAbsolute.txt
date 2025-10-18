@@ -319,3 +319,4 @@ D:\DigiEquipSys2\obj\Debug\net8.0\refint\DigiEquipSys.dll
 D:\DigiEquipSys2\obj\Debug\net8.0\DigiEquipSys.pdb
 D:\DigiEquipSys2\obj\Debug\net8.0\DigiEquipSys.genruntimeconfig.cache
 D:\DigiEquipSys2\obj\Debug\net8.0\ref\DigiEquipSys.dll
+D:\DigiEquipSys2\obj\Debug\net8.0\DigiEquipSys.sourcelink.json

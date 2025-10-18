@@ -69,7 +69,8 @@
                         <GridColumn Field=@nameof(Division.LocId) AllowFiltering="false" HeaderText="Id" IsIdentity="true" IsPrimaryKey="true" Visible="false"></GridColumn>
                         <GridColumn Field=@nameof(Division.LocCode) AllowFiltering="false" HeaderText="Code" TextAlign="@TextAlign.Left" Width="20"> </GridColumn>
                         <GridColumn Field=@nameof(Division.LocDesc) AllowFiltering="true" HeaderText="Branch Location/Name" Width="100"></GridColumn>
-                        <GridColumn Field=@nameof(Division.LocBranchCode) AllowFiltering="true" HeaderText="Company" Width="60"></GridColumn>
+                        <GridForeignColumn Field=@nameof(Division.LocBranchCode) HeaderText="Company" Width="60" ForeignKeyField="BranchCode" ForeignKeyValue="BranchDesc" ForeignDataSource="@CompanyList">
+                        </GridForeignColumn>
                     </GridColumns>
                 </SfGrid>
             </div>
