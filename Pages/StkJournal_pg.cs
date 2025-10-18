@@ -67,6 +67,8 @@ namespace DigiEquipSys.Pages
 
         //public List<ItemGroup>? ItemGroupList = new();
         //public List<ItemCat>? ItemCatList = new();
+        protected List<Branch> companylist = new();
+        protected List<Division> branchlist = new();
         protected List<ClientMaster> ClientList = new();
         protected List<ItemMaster> ItemMasterList = new();
         protected List<Stock> StockList = new();
@@ -95,6 +97,7 @@ namespace DigiEquipSys.Pages
         private bool isDisApprove = true;
         private SfComboBox<string, ClientMaster> ComboObj;
         private SfComboBox<string, ClientMaster> ComboObjTo;
+        private SfComboBox<string?, Branch> Company;
         private string Custom { get; set; }
         public string SelectedItemDesc { get; set; }
         public int TotalQty { get; set; }
@@ -121,6 +124,8 @@ namespace DigiEquipSys.Pages
                 //genScanSpecList = await myScanSpecService.GetGenScanSpecs();
                 ItemMasterList = await myItemMaster.GetItemMasters();
                 StockForJournalList = await myStockService.GetStockForJournal();
+                companylist = await myBranchService.GetBranches();
+                branchlist = await myDivisionService.GetDivisions();
 
                 if (TrvouId != 0)
                 {
@@ -208,6 +213,11 @@ namespace DigiEquipSys.Pages
                         }
                     }
                 }
+                else
+                {
+                    trvouaddedit.TrhComp = "01";   // Default company code
+                    trvouaddedit.TrhBranch = "001";   // Default branch code
+                }
 
                 //ItemGroupList = await myItemMaster.GetItemGroups();
                 //ItemCatList = await myItemMaster.GetItemCats();
@@ -221,6 +231,13 @@ namespace DigiEquipSys.Pages
                 await JSRuntime.InvokeVoidAsync("alert", ex.Message);
                 return;
             }
+        }
+        private async Task mybranch(ChangeEventArgs<string?, Branch> args)
+        {
+            trvouaddedit.TrhBranch = "";
+            branchlist = await myDivisionService.GetDivisions();
+            var qbranchlist = branchlist.Where(c => c.LocBranchCode == args.Value).ToList();
+            branchlist = qbranchlist.ToList();
         }
 
         public async Task OnValueChange(ValueChangeEventArgs<string, StockForJournal> args)
@@ -600,7 +617,14 @@ namespace DigiEquipSys.Pages
             query = !string.IsNullOrEmpty(args.Text) ? query : new Query();
             await ComboObj.FilterAsync(ClientMasterList, query);
         }
-
+        private async Task OnFilteringBranch(Syncfusion.Blazor.DropDowns.FilteringEventArgs args)
+        {
+            Custom = args.Text;
+            args.PreventDefaultAction = true;
+            var query1 = new Query().Where(new WhereFilter() { Field = "BranchDesc", Operator = "contains", value = args.Text, IgnoreCase = true });
+            query1 = !string.IsNullOrEmpty(args.Text) ? query1 : new Query();
+            await Company.FilterAsync(companylist, query1);
+        }
         private async Task OnFilteringTo(Syncfusion.Blazor.DropDowns.FilteringEventArgs args)
         {
             Custom = args.Text;
@@ -611,6 +635,20 @@ namespace DigiEquipSys.Pages
         }
         protected async Task TrVouSave()
         {
+            if (trvouaddedit.TrhComp == "" || trvouaddedit.TrhComp == null)
+            {
+                WarningHeaderMessage = "Warning!";
+                WarningContentMessage = "Please Select a Company before saving the Delivery Note.";
+                Warning.OpenDialog();
+                return;
+            }
+            if (trvouaddedit.TrhBranch == "" || trvouaddedit.TrhBranch == null)
+            {
+                WarningHeaderMessage = "Warning!";
+                WarningContentMessage = "Please Select a Branch before saving the Delivery Note.";
+                Warning.OpenDialog();
+                return;
+            }
             await TrDetGrid.EndEditAsync();
             this.SpinnerVisible = true;
             if (trvoudetails.Count() == 0)

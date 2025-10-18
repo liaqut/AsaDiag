@@ -15,7 +15,8 @@
 @inject AccYear myAccYear
 @inject IGroupMasterService myGrpService
 @inject ICatMasterService myCatService
-
+@inject IBranchService myBranchService
+@inject IDivisionService myDivisionService
 <h3 class="page-title">Goods Receipt (GRN)</h3>
 <style>
     .e-grid .e-headercelldiv {
@@ -60,6 +61,23 @@
                     </div>
                     <div class="grid-item">
                         <SfTextBox Enabled=@vEnable Placeholder="Remarks" @bind-Value="@rcptvouaddedit.RhRemarks" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
+                    </div>
+                    <div class="grid-item">
+                        <SfComboBox @ref="@Company" TValue="string" TItem="Branch" @bind-Value="@rcptvouaddedit.RhComp" DataSource="@companylist" Placeholder="Select a Company" AllowFiltering="true" AllowCustom="true" Enabled=@vEnable>
+                            <ComboBoxFieldSettings Value="BranchCode" Text="BranchDesc"></ComboBoxFieldSettings>
+                            <ComboBoxEvents TItem="Branch" TValue="string" ValueChange="mybranch" Filtering="OnFilteringBranch"></ComboBoxEvents>
+                        </SfComboBox>
+
+                        <SfDropDownList DataSource="@branchlist" AllowFiltering="true"
+                                        TItem="Division"
+                                        TValue="string"
+                                        Text="DelBranch"
+                                        @bind-Value="@rcptvouaddedit.RhBranch"
+                                        Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Auto"
+                                        Placeholder="Select Branch"
+                                        Enabled=@vEnable>
+                            <DropDownListFieldSettings Text="LocDesc" Value="LocCode"></DropDownListFieldSettings>
+                        </SfDropDownList>
                     </div>
                 </div>
                 <div class="col-lg-12 Control-section">
@@ -117,7 +135,7 @@
         display: grid;
         padding:20px;
         max-width: 1200px; /* Maximum width of the whole container - in this case both columns */
-        grid-template-columns: 1fr 1fr 1fr; /* Relative width of each column (1fr 1fr is equivalent to, say, 33fr 33fr */
+        grid-template-columns: 1fr 1fr 1fr 1fr; /* Relative width of each column (1fr 1fr is equivalent to, say, 33fr 33fr */
         grid-gap: 5px; /* size of the gap between columns */
         background-color : #ffefd5 ;
     }

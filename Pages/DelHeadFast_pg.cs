@@ -73,10 +73,15 @@ namespace DigiEquipSys.Pages
         //protected List<ItemMaster> ItemMasterListSelected = new();
         protected List<GenCity>? CityList = new();
         protected List<ClientCity> ClientCityList = new();
+        protected List<Branch> companylist = new();
+        protected List<Division> branchlist = new();
+
         public string? GroupDesc { get; set; }
         public string? UnitDesc { get; set; }
 
         SfDropDownList<long?, ItemMaster> myItem;
+        private SfComboBox<string?, Branch> Company;
+
         protected ElementReference myQty;
         protected List<Stock> myStockList = new();
         public int iSw = 0;
@@ -135,10 +140,18 @@ namespace DigiEquipSys.Pages
                         myClientCityList = myQ.Where(m => m.ClientId == Delnoteaddedit.DelClientId).Select(g => new tblClientCity { ClientId = g.ClientId, CityId = g.CityId, CityName = g.CityName }).ToList();
                     }
                 }
+                else
+                {
+                    Delnoteaddedit.DelComp = "01";   // Default company code
+                    Delnoteaddedit.DelBranch = "001";   // Default branch code
+                }
                 ItemMasterList = await myItemMaster.GetItemMasters();
                 ItemGroupList = await myGrpMaster.GetGroupMasters();
                 ItemCatList = await myCatMaster.GetCategMasters();
                 ItemUnitList = await myUnitMaster.GetItemUnits();
+                companylist = await myBranchService.GetBranches();
+                branchlist = await myDivisionService.GetDivisions();
+
                 await InvokeAsync(StateHasChanged);
                 this.SpinnerVisible = false;
             }
@@ -352,6 +365,20 @@ namespace DigiEquipSys.Pages
                         Warning.OpenDialog();
                         return;
                     }
+                    if (Delnoteaddedit.DelComp == "" || Delnoteaddedit.DelComp == null)
+                    {
+                        WarningHeaderMessage = "Warning!";
+                        WarningContentMessage = "Please Select a Company before saving the Delivery Note.";
+                        Warning.OpenDialog();
+                        return;
+                    }
+                    if (Delnoteaddedit.DelBranch == "" || Delnoteaddedit.DelBranch == null)
+                    {
+                        WarningHeaderMessage = "Warning!";
+                        WarningContentMessage = "Please Select a Branch before saving the Delivery Note.";
+                        Warning.OpenDialog();
+                        return;
+                    }
                 }
                 isChkList = false;
                 this.SpinnerVisible = true;
@@ -500,6 +527,13 @@ namespace DigiEquipSys.Pages
             var myQ = (from x in ClientCityList join y in CityList on x.CityId equals y.CityId select new { x.ClientId, x.CityId, y.CityName }).ToList();
             myClientCityList = myQ.Where(m => m.ClientId == args.ItemData.ClientId).Select(g => new tblClientCity { ClientId = g.ClientId, CityId = g.CityId, CityName = g.CityName }).ToList();
         }
+        private async Task mybranch(ChangeEventArgs<string?, Branch> args)
+        {
+            Delnoteaddedit.DelBranch = "";
+            branchlist = await myDivisionService.GetDivisions();
+            var qbranchlist = branchlist.Where(c => c.LocBranchCode == args.Value).ToList();
+            branchlist = qbranchlist.ToList();
+        }
         private bool IsRowEmpty(DelDetl Deldet)
         {
             return Deldet.DelListNo == null; //string.IsNullOrEmpty(Deldet.DelScanCode) ||
@@ -588,6 +622,14 @@ namespace DigiEquipSys.Pages
             var query = new Query().Where(new WhereFilter() { Field = "ClientName", Operator = "contains", value = args.Text, IgnoreCase = true });
             query = !string.IsNullOrEmpty(args.Text) ? query : new Query();
             await ComboObj.FilterAsync(clientlist, query);
+        }
+        private async Task OnFilteringBranch(Syncfusion.Blazor.DropDowns.FilteringEventArgs args)
+        {
+            Custom = args.Text;
+            args.PreventDefaultAction = true;
+            var query1 = new Query().Where(new WhereFilter() { Field = "BranchDesc", Operator = "contains", value = args.Text, IgnoreCase = true });
+            query1 = !string.IsNullOrEmpty(args.Text) ? query1 : new Query();
+            await Company.FilterAsync(companylist, query1);
         }
 
     }

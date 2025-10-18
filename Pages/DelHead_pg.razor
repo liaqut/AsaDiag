@@ -21,10 +21,14 @@
 
 <h3 class="page-title">Delivery Note</h3>
 <style>
-    .e-grid .e-headercelldiv {
-        font-weight: bold !important;
-        background-color: #d4d1ce;
-        color: white
+    .e-grid .e-headercell {
+        background-color: #37474f !important; /* Dark Blue-Grey */
+        color: #ffffff !important; /* White text */
+        font-weight: 600;
+    }
+
+    .e-grid .e-gridheader {
+        border-bottom: 2px solid #607d8b !important;
     }
 </style>
 <style>
@@ -81,14 +85,14 @@
                     <SfTextBox Enabled="@vEnable" Placeholder="Our Ref" @bind-Value="@Delnoteaddedit.PoNumber" Syncfusion.Blazor.Inputs.FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfTextBox>
                 </div>
                 <div class="grid-item">
-                    <SfComboBox @ref="@Company" TValue="string?" TItem="Branch" @bind-Value="@Delnoteaddedit.DelComp" DataSource="@companylist" Placeholder="Select a Company" AllowFiltering="true" AllowCustom="true" Enabled=@vEnable>
+                    <SfComboBox @ref="@Company" TValue="string" TItem="Branch" @bind-Value="@Delnoteaddedit.DelComp" DataSource="@companylist" Placeholder="Select a Company" AllowFiltering="true" AllowCustom="true" Enabled=@vEnable>
                         <ComboBoxFieldSettings Value="BranchCode" Text="BranchDesc"></ComboBoxFieldSettings>
-                        <ComboBoxEvents TItem="Branch" TValue="string?" ValueChange="mybranch" Filtering="OnFilteringBranch"></ComboBoxEvents>
+                        <ComboBoxEvents TItem="Branch" TValue="string" ValueChange="mybranch" Filtering="OnFilteringBranch"></ComboBoxEvents>
                     </SfComboBox>
 
                     <SfDropDownList DataSource="@branchlist" AllowFiltering="true"
                                     TItem="Division"
-                                    TValue="string?"
+                                    TValue="string"
                                     Text="DelBranch"
                                     @bind-Value="@Delnoteaddedit.DelBranch"
                                     Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Auto"
@@ -97,7 +101,6 @@
                         <DropDownListFieldSettings Text="LocDesc" Value="LocCode"></DropDownListFieldSettings>
                     </SfDropDownList>
                 </div>
-
             </div>
         </EditForm>
         <br />
@@ -145,11 +148,11 @@
 
                         <GridColumns>
 
-                            <GridColumn Field="@nameof(DelDetl.DelScanCode)" HeaderText="Scan Code" Width="100" AllowEditing="false"></GridColumn>
-                            <GridColumn Field="@nameof(DelDetl.DelListNo)" HeaderText="List Number" Width="30" AllowEditing="false"></GridColumn>
-                            <GridColumn Field="@nameof(DelDetl.DelLotNo)" HeaderText="Lot Number" Width="40" AllowEditing="false"></GridColumn>
-                            <GridColumn Field="@nameof(DelDetl.DelExpiryDate)" Format="dd/MM/yyyy" HeaderText="Expiry Date" Width="30" AllowEditing="false"></GridColumn>
-                            <GridColumn Field="@nameof(DelDetl.DelBatchId)" HeaderText="Batch Id" Width="40" AllowEditing="false"></GridColumn>
+                            <GridColumn Field="@nameof(DelDetl.DelScanCode)" HeaderText="Scan Code" Width="80" AllowEditing="false"></GridColumn>
+                            <GridColumn Field="@nameof(DelDetl.DelListNo)" HeaderText="List #" Width="50" AllowEditing="false"></GridColumn>
+                            <GridColumn Field="@nameof(DelDetl.DelLotNo)" HeaderText="Lot #" Width="50" AllowEditing="false"></GridColumn>
+                            <GridColumn Field="@nameof(DelDetl.DelExpiryDate)" Format="dd/MM/yyyy" HeaderText="Expiry" Width="40" AllowEditing="false"></GridColumn>
+                            <GridColumn Field="@nameof(DelDetl.DelBatchId)" HeaderText="Batch" Width="40" AllowEditing="false"></GridColumn>
 
                             <GridForeignColumn Field="@nameof(DelDetl.DelStkId)" ForeignKeyField="ItemId" ForeignKeyValue="ItemListNo" ForeignDataSource="@ItemMasterList" HeaderText="Item Code" Width="30" Visible="false"></GridForeignColumn>
                             <GridForeignColumn Field="@nameof(DelDetl.DelStkIdDesc)"
@@ -166,7 +169,7 @@
                             <GridForeignColumn Field="@nameof(DelDetl.DelStkIdCat)"
                                                HeaderText="Categ Desc"
                                                ForeignKeyField="CatNo" ForeignKeyValue="CatDesc" ForeignDataSource="@ItemCatList"
-                                               Width="50" AllowEditing="false">
+                                               Width="40" AllowEditing="false">
                             </GridForeignColumn>
 
                             <GridForeignColumn Field="@nameof(DelDetl.DelStkIdUnit)" AllowEditing="false"
@@ -175,8 +178,8 @@
                                                Width="30">
                             </GridForeignColumn>
 
-                            <GridColumn Field=@nameof(DelDetl.DelQty) AllowEditing=false EditorSettings="@myEditParams" HeaderText="Qty" Width="30" TextAlign="@TextAlign.Right" Format="n2"></GridColumn>
-                            <GridColumn Field=@nameof(DelDetl.DelUprice) Visible="@IsVisRole" AllowEditing=@vEnable EditorSettings="@myEditParams" HeaderText="Selling Price" Width="30" TextAlign="@TextAlign.Right" Format="n2"></GridColumn>
+                            <GridColumn Field=@nameof(DelDetl.DelQty) AllowEditing=false EditorSettings="@myEditParams" HeaderText="Qty" Width="40" TextAlign="@TextAlign.Right" Format="n2"></GridColumn>
+                            <GridColumn Field=@nameof(DelDetl.DelUprice) Visible="@IsVisRole" AllowEditing=@vEnable EditorSettings="@myEditParams" HeaderText="S. Price" Width="50" TextAlign="@TextAlign.Right" Format="n2"></GridColumn>
                             @* <GridColumn HeaderText="Amount" Format="C2" TextAlign="TextAlign.Center" Width="30" Visible="@IsVisRole">
                                 <Template>
                                     @{
@@ -191,7 +194,7 @@
 
                             <GridColumn Field="@nameof(DelDetl.DelPurchPrice)" HeaderText="Purch Price" Format="n2" TextAlign="TextAlign.Right" Width="50px" Visible="@(myRole == "01")"></GridColumn>
 
-                            <GridColumn HeaderText="Diff Value" Format="n2" TextAlign="TextAlign.Center" Width="30" Visible="@(myRole == "01")">
+                            <GridColumn HeaderText="Diff Value" Format="n2" TextAlign="TextAlign.Center" Width="50" Visible="@(myRole == "01")">
                                 <Template>
                                     @{
                                         var order = context as DelDetl;

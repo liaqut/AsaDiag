@@ -73,6 +73,8 @@ namespace DigiEquipSys.Pages
         public List<GroupMaster>? ItemGroupList = new();
         public List<CategMaster>? ItemCatList = new();
         public List<ItemUnit>? ItemUnitList = new();
+        protected List<Branch> companylist = new();
+        protected List<Division> branchlist = new();
 
         protected List<ItemMaster> ItemMasterList = new();
 
@@ -95,6 +97,7 @@ namespace DigiEquipSys.Pages
         private SfDialog? DialogAddManual;
         public string? vItemCode { get; set; }
         private SfComboBox<string, ItemMaster> ComboObj;
+        private SfComboBox<string?, Branch> Company;
         private string Custom { get; set; }
         private ElementReference ScanCodeInputRef;
         public int TotalItems { get; set; }
@@ -109,6 +112,8 @@ namespace DigiEquipSys.Pages
                 rcptvouaddedit.RhUser = myUser;
                 SupplierMasterList = await mySupplierService.GetSuppliers();
                 ClientMasterList = await myClientService.GetClients();
+                companylist = await myBranchService.GetBranches();
+                branchlist = await myDivisionService.GetDivisions();
                 genScanSpecList = await myScanSpecService.GetGenScanSpecs();
                 if (RcptvouId != 0)
                 {
@@ -136,6 +141,11 @@ namespace DigiEquipSys.Pages
                         }
 
                     }
+                }
+                else
+                {
+                    rcptvouaddedit.RhComp = "01";   // Default company code
+                    rcptvouaddedit.RhBranch = "001";   // Default branch code
                 }
                 ItemMasterList = await myItemMaster.GetItemMastersDistinct();
                 ItemGroupList = await myGrpService.GetGroupMasters();
@@ -165,6 +175,13 @@ namespace DigiEquipSys.Pages
                 rcptvouaddedit.RhDate = DateTime.Now;
                 return;
             }
+        }
+        private async Task mybranch(ChangeEventArgs<string?, Branch> args)
+        {
+            rcptvouaddedit.RhBranch = "";
+            branchlist = await myDivisionService.GetDivisions();
+            var qbranchlist = branchlist.Where(c => c.LocBranchCode == args.Value).ToList();
+            branchlist = qbranchlist.ToList();
         }
 
         protected async Task BatchSaveHandler(BeforeBatchSaveArgs<RcptDetail> args)
@@ -361,6 +378,20 @@ namespace DigiEquipSys.Pages
         {
             try
             {
+                if (rcptvouaddedit.RhComp == "" || rcptvouaddedit.RhComp == null)
+                {
+                    WarningHeaderMessage = "Warning!";
+                    WarningContentMessage = "Please Select a Company before saving the Delivery Note.";
+                    Warning.OpenDialog();
+                    return;
+                }
+                if (rcptvouaddedit.RhBranch == "" || rcptvouaddedit.RhBranch == null)
+                {
+                    WarningHeaderMessage = "Warning!";
+                    WarningContentMessage = "Please Select a Branch before saving the Delivery Note.";
+                    Warning.OpenDialog();
+                    return;
+                }
                 this.SpinnerVisible = true;
                 rcptvoudetails = await RcptDetailService.GetRcptDetails(vRcptvouId);
                 int vLen = 0;
@@ -533,7 +564,14 @@ namespace DigiEquipSys.Pages
                 }
             }
         }
-
+        private async Task OnFilteringBranch(Syncfusion.Blazor.DropDowns.FilteringEventArgs args)
+        {
+            Custom = args.Text;
+            args.PreventDefaultAction = true;
+            var query1 = new Query().Where(new WhereFilter() { Field = "BranchDesc", Operator = "contains", value = args.Text, IgnoreCase = true });
+            query1 = !string.IsNullOrEmpty(args.Text) ? query1 : new Query();
+            await Company.FilterAsync(companylist, query1);
+        }
         protected async Task ConfirmDelete(bool DeleteConfirmed)
         {
             try

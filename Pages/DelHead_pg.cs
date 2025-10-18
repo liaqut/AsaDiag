@@ -149,6 +149,11 @@ namespace DigiEquipSys.Pages
                         myClientCityList = myQ.Where(m => m.ClientId == Delnoteaddedit.DelClientId).Select(g => new tblClientCity { ClientId = g.ClientId, CityId = g.CityId, CityName = g.CityName }).ToList();
                     }
                 }
+                else
+                {
+                    Delnoteaddedit.DelComp = "01";   // Default company code
+                    Delnoteaddedit.DelBranch = "001";   // Default branch code
+                }
                 ItemMasterList = await myItemMaster.GetItemMasters();
                 ItemGroupList = await myGrpMaster.GetGroupMasters();
                 ItemCatList = await myCatMaster.GetCategMasters();
@@ -182,6 +187,7 @@ namespace DigiEquipSys.Pages
 
         private async Task mybranch(ChangeEventArgs<string?, Branch> args)
         {
+            Delnoteaddedit.DelBranch = "";   
             branchlist = await myDivisionService.GetDivisions();
             var qbranchlist = branchlist.Where(c => c.LocBranchCode == args.Value).ToList();
             branchlist = qbranchlist.ToList();
@@ -253,6 +259,22 @@ namespace DigiEquipSys.Pages
                         Warning.OpenDialog();
                         return;
                     }
+                    if (Delnoteaddedit.DelComp=="" || Delnoteaddedit.DelComp == null)
+                    {
+                        WarningHeaderMessage = "Warning!";
+                        WarningContentMessage = "Please Select a Company before saving the Delivery Note.";
+                        Warning.OpenDialog();
+                        return;
+                    }
+                    if (Delnoteaddedit.DelBranch == "" || Delnoteaddedit.DelBranch == null)
+                    {
+                        WarningHeaderMessage = "Warning!";
+                        WarningContentMessage = "Please Select a Branch before saving the Delivery Note.";
+                        Warning.OpenDialog();
+                        return;
+                    }
+
+
                 }
                 isChkList = false;
                 this.SpinnerVisible = true;
