@@ -1,7 +1,9 @@
 ﻿using DigiEquipSys.Interfaces;
 using DigiEquipSys.Models;
+using DigiEquipSys.Services;
 using DigiEquipSys.Shared;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.JSInterop;
 using Syncfusion.Blazor.Calendars;
@@ -9,6 +11,7 @@ using Syncfusion.Blazor.Data;
 using Syncfusion.Blazor.DropDowns;
 using Syncfusion.Blazor.Grids;
 using Syncfusion.Blazor.Inputs;
+using Syncfusion.Blazor.Navigations;
 
 namespace DigiEquipSys.Pages
 {
@@ -68,6 +71,7 @@ namespace DigiEquipSys.Pages
         [Inject]
         public ISupplierService? SupplierService { get; set; }
         public IEnumerable<SupplierMaster>? suppList;
+        private SupplierMaster povousupplier = new();
 
         public List<GroupMaster>? ItemGroupList = new();
         protected List<ItemMaster> ItemMasterList = new();
@@ -75,6 +79,8 @@ namespace DigiEquipSys.Pages
         protected List<ClientMaster>? clientList = new();
         public List<CategMaster>? ItemCatList = new();
         public List<ItemUnit>? ItemUnitList = new();
+        protected List<Branch> companylist = new();
+        protected List<Division> branchlist = new();
 
         //public string Btn { get; set; }
         public PoDetail podetaddedit = new PoDetail();
@@ -92,11 +98,19 @@ namespace DigiEquipSys.Pages
         private SfComboBox<long?, ItemMaster> ComboObj;
         private SfComboBox<int?, SupplierMaster> ComboObj1;
         private SfComboBox<int?, ClientMaster> ComboObj2;
+        private SfComboBox<string?, Branch> Company;
 
         private string Custom { get; set; }
         private bool isProgrammaticEdit = false;
         public bool TriggerClientPopup { get; set; }
-        public string clcode { get; set; }  
+        public string clcode { get; set; }
+        private List<Object> ToolbarItems { get; set; }
+        private string resultMessage = "";
+        private decimal SubTotal;
+        private decimal DiscTotal;
+        private decimal TaxTotal;
+        private decimal AdjAmount;
+        private decimal GrandTotal;
         protected override async Task OnInitializedAsync()
         {
             try
@@ -125,11 +139,31 @@ namespace DigiEquipSys.Pages
                     isButtonDisabled = false;
                     vSave = false;
                     vEnabled = false;
+                    povousupplier = await SupplierService.GetSupplier((int)povouaddedit.PohVendId);
+                    SubTotal = povoudetails.Sum(x => (x.PodQty ?? 0.00M) * (x.PodUp ?? 0.00M));
+                    DiscTotal = povoudetails.Sum(x => x.PodDiscAmt ?? 0.00M);
+                    TaxTotal = povoudetails.Sum(x => x.PodGstAmt ?? 0.00M);
+                    GrandTotal = povoudetails.Sum(x => x.PodAmount ?? 0.00M) + (povouaddedit.PohAdjustment ?? 0.00M);
+                }
+                else
+                {
+                    povouaddedit.PohComp = "01";   // Default company code
+                    povouaddedit.PohBranch = "001";   // Default branch code
                 }
                 ItemMasterList = await myItemMaster.GetItemMasters();
                 ItemGroupList = await myGroupService.GetGroupMasters();
                 ItemCatList = await myCatService.GetCategMasters();
                 ItemUnitList = await myUnitService.GetItemUnits();
+                companylist = await myBranchService.GetBranches();
+                branchlist = await myDivisionService.GetDivisions();
+
+                ToolbarItems = new List<object>()
+                {
+                    "Add", "Delete", "Edit", "Cancel", "Update","Print",
+                    new ItemModel() { Text = "ZohoUpdate", TooltipText = "Create P.O. to Zoho ", PrefixIcon = "e-export" }
+                };
+
+
                 await InvokeAsync(StateHasChanged);
                 this.SpinnerVisible = false;
             }
@@ -138,6 +172,13 @@ namespace DigiEquipSys.Pages
                 await JSRuntime.InvokeVoidAsync("alert", ex.Message);
                 return;
             }
+        }
+
+        private void ConnectToZoho()
+        {
+            var returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+            var url = ZohoTokenService.GetAuthUrl(returnUrl);
+            NavigationManager.NavigateTo(url, true);
         }
         public async Task CreateHandler()
         {
@@ -168,6 +209,13 @@ namespace DigiEquipSys.Pages
             var query = new Query().Where(new WhereFilter() { Field = "ClientName", Operator = "contains", value = args.Text, IgnoreCase = true });
             query = !string.IsNullOrEmpty(args.Text) ? query : new Query();
             await ComboObj2.FilterAsync(clientList, query);
+        }
+        private async Task mybranch(ChangeEventArgs<string?, Branch> args)
+        {
+            povouaddedit.PohBranch = "";
+            branchlist = await myDivisionService.GetDivisions();
+            var qbranchlist = branchlist.Where(c => c.LocBranchCode == args.Value).ToList();
+            branchlist = qbranchlist.ToList();
         }
         protected async Task BatchSaveHandler(BeforeBatchSaveArgs<PoDetail> args)
         {
@@ -270,7 +318,7 @@ namespace DigiEquipSys.Pages
 
                 case "PodQty":
                     podet.PodQty = args.Data.PodQty;
-                    podet.PodAmount = (args.Data.PodQty * args.Data.PodUp) - args.Data.PodDiscAmt;
+                    podet.PodAmount = ((args.Data.PodQty * args.Data.PodUp ?? 0.00M) - args.Data.PodDiscAmt ??0.00M) + (args.Data.PodGstAmt ?? 0.00M);
                     podet.PodId = (long)vPodId;
                     podet.PodStkIdDesc = vStkId;
                     podet.PodPohId = vPovouId;
@@ -287,7 +335,7 @@ namespace DigiEquipSys.Pages
 
                 case "PodUp":
                     podet.PodUp = args.Data.PodUp ?? 0.00M;
-                    podet.PodAmount = (args.Data.PodQty * args.Data.PodUp ?? 0.00M) - args.Data.PodDiscAmt;
+                    podet.PodAmount = ((args.Data.PodQty * args.Data.PodUp ?? 0.00M) - args.Data.PodDiscAmt ?? 0.00M) + (args.Data.PodGstAmt ?? 0.00M);
                     podet.PodId = (long)vPodId;
                     podet.PodStkIdDesc = vStkId;
                     podet.PodPohId = vPovouId;
@@ -302,24 +350,34 @@ namespace DigiEquipSys.Pages
                     break;
 
                 case "PodDiscAmt":
-                    podet.PodAmount = (args.Data.PodQty * args.Data.PodUp) - args.Data.PodDiscAmt ?? 0.00M;
+                    podet.PodAmount = (args.Data.PodQty * args.Data.PodUp ?? 0.00M) - args.Data.PodDiscAmt ?? 0.00M;
                     if (args.Data.PodUp == 0.00M)
                     {
                         podet.PodDiscPct = 0.00M;
                     }
                     else
                     {
-                        podet.PodDiscPct = (args.Data.PodDiscAmt / (args.Data.PodQty * args.Data.PodUp)) * 100;
+                        podet.PodDiscPct = (args.Data.PodDiscAmt / (args.Data.PodQty * args.Data.PodUp ?? 0.00M)) * 100;
                     }
+                    podet.PodId = (long)vPodId;
+                    podet.PodStkIdDesc = vStkId;
+                    podet.PodPohId = vPovouId;
+                    podet.PodAmount = ((args.Data.PodQty * args.Data.PodUp ?? 0.00M) - args.Data.PodDiscAmt ?? 0.00M) + (args.Data.PodGstAmt ?? 0.00M);
+                    await PoDetailService.UpdatePoDetail(podet); //var t1 =
+                    break;
+
+                case "PodDiscPct":
+                    podet.PodDiscAmt = (args.Data.PodQty * args.Data.PodUp) * (args.Data.PodDiscPct / 100);
+                    podet.PodAmount = (args.Data.PodQty * args.Data.PodUp) - ((args.Data.PodQty * args.Data.PodUp) * (args.Data.PodDiscPct / 100)) + (args.Data.PodGstAmt ?? 0.00M);
                     podet.PodId = (long)vPodId;
                     podet.PodStkIdDesc = vStkId;
                     podet.PodPohId = vPovouId;
                     await PoDetailService.UpdatePoDetail(podet); //var t1 =
                     break;
 
-                case "PodDiscPct":
-                    podet.PodDiscAmt = (args.Data.PodQty * args.Data.PodUp) * (args.Data.PodDiscPct / 100);
-                    podet.PodAmount = (args.Data.PodQty * args.Data.PodUp) - ((args.Data.PodQty * args.Data.PodUp) * (args.Data.PodDiscPct / 100));
+                case "PodGstPct":
+                    podet.PodGstAmt = podet.PodAmount * (args.Data.PodGstPct / 100);
+                    podet.PodAmount = (args.Data.PodQty * args.Data.PodUp) - ((args.Data.PodQty * args.Data.PodUp) * (args.Data.PodDiscPct / 100)) + (args.Data.PodGstAmt ?? 0.00M);
                     podet.PodId = (long)vPodId;
                     podet.PodStkIdDesc = vStkId;
                     podet.PodPohId = vPovouId;
@@ -340,6 +398,20 @@ namespace DigiEquipSys.Pages
             {
                 WarningHeaderMessage = "Warning!";
                 WarningContentMessage = "Please Select a Supplier before saving the order.";
+                Warning.OpenDialog();
+                return;
+            }
+            if (povouaddedit.PohComp == "" || povouaddedit.PohComp == null)
+            {
+                WarningHeaderMessage = "Warning!";
+                WarningContentMessage = "Please Select a Company before saving the Delivery Note.";
+                Warning.OpenDialog();
+                return;
+            }
+            if (povouaddedit.PohBranch == "" || povouaddedit.PohBranch == null)
+            {
+                WarningHeaderMessage = "Warning!";
+                WarningContentMessage = "Please Select a Branch before saving the Delivery Note.";
                 Warning.OpenDialog();
                 return;
             }
@@ -483,10 +555,56 @@ namespace DigiEquipSys.Pages
                         Warning.OpenDialog();
                     }
                 }
+
+                if (args.Item.Text == "ZohoUpdate")
+                {
+                    var token = await ZohoTokenService.GetAccessTokenAsync();
+                    var orgId = await ZohoService.GetOrganizationIdAsync(token);
+
+                    // var lineItems = povoudetails.Select(i => 
+                    //     new {
+                    //     item_id = "1169195000000768019",
+                    //     units = i.PodStkIdUnit,
+                    //     rate = (decimal)i.PodUp,
+                    //     quantity = (decimal)i.PodQty
+                    // }).ToList();
+
+                    var lineItems = (
+                        from p in povoudetails
+                        join it in ItemMasterList on p.PodStkIdDesc equals it.ItemId
+                        select new
+                        {
+                            item_id = it.ItemZohoItemId,        // from the joined table
+                            units = p.PodStkIdUnit,
+                            rate = (decimal)p.PodUp,
+                            quantity = (decimal)p.PodQty
+                        }
+                    ).ToList();
+
+                    var currentInvoice = new
+                    {
+                        vendor_id = povousupplier.SuppZohoVendId,
+                        purchaseorder_number = povouaddedit.PohDispNo,
+                        reference_number = povouaddedit.PohVendRef,
+                        date = povouaddedit.PohDate?.ToString("yyyy-MM-dd"),
+                        source_of_supply = "AP",
+                        destination_of_supply = "TN",
+                        discount= DiscTotal,
+                        exchange_rate = povouaddedit.PohConvRate,
+                        line_items = lineItems
+                    };
+
+                    var payload = currentInvoice;
+
+                    var result = await ZohoService.CreatePurchaseOrderAsync(token, orgId, payload);
+                    resultMessage = "Purchase Invoice successfully posted to Zoho.";
+                }
+
             }
             catch (Exception ex)
             {
-                throw ex.InnerException;
+                resultMessage = $"Error: {ex.Message}";
+                await JSRuntime.InvokeVoidAsync("alert", resultMessage);
             }
         }
         protected async Task ConfirmDelete(bool DeleteConfirmed)
@@ -514,7 +632,14 @@ namespace DigiEquipSys.Pages
         {
             NavigationManager.NavigateTo("po_pg/" + vCompType);
         }
-
+        private async Task OnFilteringBranch(Syncfusion.Blazor.DropDowns.FilteringEventArgs args)
+        {
+            Custom = args.Text;
+            args.PreventDefaultAction = true;
+            var query1 = new Query().Where(new WhereFilter() { Field = "BranchDesc", Operator = "contains", value = args.Text, IgnoreCase = true });
+            query1 = !string.IsNullOrEmpty(args.Text) ? query1 : new Query();
+            await Company.FilterAsync(companylist, query1);
+        }
         public async Task PoVouPrint()
         {
             PoNo = povouaddedit.PohNo;

@@ -1,12 +1,7 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "D:\\DigiEquipSys2\\",
-  "Documents": [
-    {
-      "AbsoluteMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|d:\\digiequipsys2\\pages\\stkjournal_pg.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|solutionrelative:pages\\stkjournal_pg.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    }
-  ],
+  "Documents": [],
   "DocumentGroupContainers": [
     {
       "Orientation": 1,
@@ -14,24 +9,11 @@
       "DocumentGroups": [
         {
           "DockedHeight": 252,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": -1,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "StkJournal_pg.cs",
-              "DocumentMoniker": "D:\\DigiEquipSys2\\Pages\\StkJournal_pg.cs",
-              "RelativeDocumentMoniker": "Pages\\StkJournal_pg.cs",
-              "ToolTip": "D:\\DigiEquipSys2\\Pages\\StkJournal_pg.cs",
-              "RelativeToolTip": "Pages\\StkJournal_pg.cs",
-              "ViewState": "AgIAAOkAAAAAAAAAAAAtwOkAAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-18T10:57:24.791Z",
-              "EditorCaption": ""
             }
           ]
         },

@@ -16,7 +16,7 @@ namespace DigiEquipSys.Services
 
         public string _clientId => _config["Zoho:ClientId"];
         public string _clientSecret => _config["Zoho:ClientSecret"];
-        public string _redirectUri => "http://52.66.241.158/zohoauthcallback"; // must match Zoho Console
+        public string _redirectUri => "http://localhost:7110/zohoauthcallback"; // must match Zoho Console
 
         private string? _accessToken;
         private string? _refreshToken;

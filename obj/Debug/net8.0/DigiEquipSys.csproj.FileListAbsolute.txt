@@ -8,6 +8,7 @@ D:\DigiEquipSys2\obj\Debug\net8.0\DigiEquipSys.MvcApplicationPartsAssemblyInfo.c
 D:\DigiEquipSys2\obj\Debug\net8.0\DigiEquipSys.MvcApplicationPartsAssemblyInfo.cache
 D:\DigiEquipSys2\obj\Debug\net8.0\DigiEquipSys.RazorAssemblyInfo.cache
 D:\DigiEquipSys2\obj\Debug\net8.0\DigiEquipSys.RazorAssemblyInfo.cs
+D:\DigiEquipSys2\obj\Debug\net8.0\DigiEquipSys.sourcelink.json
 D:\DigiEquipSys2\bin\Debug\net8.0\appsettings.Development.json
 D:\DigiEquipSys2\bin\Debug\net8.0\appsettings.json
 D:\DigiEquipSys2\bin\Debug\net8.0\DigiEquipSys.staticwebassets.runtime.json
@@ -319,4 +320,3 @@ D:\DigiEquipSys2\obj\Debug\net8.0\refint\DigiEquipSys.dll
 D:\DigiEquipSys2\obj\Debug\net8.0\DigiEquipSys.pdb
 D:\DigiEquipSys2\obj\Debug\net8.0\DigiEquipSys.genruntimeconfig.cache
 D:\DigiEquipSys2\obj\Debug\net8.0\ref\DigiEquipSys.dll
-D:\DigiEquipSys2\obj\Debug\net8.0\DigiEquipSys.sourcelink.json

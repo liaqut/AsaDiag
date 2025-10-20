@@ -670,6 +670,10 @@ public partial class BASS_DBContext : DbContext
             entity.Property(e => e.PodHsnCode)
                 .HasMaxLength(10)
                 .HasColumnName("Pod_HsnCode");
+            entity.Property(e => e.PodGstAmt)
+                .HasDefaultValue(0m)
+                .HasColumnType("numeric(11, 2)")
+                .HasColumnName("Pod_Gst_Amt");
         });
 
 		modelBuilder.Entity<PoHead>(entity =>
@@ -715,13 +719,16 @@ public partial class BASS_DBContext : DbContext
 			entity.Property(e => e.PohVendRef)
 				.HasMaxLength(50)
 				.HasColumnName("Poh_VendRef");
-
 			entity.HasOne(d => d.PohCurrNavigation).WithMany(p => p.PoHeads)
 				.HasPrincipalKey(p => p.CurrShortName)
 				.HasForeignKey(d => d.PohCurr)
 				.OnDelete(DeleteBehavior.ClientSetNull)
 				.HasConstraintName("FK_Po_Head_Gen_Currency");
-		});
+            entity.Property(e => e.PohAdjustment)
+                .HasDefaultValue(0m)
+                .HasColumnType("numeric(6, 2)")
+                .HasColumnName("Poh_Adjustment");
+        });
 
 		modelBuilder.Entity<RcptDetail>(entity =>
         {

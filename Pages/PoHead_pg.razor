@@ -13,6 +13,10 @@
 @inject ISessionStorageService sessionStorage
 @inject IClientService myClientService
 @inject AccYear myAccYear
+@inject IBranchService myBranchService
+@inject IDivisionService myDivisionService
+@inject ZohoTokenService ZohoTokenService
+@inject ZohoApiService ZohoService
 
 <PageTitle>
     Purchase Order
@@ -39,6 +43,8 @@
 
 <SfSpinner @bind-Visible="@SpinnerVisible" Type="@SpinnerType.Bootstrap4" Size="50" Label="Data loading">
 </SfSpinner>
+<button @onclick="ConnectToZoho">Connect to Zoho</button>
+
 @if (@povoudetails != null)
 {
     <div class="col-lg-12">
@@ -83,7 +89,23 @@
                         </SfDropDownList>
                         <SfNumericTextBox ShowSpinButton="false" Placeholder="Conv. Rate" @bind-Value="@povouaddedit.PohConvRate" FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"></SfNumericTextBox>
                     </div>
+                    <div class="grid-item">
+                        <SfComboBox @ref="@Company" TValue="string" TItem="Branch" @bind-Value="@povouaddedit.PohComp" DataSource="@companylist" Placeholder="Select a Company" FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"  AllowFiltering="true" AllowCustom="true" Enabled=@vEnabled>
+                            <ComboBoxFieldSettings Value="BranchCode" Text="BranchDesc"></ComboBoxFieldSettings>
+                            <ComboBoxEvents TItem="Branch" TValue="string" ValueChange="mybranch" Filtering="OnFilteringBranch"></ComboBoxEvents>
+                        </SfComboBox>
 
+                        <SfDropDownList DataSource="@branchlist" AllowFiltering="true"
+                                        TItem="Division"
+                                        TValue="string"
+                                        Text="DelBranch"
+                                        @bind-Value="@povouaddedit.PohBranch"
+                                        Syncfusion.Blazor.Inputs.FloatLabelType="@Syncfusion.Blazor.Inputs.FloatLabelType.Auto"
+                                        Placeholder="Select Branch" FloatLabelType="Syncfusion.Blazor.Inputs.FloatLabelType.Always"
+                                        Enabled=@vEnabled>
+                            <DropDownListFieldSettings Text="LocDesc" Value="LocCode"></DropDownListFieldSettings>
+                        </SfDropDownList>
+                    </div>
                 </div>
             </ChildContent>
         </EditForm>
@@ -94,8 +116,8 @@
                         <div class="row">
 
                             <SfGrid @ref="PoDetGrid" AllowTextWrap="true" DataSource="@povoudetails" Height="500" Width="100%" AllowFiltering="true" AllowSorting="true" AllowPaging="true" AllowResizing="true" AllowReordering="true" AllowExcelExport="true"
-                                    ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
-                                    Toolbar="@(new List<string>() { "Add", "Delete", "Cancel", "Update", "Print" })">
+                                ContextMenuItems="@(new List<object>() {"AutoFit", "AutoFitAll", "SortAscending", "SortDescending","Copy", "ExcelExport","CsvExport", "FirstPage", "PrevPage","LastPage", "NextPage"})"
+                                Toolbar="ToolbarItems" >
                                 <GridEditSettings ShowConfirmDialog="false" NewRowPosition="NewRowPosition.Bottom" AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="EditMode.Batch"></GridEditSettings>
                                 <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.CheckBox"></GridFilterSettings>
                                 <GridPageSettings PageSize="100" PageSizes="@(new int[] { 50, 100, 200, 400,500})"></GridPageSettings>
@@ -148,7 +170,12 @@
                                                        HeaderText="GST %"
                                                        ForeignKeyField="ItemGst" ForeignKeyValue="ItemGst" ForeignDataSource="@ItemMasterList" AllowFiltering="false"
                                                        Width="12" AllowEditing="false">
-                                    </GridForeignColumn> 
+                                    </GridForeignColumn>
+
+                                    <GridColumn Field="@nameof(PoDetail.PodGstAmt)" EditorSettings="@myEditParams" AllowFiltering="false" Visible=false
+                                                HeaderText="Gst Amt"
+                                                Width="30">
+                                    </GridColumn>
 
                                     <GridColumn Field="@nameof(PoDetail.PodQty)" EditorSettings="@myEditParams" AllowFiltering="false"
                                                 HeaderText="PO Qty"
@@ -189,26 +216,33 @@
                         </div>
                     </div>
                 </div>
-                <br /><br />
+                <br />
+                <div class="text-end mt-3 fw-bold">
+                     Sub Total: @SubTotal.ToString("N2")
+                     Discount : @DiscTotal.ToString("N2")
+                     Tax Total: @TaxTotal.ToString("N2")
+                     Grand Total: @GrandTotal.ToString("N2")
+                </div>
+
+                <br />
                 <div class="e-footer-content" style="text-align: left; width: 100%;">
                     <div class="button-container">
                         <button type="submit" disabled style="display: none" aria-hidden="true"></button>
                         <button type="submit" disabled=@vSave class="e-btn e-normal e-primary" @onclick="@PoVouSave">Save</button>
                         <button type="button" class="e-btn e-normal" @onclick="@Cancel">Back</button>
                         <button type="button" disabled=@isButtonDisabled class="e-btn e-normal btn-success" @onclick="@PoVouPrint">Print</button>
-                        <button type="button" disabled=@isZoho class="e-btn e-normal btn-success" @onclick="@PoInvToZoho">Invoice to Zoho</button>
+                        @* <button type="button" disabled=@isZoho class="e-btn e-normal btn-success" @onclick="@PoInvToZoho">Upload to Zoho</button> *@
                     </div>
                 </div>
         <br />
-        <WarningPage @ref="Warning" WarningHeaderMessage="@WarningHeaderMessage" WarningContentMessage="@WarningContentMessage" />
-        <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
+\        <ConfirmPage @ref="DialogDelete" ConfirmHeaderMessage="@ConfirmHeaderMessage" ConfirmContentMessage="@ConfirmContentMessage" ConfirmationChanged="ConfirmDelete" />
     </div>
     <div id="report-viewer" style="height: 100vh;z-index: 1; position: absolute; top: 20; left: 20;"></div>
 }
 <style>
     .grid-container {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(5, 1fr);
         gap: 10px;
         padding: 20px;
         background-color: #f9f9f9;

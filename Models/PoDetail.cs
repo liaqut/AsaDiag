@@ -40,5 +40,6 @@ public partial class PoDetail
 
     public decimal? PodAmount { get; set; }
     public string? PodHsnCode { get; set; }
+    public decimal? PodGstAmt { get; set; }
     public virtual PoHead PodPoh { get; set; } = null!;
 }

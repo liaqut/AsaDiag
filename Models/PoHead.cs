@@ -32,7 +32,7 @@ public partial class PoHead
     public string? PohComp { get; set; }
 
     public string? PohBranch { get; set; }
-
+    public decimal? PohAdjustment { get; set; }
     public virtual ICollection<PoDetail> PoDetails { get; set; } = new List<PoDetail>();
 
     public virtual GenCurrency PohCurrNavigation { get; set; } = null!;

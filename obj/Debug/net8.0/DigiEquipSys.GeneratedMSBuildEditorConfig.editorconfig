@@ -180,10 +180,6 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHVyY2hTdGF0X3BnLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/DigiEquipSys2/Pages/PushInvoiceToZoho.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHVzaEludm9pY2VUb1pvaG8ucmF6b3I=
-build_metadata.AdditionalFiles.CssScope = 
-
 [D:/DigiEquipSys2/Pages/RcptDates_pg.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmNwdERhdGVzX3BnLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
@@ -274,6 +270,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [D:/DigiEquipSys2/Pages/ViewStock_pg.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVmlld1N0b2NrX3BnLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/DigiEquipSys2/Pages/XXPushInvoiceToZoho.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcWFhQdXNoSW52b2ljZVRvWm9oby5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/DigiEquipSys2/Pages/ZohoAuthCallback.razor]
