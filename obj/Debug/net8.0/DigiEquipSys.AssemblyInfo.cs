@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DigiEquipSys")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+717c5f4a407060e0fe9613af6ea9a5589aafd310")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d47d40ac6caad1684fcb1f398c00818fe90af7bc")]
 [assembly: System.Reflection.AssemblyProductAttribute("DigiEquipSys")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DigiEquipSys")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

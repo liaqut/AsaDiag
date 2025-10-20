@@ -1,7 +1,32 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "D:\\DigiEquipSys2\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|d:\\digiequipsys2\\pages\\pohead_pg.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|solutionrelative:pages\\pohead_pg.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|d:\\digiequipsys2\\services\\podetailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|solutionrelative:services\\podetailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|d:\\digiequipsys2\\services\\zohoapiservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|solutionrelative:services\\zohoapiservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|d:\\digiequipsys2\\pages\\pohead_pg.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|solutionrelative:pages\\pohead_pg.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|d:\\digiequipsys2\\pages\\customer_pg.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|solutionrelative:pages\\customer_pg.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|d:\\digiequipsys2\\pages\\customer_pg.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{9EA45199-0952-4AA8-9F2F-95BB3999C379}|DigiEquipSys.csproj|solutionrelative:pages\\customer_pg.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 1,
@@ -9,11 +34,87 @@
       "DocumentGroups": [
         {
           "DockedHeight": 252,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ZohoApiService.cs",
+              "DocumentMoniker": "D:\\DigiEquipSys2\\Services\\ZohoApiService.cs",
+              "RelativeDocumentMoniker": "Services\\ZohoApiService.cs",
+              "ToolTip": "D:\\DigiEquipSys2\\Services\\ZohoApiService.cs",
+              "RelativeToolTip": "Services\\ZohoApiService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-20T15:41:51.058Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "PoDetailService.cs",
+              "DocumentMoniker": "D:\\DigiEquipSys2\\Services\\PoDetailService.cs",
+              "RelativeDocumentMoniker": "Services\\PoDetailService.cs",
+              "ToolTip": "D:\\DigiEquipSys2\\Services\\PoDetailService.cs",
+              "RelativeToolTip": "Services\\PoDetailService.cs",
+              "ViewState": "AgIAALQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-20T09:15:46.514Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Customer_pg.cs",
+              "DocumentMoniker": "D:\\DigiEquipSys2\\Pages\\Customer_pg.cs",
+              "RelativeDocumentMoniker": "Pages\\Customer_pg.cs",
+              "ToolTip": "D:\\DigiEquipSys2\\Pages\\Customer_pg.cs",
+              "RelativeToolTip": "Pages\\Customer_pg.cs",
+              "ViewState": "AgIAAH4AAAAAAAAAAAAuwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-20T08:47:16.805Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Customer_pg.razor",
+              "DocumentMoniker": "D:\\DigiEquipSys2\\Pages\\Customer_pg.razor",
+              "RelativeDocumentMoniker": "Pages\\Customer_pg.razor",
+              "ToolTip": "D:\\DigiEquipSys2\\Pages\\Customer_pg.razor",
+              "RelativeToolTip": "Pages\\Customer_pg.razor",
+              "ViewState": "AgIAAC0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-10-20T08:47:09.612Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "PoHead_pg.cs",
+              "DocumentMoniker": "D:\\DigiEquipSys2\\Pages\\PoHead_pg.cs",
+              "RelativeDocumentMoniker": "Pages\\PoHead_pg.cs",
+              "ToolTip": "D:\\DigiEquipSys2\\Pages\\PoHead_pg.cs",
+              "RelativeToolTip": "Pages\\PoHead_pg.cs",
+              "ViewState": "AgIAADwCAAAAAAAAAAAkwFYCAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-20T06:51:33.642Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "PoHead_pg.razor",
+              "DocumentMoniker": "D:\\DigiEquipSys2\\Pages\\PoHead_pg.razor",
+              "RelativeDocumentMoniker": "Pages\\PoHead_pg.razor",
+              "ToolTip": "D:\\DigiEquipSys2\\Pages\\PoHead_pg.razor",
+              "RelativeToolTip": "Pages\\PoHead_pg.razor",
+              "ViewState": "AgIAADUAAAAAAAAAAAAAAEIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-10-20T09:01:34.045Z",
+              "EditorCaption": ""
             }
           ]
         },

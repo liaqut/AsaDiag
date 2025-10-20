@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.JSInterop;
+using Newtonsoft.Json;
 using Syncfusion.Blazor.Calendars;
 using Syncfusion.Blazor.Data;
 using Syncfusion.Blazor.DropDowns;
@@ -558,6 +559,8 @@ namespace DigiEquipSys.Pages
 
                 if (args.Item.Text == "ZohoUpdate")
                 {
+                    var clname = clientList.FirstOrDefault(c => c.ClientId == povouaddedit.PohCustId).ClientName;
+
                     var token = await ZohoTokenService.GetAccessTokenAsync();
                     var orgId = await ZohoService.GetOrganizationIdAsync(token);
 
@@ -574,10 +577,12 @@ namespace DigiEquipSys.Pages
                         join it in ItemMasterList on p.PodStkIdDesc equals it.ItemId
                         select new
                         {
-                            item_id = it.ItemZohoItemId,        // from the joined table
+                            item_id = it.ItemZohoItemId,
+                            name=it.ItemListNo.Trim() + " - " + clname,
                             units = p.PodStkIdUnit,
                             rate = (decimal)p.PodUp,
-                            quantity = (decimal)p.PodQty
+                            quantity = (decimal)p.PodQty,
+                            description = it.ItemDesc
                         }
                     ).ToList();
 
@@ -587,17 +592,23 @@ namespace DigiEquipSys.Pages
                         purchaseorder_number = povouaddedit.PohDispNo,
                         reference_number = povouaddedit.PohVendRef,
                         date = povouaddedit.PohDate?.ToString("yyyy-MM-dd"),
-                        source_of_supply = "AP",
+                        source_of_supply = "TN",
                         destination_of_supply = "TN",
                         discount= DiscTotal,
+                        //tax_type = "tax",
+                        //tax_total=TaxTotal,
+                        discount_account_id = "1169195000000000558",
                         exchange_rate = povouaddedit.PohConvRate,
                         line_items = lineItems
                     };
 
                     var payload = currentInvoice;
-
                     var result = await ZohoService.CreatePurchaseOrderAsync(token, orgId, payload);
-                    resultMessage = "Purchase Invoice successfully posted to Zoho.";
+                    var json = result; 
+                    dynamic data = JsonConvert.DeserializeObject(json);
+                    resultMessage = data.message;
+                    await JSRuntime.InvokeVoidAsync("alert", resultMessage);
+
                 }
 
             }
